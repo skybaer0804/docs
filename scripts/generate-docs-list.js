@@ -2,23 +2,37 @@ import { readdir, stat } from 'fs/promises';
 import { join, extname, relative } from 'path';
 import { writeFileSync } from 'fs';
 
-async function getAllFiles(dir, baseDir = dir) {
+async function getAllFiles(dir, baseDir = dir, pathPrefix = '') {
     const files = [];
+    const dirs = [];
     const entries = await readdir(dir, { withFileTypes: true });
 
     for (const entry of entries) {
         const fullPath = join(dir, entry.name);
         if (entry.isDirectory()) {
-            const subFiles = await getAllFiles(fullPath, baseDir);
-            files.push(...subFiles);
+            const dirPath = pathPrefix ? `${pathPrefix}/${entry.name}` : entry.name;
+            dirs.push({
+                name: entry.name,
+                path: dirPath,
+                fullPath: fullPath,
+            });
         } else if (entry.isFile() && (extname(entry.name) === '.md' || extname(entry.name) === '.template')) {
             const relativePath = '/docs/' + relative(baseDir, fullPath).replace(/\\/g, '/');
+            const pathParts = relativePath.split('/').filter((p) => p);
             files.push({
                 path: relativePath,
                 name: entry.name,
-                category: relativePath.split('/').length > 3 ? relativePath.split('/')[2] : 'root',
+                category: pathParts.length > 2 ? pathParts[1] : 'root',
+                subcategory: pathParts.length > 3 ? pathParts[2] : null,
+                ext: extname(entry.name),
             });
         }
+    }
+
+    // 하위 디렉토리 처리
+    for (const dirInfo of dirs) {
+        const subFiles = await getAllFiles(dirInfo.fullPath, baseDir, dirInfo.path);
+        files.push(...subFiles);
     }
 
     return files;
@@ -26,28 +40,45 @@ async function getAllFiles(dir, baseDir = dir) {
 
 async function generateDocsList() {
     const docsDir = join(process.cwd(), 'docs');
-    const rootFiles = [
-        { path: '/README.md', name: 'README.md', category: 'root' },
-        { path: '/SETUP.md', name: 'SETUP.md', category: 'root' },
-    ];
 
     try {
         const docsFiles = await getAllFiles(docsDir);
-        const allFiles = [...rootFiles, ...docsFiles];
+        const allFiles = docsFiles;
 
-        const categorized = {};
+        // 디렉토리 구조로 재구성
+        const tree = {};
         allFiles.forEach((file) => {
-            if (!categorized[file.category]) {
-                categorized[file.category] = [];
-            }
             const route = file.path.replace(/\.(md|template)$/, '');
             const title = file.name.replace(/\.(md|template)$/, '');
-            categorized[file.category].push({
+            const fileInfo = {
                 path: file.path,
                 route,
                 title,
                 category: file.category,
-            });
+                subcategory: file.subcategory,
+                ext: file.ext,
+            };
+
+            if (!tree[file.category]) {
+                tree[file.category] = {};
+            }
+
+            if (file.subcategory) {
+                if (!tree[file.category][file.subcategory]) {
+                    tree[file.category][file.subcategory] = [];
+                }
+                tree[file.category][file.subcategory].push(fileInfo);
+            } else {
+                if (!tree[file.category]._files) {
+                    tree[file.category]._files = [];
+                }
+                tree[file.category]._files.push(fileInfo);
+            }
+        });
+
+        const categorized = {};
+        Object.keys(tree).forEach((category) => {
+            categorized[category] = tree[category];
         });
 
         const output = {
@@ -56,6 +87,8 @@ async function generateDocsList() {
                 route: f.path.replace(/\.(md|template)$/, ''),
                 title: f.name.replace(/\.(md|template)$/, ''),
                 category: f.category,
+                subcategory: f.subcategory,
+                ext: f.ext || '',
             })),
             categorized,
         };

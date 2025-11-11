@@ -74,14 +74,72 @@ body {
     gap: 8px;
 }
 
+.category-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    padding: 8px 0;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.category-header:hover {
+    color: #2c3e50;
+}
+
+.toggle-icon {
+    display: inline-block;
+    font-size: 0.7rem;
+    color: #999;
+    transition: transform 0.2s;
+    width: 12px;
+    text-align: center;
+}
+
+.toggle-icon.expanded {
+    transform: rotate(90deg);
+}
+
 .category-title {
     font-weight: 600;
     font-size: 0.9rem;
     color: #555;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #e0e0e0;
+}
+
+.subcategory-item {
+    margin-left: 12px;
+    margin-top: 4px;
+}
+
+.subcategory-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    padding: 6px 0;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.subcategory-header:hover {
+    color: #2c3e50;
+}
+
+.subcategory-title {
+    font-weight: 500;
+}
+
+.sub-file-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-left: 20px;
+    margin-top: 4px;
 }
 
 .file-list {
@@ -218,6 +276,53 @@ body {
 
 .markdown-content a:hover {
     text-decoration: underline;
+}
+
+/* Template Viewer Styles */
+.template-viewer {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.template-content {
+    background-color: #282c34;
+    color: #abb2bf;
+    padding: 20px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.template-content code {
+    background-color: transparent;
+    padding: 0;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+}
+
+/* JSON Syntax Highlighting (기본적인 색상) */
+.template-content {
+    counter-reset: line;
+}
+
+.template-content code {
+    display: block;
+    white-space: pre;
+}
+
+/* JSON 키워드 색상 */
+.template-content code {
+    color: #abb2bf;
+}
+
+/* 간단한 JSON 하이라이팅을 위한 스타일 */
+.template-content {
+    background: #282c34;
+    color: #abb2bf;
 }
 
 /* 반응형 디자인 */

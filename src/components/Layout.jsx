@@ -5,7 +5,7 @@ export function Layout({ children, currentPath, onNavigate }) {
         <div class="layout">
             <div class="container">
                 <header class="header">
-                    <h1>Documentation</h1>
+                    <h1>Nodejs Documentation</h1>
                 </header>
                 <div class="content-wrapper">
                     <aside class="sidebar">
