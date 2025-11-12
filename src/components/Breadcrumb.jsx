@@ -7,7 +7,7 @@ import {
     buildFileBreadcrumbItems,
     filterBreadcrumbItemsForMobile,
 } from '../utils/breadcrumbUtils';
-import { IconChevronsRight } from '@tabler/icons-preact';
+import { IconChevronsRight, IconExternalLink } from '@tabler/icons-preact';
 import './Breadcrumb.scss';
 
 /**
@@ -83,13 +83,30 @@ export function Breadcrumb({ currentRoute, onNavigate }) {
     const sidebarCollapsed = sidebar?.sidebarCollapsed;
     const { files } = getMarkdownFiles();
 
+    const handleExternalLinkClick = (e) => {
+        e.preventDefault();
+        window.open('https://skybear.notion.site/Web-Developer-91775e3d66dd4b0893b871bce56894db?pvs=74', '_blank', 'noopener,noreferrer');
+    };
+
     // 홈일 때도 브레드크럼 표시
     if (!currentRoute || currentRoute === '/') {
         const homeItems = [{ label: '홈', route: '/', type: 'link' }];
         return (
             <div class="header__breadcrumb">
                 <div class="header__title-wrapper">
-                    <h1 class="header__title">Nodnjs Documentation</h1>
+                    <h1 class="header__title">
+                        Nodnjs Documentation
+                        <a
+                            href="https://skybear.notion.site/Web-Developer-91775e3d66dd4b0893b871bce56894db?pvs=74"
+                            onClick={handleExternalLinkClick}
+                            class="header__external-link"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="외부 링크 열기"
+                        >
+                            <IconExternalLink size={16} />
+                        </a>
+                    </h1>
                 </div>
                 <BreadcrumbNav items={homeItems} onNavigate={onNavigate} sidebarCollapsed={sidebarCollapsed} onToggleCollapse={onToggleCollapse} />
             </div>
@@ -106,7 +123,19 @@ export function Breadcrumb({ currentRoute, onNavigate }) {
         return (
             <div class="header__breadcrumb">
                 <div class="header__title-wrapper">
-                    <h1 class="header__title">Nodnjs Documentation</h1>
+                    <h1 class="header__title">
+                        Nodnjs Documentation
+                        <a
+                            href="https://skybear.notion.site/Web-Developer-91775e3d66dd4b0893b871bce56894db?pvs=74"
+                            onClick={handleExternalLinkClick}
+                            class="header__external-link"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="외부 링크 열기"
+                        >
+                            <IconExternalLink size={16} />
+                        </a>
+                    </h1>
                 </div>
                 {/* 데스크톱 브레드크럼 */}
                 <BreadcrumbNav items={breadcrumbItems} onNavigate={onNavigate} sidebarCollapsed={sidebarCollapsed} onToggleCollapse={onToggleCollapse} />
@@ -125,7 +154,19 @@ export function Breadcrumb({ currentRoute, onNavigate }) {
     return (
         <div class="header__breadcrumb">
             <div class="header__title-wrapper">
-                <h1 class="header__title">Nodnjs Documentation</h1>
+                <h1 class="header__title">
+                    Nodnjs Documentation
+                    <a
+                        href="https://skybear.notion.site/Web-Developer-91775e3d66dd4b0893b871bce56894db?pvs=74"
+                        onClick={handleExternalLinkClick}
+                        class="header__external-link"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="외부 링크 열기"
+                    >
+                        <IconExternalLink size={16} />
+                    </a>
+                </h1>
             </div>
             <BreadcrumbNav items={breadcrumbItems} onNavigate={onNavigate} sidebarCollapsed={sidebarCollapsed} onToggleCollapse={onToggleCollapse} />
         </div>
