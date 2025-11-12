@@ -19,9 +19,11 @@ export function App() {
     return (
         <Layout currentPath={currentPath} onNavigate={handleNavigate}>
             <Router onChange={handleRoute}>
-                <Home path="/" />
-                <DocPage path="/docs/:path*" />
-                <DocPage path="/setup" />
+                <Home path="/" onNavigate={handleNavigate} />
+                <DocPage path="/category/:category" onNavigate={handleNavigate} />
+                <DocPage path="/category/:category/:subcategory" onNavigate={handleNavigate} />
+                <DocPage path="/docs/:path*" onNavigate={handleNavigate} />
+                <DocPage path="/setup" onNavigate={handleNavigate} />
             </Router>
         </Layout>
     );

@@ -39,7 +39,7 @@ async function getAllFiles(dir, baseDir = dir, pathPrefix = '') {
 }
 
 async function generateDocsList() {
-    const docsDir = join(process.cwd(), 'docs');
+    const docsDir = join(process.cwd(), 'public', 'docs');
 
     try {
         const docsFiles = await getAllFiles(docsDir);

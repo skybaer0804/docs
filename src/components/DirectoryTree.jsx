@@ -22,19 +22,35 @@ export function DirectoryTree({ currentPath, onNavigate }) {
         misc: '기타',
     };
 
-    const toggleCategory = (category) => {
+    const handleCategoryClick = (category) => {
+        // 폴더 클릭 시 토글하고 해당 폴더 뷰로 이동
         setExpandedCategories((prev) => ({
             ...prev,
-            [category]: !prev[category],
+            [category]: prev[category] === undefined ? false : !prev[category],
         }));
+
+        const categoryRoute = `/category/${category}`;
+        if (onNavigate) {
+            onNavigate(categoryRoute);
+        } else {
+            route(categoryRoute);
+        }
     };
 
-    const toggleSubcategory = (category, subcategory) => {
+    const handleSubcategoryClick = (category, subcategory) => {
+        // 서브폴더 클릭 시 토글하고 해당 폴더 뷰로 이동
         const key = `${category}/${subcategory}`;
         setExpandedSubcategories((prev) => ({
             ...prev,
-            [key]: !prev[key],
+            [key]: prev[key] === undefined ? false : !prev[key],
         }));
+
+        const subcategoryRoute = `/category/${category}/${subcategory}`;
+        if (onNavigate) {
+            onNavigate(subcategoryRoute);
+        } else {
+            route(subcategoryRoute);
+        }
     };
 
     const handleClick = (file) => {
@@ -69,8 +85,8 @@ export function DirectoryTree({ currentPath, onNavigate }) {
 
                 return (
                     <div key={category} class="category-section">
-                        <div class="category-header" onClick={() => toggleCategory(category)}>
-                            <span class={`toggle-icon ${isExpanded ? 'expanded' : ''}`}>▶</span>
+                        <div class="category-header" onClick={() => handleCategoryClick(category)}>
+                            <span class="folder-icon">📁</span>
                             <span class="category-title">{categoryNames[category] || category}</span>
                         </div>
                         {isExpanded && (
@@ -79,7 +95,8 @@ export function DirectoryTree({ currentPath, onNavigate }) {
                                 {categoryData._files &&
                                     categoryData._files.map((file) => (
                                         <li key={file.path} class={`file-item ${currentPath === file.route ? 'active' : ''}`} onClick={() => handleClick(file)}>
-                                            {file.title}
+                                            <span class="file-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
+                                            <span class="file-name">{file.title}</span>
                                         </li>
                                     ))}
 
@@ -91,8 +108,8 @@ export function DirectoryTree({ currentPath, onNavigate }) {
 
                                     return (
                                         <li key={subcategory} class="subcategory-item">
-                                            <div class="subcategory-header" onClick={() => toggleSubcategory(category, subcategory)}>
-                                                <span class={`toggle-icon ${isSubExpanded ? 'expanded' : ''}`}>▶</span>
+                                            <div class="subcategory-header" onClick={() => handleSubcategoryClick(category, subcategory)}>
+                                                <span class="folder-icon">📁</span>
                                                 <span class="subcategory-title">{subcategory}</span>
                                             </div>
                                             {isSubExpanded && (
@@ -103,7 +120,8 @@ export function DirectoryTree({ currentPath, onNavigate }) {
                                                             class={`file-item ${currentPath === file.route ? 'active' : ''}`}
                                                             onClick={() => handleClick(file)}
                                                         >
-                                                            {file.title}
+                                                            <span class="file-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
+                                                            <span class="file-name">{file.title}</span>
                                                         </li>
                                                     ))}
                                                 </ul>
