@@ -1,0 +1,28 @@
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    gap: 16px;
+
+    &__icon {
+        animation: spin 1s linear infinite;
+        color: var(--primary-color, #0066cc);
+    }
+
+    &__text {
+        margin: 0;
+        color: var(--text-secondary, #666);
+        font-size: 14px;
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}

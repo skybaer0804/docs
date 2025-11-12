@@ -3,6 +3,7 @@ import { getMarkdownContent, getMarkdownFiles } from '../utils/markdownLoader';
 import { MarkdownViewer } from '../components/MarkdownViewer';
 import { TemplateViewer } from '../components/TemplateViewer';
 import { DirectoryView } from '../components/DirectoryView';
+import { LoadingSpinner } from '../components/LoadingSpinner';
 import { route } from 'preact-router';
 
 export function DocPage({ url }) {
@@ -61,7 +62,11 @@ export function DocPage({ url }) {
     };
 
     if (loading) {
-        return <div class="page">로딩 중...</div>;
+        return (
+            <div class="page">
+                <LoadingSpinner />
+            </div>
+        );
     }
 
     if (!content) {
