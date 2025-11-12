@@ -10,6 +10,7 @@ export function DocPage({ url }) {
     const [loading, setLoading] = useState(true);
     const [fileExt, setFileExt] = useState('');
     const [currentRoute, setCurrentRoute] = useState('');
+    const [currentFile, setCurrentFile] = useState(null);
 
     useEffect(() => {
         const loadContent = async () => {
@@ -20,6 +21,7 @@ export function DocPage({ url }) {
             // 카테고리/서브카테고리 경로인 경우 파일을 로드하지 않음
             if (routePath.startsWith('/category/')) {
                 setContent('');
+                setCurrentFile(null);
                 setLoading(false);
                 return;
             }
@@ -28,11 +30,14 @@ export function DocPage({ url }) {
             const file = files.find((f) => f.route === routePath);
 
             if (file) {
+                setCurrentFile(file);
                 setFileExt(file.ext || '');
                 const mdContent = await getMarkdownContent(file.path);
                 if (mdContent) {
                     setContent(mdContent);
                 }
+            } else {
+                setCurrentFile(null);
             }
             setLoading(false);
         };
@@ -60,14 +65,14 @@ export function DocPage({ url }) {
     if (fileExt === '.template') {
         return (
             <div class="page">
-                <TemplateViewer content={content} />
+                <TemplateViewer content={content} file={currentFile} />
             </div>
         );
     }
 
     return (
         <div class="page">
-            <MarkdownViewer content={content} />
+            <MarkdownViewer content={content} file={currentFile} />
         </div>
     );
 }
