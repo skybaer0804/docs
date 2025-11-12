@@ -1,13 +1,5 @@
 import { route } from 'preact-router';
 
-export const CATEGORY_NAMES = {
-    root: '루트',
-    common: '공통',
-    sdk: 'SDK',
-    backend: '백엔드',
-    misc: '기타',
-};
-
 /**
  * 브레드크럼 아이템 클릭 핸들러
  */
@@ -63,7 +55,7 @@ export const buildCategoryBreadcrumbItems = (category, subcategory) => {
 
     if (category) {
         items.push({
-            label: CATEGORY_NAMES[category] || category,
+            label: category,
             route: null,
             type: 'category',
             category: category,
@@ -98,7 +90,7 @@ export const buildFileBreadcrumbItems = (file) => {
     // 카테고리 추가
     if (file.category && file.category !== 'root') {
         items.push({
-            label: CATEGORY_NAMES[file.category] || file.category,
+            label: file.category,
             route: null,
             type: 'category',
             category: file.category,

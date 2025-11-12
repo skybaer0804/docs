@@ -15,14 +15,6 @@ export function DirectoryTree({ currentPath, onNavigate }) {
         console.error('Error loading markdown files:', error);
     }
 
-    const categoryNames = {
-        root: '루트',
-        common: '공통',
-        sdk: 'SDK',
-        backend: '백엔드',
-        misc: '기타',
-    };
-
     const handleCategoryClick = (category) => {
         // 폴더 클릭 시 토글하고 해당 폴더 뷰로 이동
         setExpandedCategories((prev) => ({
@@ -86,16 +78,21 @@ export function DirectoryTree({ currentPath, onNavigate }) {
 
                 return (
                     <div key={category} class="category-section">
-                        <div class="category-header" onClick={() => handleCategoryClick(category)}>
+                        <div class="category-header" onClick={() => handleCategoryClick(category)} title={category}>
                             <span class="folder-icon">📁</span>
-                            <span class="category-title">{categoryNames[category] || category}</span>
+                            <span class="category-title">{category}</span>
                         </div>
                         {isExpanded && (
                             <ul class="file-list">
                                 {/* 직접 파일들 */}
                                 {categoryData._files &&
                                     categoryData._files.map((file) => (
-                                        <li key={file.path} class={`file-item ${currentPath === file.route ? 'active' : ''}`} onClick={() => handleClick(file)}>
+                                        <li
+                                            key={file.path}
+                                            class={`file-item ${currentPath === file.route ? 'active' : ''}`}
+                                            onClick={() => handleClick(file)}
+                                            title={file.path}
+                                        >
                                             <span class="file-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
                                             <span class="file-name">{file.title}</span>
                                         </li>
@@ -109,7 +106,11 @@ export function DirectoryTree({ currentPath, onNavigate }) {
 
                                     return (
                                         <li key={subcategory} class="subcategory-item">
-                                            <div class="subcategory-header" onClick={() => handleSubcategoryClick(category, subcategory)}>
+                                            <div
+                                                class="subcategory-header"
+                                                onClick={() => handleSubcategoryClick(category, subcategory)}
+                                                title={`${category}/${subcategory}`}
+                                            >
                                                 <span class="folder-icon">📁</span>
                                                 <span class="subcategory-title">{subcategory}</span>
                                             </div>
@@ -120,6 +121,7 @@ export function DirectoryTree({ currentPath, onNavigate }) {
                                                             key={file.path}
                                                             class={`file-item ${currentPath === file.route ? 'active' : ''}`}
                                                             onClick={() => handleClick(file)}
+                                                            title={file.path}
                                                         >
                                                             <span class="file-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
                                                             <span class="file-name">{file.title}</span>

@@ -9,9 +9,34 @@ body {
         sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-color: #f5f5f5;
+    background-color: #ffffff;
     color: #333;
     line-height: 1.6;
+}
+
+// 스크롤바 스타일 (웹킷 브라우저)
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #1976d2;
+    border-radius: 4px;
+
+    &:hover {
+        background: #1565c0;
+    }
+}
+
+// Firefox 스크롤바 스타일
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #1976d2 #f1f1f1;
 }
 
 html,
@@ -33,7 +58,7 @@ body {
 // Markdown Viewer Styles
 .markdown-content {
     max-width: 100%;
-    overflow-x: auto;
+    overflow-x: hidden;
     word-wrap: break-word;
     overflow-wrap: break-word;
 
@@ -86,7 +111,7 @@ body {
         background-color: #f4f4f4;
         padding: 1rem;
         border-radius: 4px;
-        overflow-x: auto;
+        overflow-x: hidden;
         margin-bottom: 1rem;
         max-width: 100%;
         word-wrap: break-word;
@@ -112,8 +137,8 @@ body {
         border-collapse: collapse;
         margin-bottom: 1rem;
         display: block;
-        overflow-x: auto;
-        white-space: nowrap;
+        overflow-x: hidden;
+        white-space: normal;
     }
 
     th,

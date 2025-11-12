@@ -5,14 +5,6 @@ import './DirectoryView.scss';
 export function DirectoryView({ currentRoute, onNavigate }) {
     const { categorized, files } = getMarkdownFiles();
 
-    const categoryNames = {
-        root: '루트',
-        common: '공통',
-        sdk: 'SDK',
-        backend: '백엔드',
-        misc: '기타',
-    };
-
     const handleCategoryClick = (category) => {
         // 카테고리 폴더 뷰를 보여주기 위해 특별한 경로로 이동
         const categoryRoute = `/category/${category}`;
@@ -115,9 +107,9 @@ export function DirectoryView({ currentRoute, onNavigate }) {
                         const hasSubcategories = subcategories.length > 0;
 
                         return (
-                            <div key={category} class="directory-item folder-item" onClick={() => handleCategoryClick(category)}>
+                            <div key={category} class="directory-item folder-item" onClick={() => handleCategoryClick(category)} title={category}>
                                 <span class="item-icon">📁</span>
-                                <span class="item-name">{categoryNames[category] || category}</span>
+                                <span class="item-name">{category}</span>
                             </div>
                         );
                     })}
@@ -139,7 +131,12 @@ export function DirectoryView({ currentRoute, onNavigate }) {
                     {subcategories.map((subcategory) => {
                         const subFiles = data[subcategory] || [];
                         return (
-                            <div key={subcategory} class="directory-item folder-item" onClick={() => handleSubcategoryClick(category, subcategory)}>
+                            <div
+                                key={subcategory}
+                                class="directory-item folder-item"
+                                onClick={() => handleSubcategoryClick(category, subcategory)}
+                                title={`${category}/${subcategory}`}
+                            >
                                 <span class="item-icon">📁</span>
                                 <span class="item-name">{subcategory}</span>
                             </div>
@@ -147,7 +144,7 @@ export function DirectoryView({ currentRoute, onNavigate }) {
                     })}
                     {/* 직접 파일들 */}
                     {directFiles.map((file) => (
-                        <div key={file.path} class="directory-item file-item" onClick={() => handleFileClick(file)}>
+                        <div key={file.path} class="directory-item file-item" onClick={() => handleFileClick(file)} title={file.path}>
                             <span class="item-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
                             <span class="item-name">{file.title}</span>
                         </div>
@@ -165,7 +162,7 @@ export function DirectoryView({ currentRoute, onNavigate }) {
             <div class="directory-view">
                 <div class="directory-grid">
                     {subFiles.map((file) => (
-                        <div key={file.path} class="directory-item file-item" onClick={() => handleFileClick(file)}>
+                        <div key={file.path} class="directory-item file-item" onClick={() => handleFileClick(file)} title={file.path}>
                             <span class="item-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
                             <span class="item-name">{file.title}</span>
                         </div>

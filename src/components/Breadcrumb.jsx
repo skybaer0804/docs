@@ -7,12 +7,13 @@ import {
     buildFileBreadcrumbItems,
     filterBreadcrumbItemsForMobile,
 } from '../utils/breadcrumbUtils';
+import { IconChevronsRight } from '@tabler/icons-preact';
 import './Breadcrumb.scss';
 
 /**
  * 브레드크럼 네비게이션 컴포넌트
  */
-function BreadcrumbNav({ items, onNavigate }) {
+function BreadcrumbNav({ items, onNavigate, sidebarCollapsed, onToggleCollapse }) {
     const renderBreadcrumbItem = (item, index, isCurrent, isLast = false) => {
         const linkRoute = getBreadcrumbLinkRoute(item);
 
@@ -41,6 +42,11 @@ function BreadcrumbNav({ items, onNavigate }) {
         <>
             {/* 데스크톱 브레드크럼 */}
             <nav class="breadcrumb breadcrumb--desktop">
+                {sidebarCollapsed && onToggleCollapse && (
+                    <button class="breadcrumb__expand-btn" onClick={onToggleCollapse} aria-label="사이드바 펼치기">
+                        <IconChevronsRight size={16} />
+                    </button>
+                )}
                 {items.map((item, index) => {
                     const isCurrent = item.type === 'current' || index === items.length - 1;
                     return renderBreadcrumbItem(item, index, isCurrent, index === items.length - 1);
@@ -73,6 +79,8 @@ function BreadcrumbNav({ items, onNavigate }) {
 export function Breadcrumb({ currentRoute, onNavigate }) {
     const sidebar = useSidebar();
     const onToggleSidebar = sidebar?.toggleSidebar;
+    const onToggleCollapse = sidebar?.toggleSidebarCollapse;
+    const sidebarCollapsed = sidebar?.sidebarCollapsed;
     const { files } = getMarkdownFiles();
 
     // 홈일 때도 브레드크럼 표시
@@ -83,7 +91,7 @@ export function Breadcrumb({ currentRoute, onNavigate }) {
                 <div class="header__title-wrapper">
                     <h1 class="header__title">Nodnjs Documentation</h1>
                 </div>
-                <BreadcrumbNav items={homeItems} onNavigate={onNavigate} />
+                <BreadcrumbNav items={homeItems} onNavigate={onNavigate} sidebarCollapsed={sidebarCollapsed} onToggleCollapse={onToggleCollapse} />
             </div>
         );
     }
@@ -101,7 +109,7 @@ export function Breadcrumb({ currentRoute, onNavigate }) {
                     <h1 class="header__title">Nodnjs Documentation</h1>
                 </div>
                 {/* 데스크톱 브레드크럼 */}
-                <BreadcrumbNav items={breadcrumbItems} onNavigate={onNavigate} />
+                <BreadcrumbNav items={breadcrumbItems} onNavigate={onNavigate} sidebarCollapsed={sidebarCollapsed} onToggleCollapse={onToggleCollapse} />
             </div>
         );
     }
@@ -119,7 +127,7 @@ export function Breadcrumb({ currentRoute, onNavigate }) {
             <div class="header__title-wrapper">
                 <h1 class="header__title">Nodnjs Documentation</h1>
             </div>
-            <BreadcrumbNav items={breadcrumbItems} onNavigate={onNavigate} />
+            <BreadcrumbNav items={breadcrumbItems} onNavigate={onNavigate} sidebarCollapsed={sidebarCollapsed} onToggleCollapse={onToggleCollapse} />
         </div>
     );
 }
