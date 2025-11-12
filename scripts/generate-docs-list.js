@@ -48,7 +48,8 @@ async function generateDocsList() {
         // 디렉토리 구조로 재구성
         const tree = {};
         allFiles.forEach((file) => {
-            const route = file.path.replace(/\.(md|template)$/, '');
+            // route는 path와 동일하게 확장자 포함
+            const route = file.path;
             const title = file.name.replace(/\.(md|template)$/, '');
             const fileInfo = {
                 path: file.path,
@@ -84,7 +85,7 @@ async function generateDocsList() {
         const output = {
             files: allFiles.map((f) => ({
                 path: f.path,
-                route: f.path.replace(/\.(md|template)$/, ''),
+                route: f.path, // route는 path와 동일하게 확장자 포함
                 title: f.name.replace(/\.(md|template)$/, ''),
                 category: f.category,
                 subcategory: f.subcategory,

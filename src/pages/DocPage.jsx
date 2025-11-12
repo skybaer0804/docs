@@ -27,7 +27,18 @@ export function DocPage({ url }) {
             }
 
             const { files } = getMarkdownFiles();
-            const file = files.find((f) => f.route === routePath);
+            // route로 파일 찾기 (확장자 포함)
+            let file = files.find((f) => f.route === routePath);
+
+            // 찾지 못한 경우 확장자 없는 경로로도 시도 (하위 호환성)
+            if (!file) {
+                const routePathWithExt = routePath + '.md';
+                file = files.find((f) => f.route === routePathWithExt);
+            }
+            if (!file) {
+                const routePathWithTemplate = routePath + '.template';
+                file = files.find((f) => f.route === routePathWithTemplate);
+            }
 
             if (file) {
                 setCurrentFile(file);
