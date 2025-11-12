@@ -2,7 +2,6 @@ import { useEffect, useState } from 'preact/hooks';
 import { getMarkdownContent, getMarkdownFiles } from '../utils/markdownLoader';
 import { MarkdownViewer } from '../components/MarkdownViewer';
 import { TemplateViewer } from '../components/TemplateViewer';
-import { Breadcrumb } from '../components/Breadcrumb';
 import { DirectoryView } from '../components/DirectoryView';
 import { route } from 'preact-router';
 
@@ -52,7 +51,6 @@ export function DocPage({ url }) {
     if (!content) {
         return (
             <div class="page">
-                <Breadcrumb currentRoute={currentRoute} onNavigate={handleNavigate} />
                 <DirectoryView currentRoute={currentRoute} onNavigate={handleNavigate} />
             </div>
         );
@@ -62,7 +60,6 @@ export function DocPage({ url }) {
     if (fileExt === '.template') {
         return (
             <div class="page">
-                <Breadcrumb currentRoute={currentRoute} onNavigate={handleNavigate} />
                 <TemplateViewer content={content} />
             </div>
         );
@@ -70,7 +67,6 @@ export function DocPage({ url }) {
 
     return (
         <div class="page">
-            <Breadcrumb currentRoute={currentRoute} onNavigate={handleNavigate} />
             <MarkdownViewer content={content} />
         </div>
     );

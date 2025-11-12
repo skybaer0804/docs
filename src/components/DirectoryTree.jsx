@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import { getMarkdownFiles } from '../utils/markdownLoader';
 import { route } from 'preact-router';
+import './DirectoryTree.scss';
 
 export function DirectoryTree({ currentPath, onNavigate }) {
     const [expandedCategories, setExpandedCategories] = useState({});

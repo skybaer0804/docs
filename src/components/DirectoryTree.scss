@@ -1,0 +1,141 @@
+.directory-tree {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.category-section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.category-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    padding: 6px 0;
+    position: relative;
+
+    &:hover {
+        color: #2c3e50;
+    }
+}
+
+.toggle-icon {
+    display: inline-block;
+    font-size: 0.7rem;
+    color: #999;
+    transition: transform 0.2s;
+    width: 12px;
+    text-align: center;
+
+    &.expanded {
+        transform: rotate(90deg);
+    }
+}
+
+.category-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.subcategory-item {
+    margin-left: 12px;
+    margin-top: 2px;
+}
+
+.subcategory-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    padding: 4px 0;
+    font-size: 0.85rem;
+    color: #666;
+    position: relative;
+
+    &:hover {
+        color: #2c3e50;
+    }
+}
+
+.subcategory-title {
+    font-weight: 500;
+}
+
+.sub-file-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-left: 20px;
+    margin-top: 2px;
+}
+
+.file-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.file-item {
+    padding: 6px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &:hover {
+        background-color: #f0f0f0;
+        color: #2c3e50;
+    }
+
+    &.active {
+        background-color: #e3f2fd;
+        color: #1976d2;
+        font-weight: 500;
+    }
+}
+
+.file-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    .file-item,
+    .category-header,
+    .subcategory-header {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .file-item:active,
+    .category-header:active,
+    .subcategory-header:active {
+        background-color: #e9ecef;
+        transform: scale(0.98);
+    }
+}

@@ -1,5 +1,6 @@
 import { getMarkdownFiles } from '../utils/markdownLoader';
 import { route } from 'preact-router';
+import './DirectoryView.scss';
 
 export function DirectoryView({ currentRoute, onNavigate }) {
     const { categorized, files } = getMarkdownFiles();

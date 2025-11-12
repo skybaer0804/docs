@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
+import './TemplateViewer.scss';
 
 export function TemplateViewer({ content }) {
     const [formattedContent, setFormattedContent] = useState('');

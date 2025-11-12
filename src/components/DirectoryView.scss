@@ -1,0 +1,79 @@
+.directory-view {
+    width: 100%;
+}
+
+.directory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    padding: 0;
+}
+
+.directory-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 40px;
+
+    &:hover {
+        background: #e9ecef;
+        border-color: #667eea;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    &:active {
+        transform: scale(0.98);
+        background: #dee2e6;
+    }
+
+    &.folder-item {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+
+        &:hover {
+            background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+        }
+    }
+
+    &.file-item {
+        background: #f5f5f5;
+    }
+}
+
+.item-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.item-name {
+    font-size: 0.95rem;
+    color: #495057;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.folder-item .item-name {
+    color: #333;
+}
+
+@media (max-width: 768px) {
+    .directory-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding: 0;
+    }
+
+    .directory-item {
+        min-height: 36px;
+        padding: 8px 10px;
+    }
+}

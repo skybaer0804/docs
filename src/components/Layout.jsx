@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'preact/hooks';
 import { DirectoryTree } from './DirectoryTree';
+import { Breadcrumb } from './Breadcrumb';
 import { SidebarContext } from '../contexts/SidebarContext';
+import './Layout.scss';
 
 export function Layout({ children, currentPath, onNavigate }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -17,9 +19,8 @@ export function Layout({ children, currentPath, onNavigate }) {
     useEffect(() => {
         const handleClickOutside = (e) => {
             if (sidebarOpen && window.innerWidth <= 768) {
-                const sidebar = document.querySelector('.sidebar');
-                const toggle = document.querySelector('.mobile-menu-toggle-small');
-                if (sidebar && !sidebar.contains(e.target) && !toggle?.contains(e.target)) {
+                const sidebar = document.querySelector('.layout__sidebar');
+                if (sidebar && !sidebar.contains(e.target)) {
                     closeSidebar();
                 }
             }
@@ -49,16 +50,19 @@ export function Layout({ children, currentPath, onNavigate }) {
     return (
         <SidebarContext.Provider value={{ toggleSidebar, closeSidebar }}>
             <div class="layout">
-                <div class={`sidebar-overlay ${sidebarOpen ? 'open' : ''}`} onClick={closeSidebar}></div>
-                <div class="container">
-                    <div class="content-wrapper">
-                        <aside class={`sidebar ${sidebarOpen ? 'open' : ''}`}>
-                            <button class="sidebar-close" onClick={closeSidebar} aria-label="사이드바 닫기">
+                <div class={`layout__overlay ${sidebarOpen ? 'layout__overlay--open' : ''}`} onClick={closeSidebar}></div>
+                <div class="layout__container">
+                    <header class="header">
+                        <Breadcrumb currentRoute={currentPath} onNavigate={handleNavigate} />
+                    </header>
+                    <div class="layout__content-wrapper">
+                        <aside class={`layout__sidebar ${sidebarOpen ? 'layout__sidebar--open' : ''}`}>
+                            <button class="layout__sidebar-close" onClick={closeSidebar} aria-label="사이드바 닫기">
                                 ✕
                             </button>
                             <DirectoryTree currentPath={currentPath} onNavigate={handleNavigate} />
                         </aside>
-                        <main class="main-content">{children}</main>
+                        <main class="layout__main">{children}</main>
                     </div>
                 </div>
             </div>

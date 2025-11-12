@@ -1,0 +1,38 @@
+.template-viewer {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.template-content {
+    background-color: #282c34;
+    color: #abb2bf;
+    padding: 20px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin: 0;
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+
+    code {
+        background-color: transparent;
+        padding: 0;
+        color: inherit;
+        font-family: inherit;
+        font-size: inherit;
+        display: block;
+        white-space: pre;
+    }
+}
+
+@media (max-width: 768px) {
+    .template-content {
+        font-size: 0.8rem;
+        padding: 16px;
+    }
+}
