@@ -1,5 +1,30 @@
 .directory-view {
     width: 100%;
+    animation: fadeIn 0.2s ease-in;
+
+    @media (max-width: 768px) {
+        animation: slideInFromRight 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
 
 .directory-grid {

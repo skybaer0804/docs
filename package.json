@@ -5,7 +5,9 @@
     "scripts": {
         "generate-docs": "node scripts/generate-docs-list.js",
         "generate-icons": "node scripts/generate-icons.js",
+        "clean": "node scripts/clean-cache.js",
         "dev": "npm run generate-docs && npm run generate-icons && vite",
+        "dev:clean": "npm run clean && npm run generate-docs && npm run generate-icons && vite",
         "build": "npm run generate-docs && npm run generate-icons && vite build",
         "preview": "vite preview"
     },

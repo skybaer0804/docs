@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import { getMarkdownFiles } from '../utils/markdownLoader';
 import { route } from 'preact-router';
+import { devError } from '../utils/logger';
 import './DirectoryTree.scss';
 
 export function DirectoryTree({ currentPath, onNavigate }) {
@@ -11,7 +12,7 @@ export function DirectoryTree({ currentPath, onNavigate }) {
         const result = getMarkdownFiles();
         categorized = result.categorized || {};
     } catch (error) {
-        console.error('Error loading markdown files:', error);
+        devError('Error loading markdown files:', error);
     }
 
     const handleFolderClick = (path) => {
@@ -69,7 +70,7 @@ export function DirectoryTree({ currentPath, onNavigate }) {
                     const isSubExpanded = expandedPaths[subPath] !== false; // 기본값 true
 
                     return (
-                        <li key={key} class={level === 0 ? 'subcategory-item' : 'subcategory-item nested'}>
+                        <li key={key} class={level === 0 ? 'subcategory-item' : 'subcategory-item nested'} data-expanded={isSubExpanded}>
                             <div
                                 class={level === 0 ? 'subcategory-header' : 'subcategory-header nested'}
                                 onClick={() => handleFolderClick(subPath)}
@@ -78,7 +79,7 @@ export function DirectoryTree({ currentPath, onNavigate }) {
                                 <span class="folder-icon">📁</span>
                                 <span class="subcategory-title">{key}</span>
                             </div>
-                            {isSubExpanded && renderTree(subNode, subPath, level + 1)}
+                            <div class="subcategory-content">{renderTree(subNode, subPath, level + 1)}</div>
                         </li>
                     );
                 })}
@@ -109,12 +110,12 @@ export function DirectoryTree({ currentPath, onNavigate }) {
                 const isExpanded = expandedPaths[categoryPath] !== false; // 기본값 true
 
                 return (
-                    <div key={category} class="category-section">
+                    <div key={category} class="category-section" data-expanded={isExpanded}>
                         <div class="category-header" onClick={() => handleFolderClick(categoryPath)} title={category}>
                             <span class="folder-icon">📁</span>
                             <span class="category-title">{category}</span>
                         </div>
-                        {isExpanded && renderTree(categoryData, categoryPath, 0)}
+                        <div class="category-content">{renderTree(categoryData, categoryPath, 0)}</div>
                     </div>
                 );
             })}

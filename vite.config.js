@@ -53,6 +53,9 @@ function generateDocsPlugin() {
 }
 
 export default defineConfig({
+    define: {
+        'import.meta.env.VITE_NODE_MODE': JSON.stringify(process.env.NODE_MODE || process.env.NODE_ENV || 'development'),
+    },
     plugins: [
         preact(),
         generateDocsPlugin(),
@@ -119,6 +122,13 @@ export default defineConfig({
             },
         }),
     ],
+    css: {
+        preprocessorOptions: {
+            scss: {
+                silenceDeprecations: ['legacy-js-api'],
+            },
+        },
+    },
     server: {
         port: 8888,
         open: true,

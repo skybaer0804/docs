@@ -108,6 +108,12 @@
         flex: 1;
         min-width: 0;
         height: calc(100vh - var(--header-height, 80px));
+
+        // 모바일에서 페이지 전환 애니메이션을 위한 컨테이너
+        @media (max-width: 768px) {
+            overflow: hidden;
+            position: relative;
+        }
     }
 }
 
