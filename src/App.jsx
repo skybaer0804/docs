@@ -20,8 +20,7 @@ export function App() {
         <Layout currentPath={currentPath} onNavigate={handleNavigate}>
             <Router onChange={handleRoute}>
                 <Home path="/" onNavigate={handleNavigate} />
-                <DocPage path="/category/:category" onNavigate={handleNavigate} />
-                <DocPage path="/category/:category/:subcategory" onNavigate={handleNavigate} />
+                <DocPage path="/category/:path*" onNavigate={handleNavigate} />
                 <DocPage path="/docs/:path*" onNavigate={handleNavigate} />
                 <DocPage path="/setup" onNavigate={handleNavigate} />
             </Router>

@@ -4,8 +4,7 @@ import { route } from 'preact-router';
 import './DirectoryTree.scss';
 
 export function DirectoryTree({ currentPath, onNavigate }) {
-    const [expandedCategories, setExpandedCategories] = useState({});
-    const [expandedSubcategories, setExpandedSubcategories] = useState({});
+    const [expandedPaths, setExpandedPaths] = useState({});
 
     let categorized = {};
     try {
@@ -15,34 +14,18 @@ export function DirectoryTree({ currentPath, onNavigate }) {
         console.error('Error loading markdown files:', error);
     }
 
-    const handleCategoryClick = (category) => {
-        // 폴더 클릭 시 토글하고 해당 폴더 뷰로 이동
-        setExpandedCategories((prev) => ({
+    const handleFolderClick = (path) => {
+        // 폴더 클릭 시 토글
+        setExpandedPaths((prev) => ({
             ...prev,
-            [category]: prev[category] === undefined ? false : !prev[category],
+            [path]: prev[path] === undefined ? false : !prev[path],
         }));
 
-        const categoryRoute = `/category/${category}`;
+        const categoryRoute = `/category/${path}`;
         if (onNavigate) {
             onNavigate(categoryRoute);
         } else {
             route(categoryRoute);
-        }
-    };
-
-    const handleSubcategoryClick = (category, subcategory) => {
-        // 서브폴더 클릭 시 토글하고 해당 폴더 뷰로 이동
-        const key = `${category}/${subcategory}`;
-        setExpandedSubcategories((prev) => ({
-            ...prev,
-            [key]: prev[key] === undefined ? false : !prev[key],
-        }));
-
-        const subcategoryRoute = `/category/${category}/${subcategory}`;
-        if (onNavigate) {
-            onNavigate(subcategoryRoute);
-        } else {
-            route(subcategoryRoute);
         }
     };
 
@@ -53,6 +36,55 @@ export function DirectoryTree({ currentPath, onNavigate }) {
             route(file.route);
         }
     };
+
+    // 재귀적으로 트리 렌더링
+    function renderTree(node, path = '', level = 0) {
+        const keys = Object.keys(node)
+            .filter((key) => key !== '_files')
+            .sort();
+        const files = node._files || [];
+
+        if (keys.length === 0 && files.length === 0) {
+            return null;
+        }
+
+        return (
+            <ul class={level === 0 ? 'file-list' : 'sub-file-list'}>
+                {/* 파일들 */}
+                {files.map((file) => (
+                    <li key={file.path} class={`file-item ${currentPath === file.route ? 'active' : ''}`} onClick={() => handleClick(file)} title={file.path}>
+                        <span class="file-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
+                        <span class="file-name">{file.title}</span>
+                    </li>
+                ))}
+
+                {/* 하위 디렉토리들 */}
+                {keys.map((key) => {
+                    const subPath = path ? `${path}/${key}` : key;
+                    const subNode = node[key];
+                    const hasContent = subNode._files?.length > 0 || Object.keys(subNode).filter((k) => k !== '_files').length > 0;
+
+                    if (!hasContent) return null;
+
+                    const isSubExpanded = expandedPaths[subPath] !== false; // 기본값 true
+
+                    return (
+                        <li key={key} class={level === 0 ? 'subcategory-item' : 'subcategory-item nested'}>
+                            <div
+                                class={level === 0 ? 'subcategory-header' : 'subcategory-header nested'}
+                                onClick={() => handleFolderClick(subPath)}
+                                title={subPath}
+                            >
+                                <span class="folder-icon">📁</span>
+                                <span class="subcategory-title">{key}</span>
+                            </div>
+                            {isSubExpanded && renderTree(subNode, subPath, level + 1)}
+                        </li>
+                    );
+                })}
+            </ul>
+        );
+    }
 
     const categoryKeys = Object.keys(categorized).sort();
 
@@ -73,67 +105,16 @@ export function DirectoryTree({ currentPath, onNavigate }) {
         <div class="directory-tree">
             {categoryKeys.map((category) => {
                 const categoryData = categorized[category];
-                const isExpanded = expandedCategories[category] !== false; // 기본값 true
-                const subcategories = Object.keys(categoryData).filter((key) => key !== '_files');
+                const categoryPath = category;
+                const isExpanded = expandedPaths[categoryPath] !== false; // 기본값 true
 
                 return (
                     <div key={category} class="category-section">
-                        <div class="category-header" onClick={() => handleCategoryClick(category)} title={category}>
+                        <div class="category-header" onClick={() => handleFolderClick(categoryPath)} title={category}>
                             <span class="folder-icon">📁</span>
                             <span class="category-title">{category}</span>
                         </div>
-                        {isExpanded && (
-                            <ul class="file-list">
-                                {/* 직접 파일들 */}
-                                {categoryData._files &&
-                                    categoryData._files.map((file) => (
-                                        <li
-                                            key={file.path}
-                                            class={`file-item ${currentPath === file.route ? 'active' : ''}`}
-                                            onClick={() => handleClick(file)}
-                                            title={file.path}
-                                        >
-                                            <span class="file-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
-                                            <span class="file-name">{file.title}</span>
-                                        </li>
-                                    ))}
-
-                                {/* 하위 디렉토리들 */}
-                                {subcategories.map((subcategory) => {
-                                    const key = `${category}/${subcategory}`;
-                                    const isSubExpanded = expandedSubcategories[key] !== false; // 기본값 true
-                                    const subFiles = categoryData[subcategory] || [];
-
-                                    return (
-                                        <li key={subcategory} class="subcategory-item">
-                                            <div
-                                                class="subcategory-header"
-                                                onClick={() => handleSubcategoryClick(category, subcategory)}
-                                                title={`${category}/${subcategory}`}
-                                            >
-                                                <span class="folder-icon">📁</span>
-                                                <span class="subcategory-title">{subcategory}</span>
-                                            </div>
-                                            {isSubExpanded && (
-                                                <ul class="sub-file-list">
-                                                    {subFiles.map((file) => (
-                                                        <li
-                                                            key={file.path}
-                                                            class={`file-item ${currentPath === file.route ? 'active' : ''}`}
-                                                            onClick={() => handleClick(file)}
-                                                            title={file.path}
-                                                        >
-                                                            <span class="file-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
-                                                            <span class="file-name">{file.title}</span>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            )}
-                                        </li>
-                                    );
-                                })}
-                            </ul>
-                        )}
+                        {isExpanded && renderTree(categoryData, categoryPath, 0)}
                     </div>
                 );
             })}

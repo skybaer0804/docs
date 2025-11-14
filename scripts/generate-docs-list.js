@@ -19,11 +19,14 @@ async function getAllFiles(dir, baseDir = dir, pathPrefix = '') {
         } else if (entry.isFile() && (extname(entry.name) === '.md' || extname(entry.name) === '.template')) {
             const relativePath = '/docs/' + relative(baseDir, fullPath).replace(/\\/g, '/');
             const pathParts = relativePath.split('/').filter((p) => p);
+            // 무제한 중첩 구조 지원: 전체 경로를 배열로 저장
+            const directoryPath = pathParts.slice(1, -1); // 'docs' 제외하고 파일명 제외
             files.push({
                 path: relativePath,
                 name: entry.name,
-                category: pathParts.length > 2 ? pathParts[1] : 'root',
-                subcategory: pathParts.length > 3 ? pathParts[2] : null,
+                directoryPath: directoryPath, // 전체 디렉토리 경로 배열
+                category: directoryPath.length > 0 ? directoryPath[0] : 'root',
+                subcategory: directoryPath.length > 1 ? directoryPath[1] : null,
                 ext: extname(entry.name),
             });
         }
@@ -45,48 +48,53 @@ async function generateDocsList() {
         const docsFiles = await getAllFiles(docsDir);
         const allFiles = docsFiles;
 
-        // 디렉토리 구조로 재구성
-        const tree = {};
-        allFiles.forEach((file) => {
-            // route는 path와 동일하게 확장자 포함
-            const route = file.path;
-            const title = file.name.replace(/\.(md|template)$/, '');
-            const fileInfo = {
-                path: file.path,
-                route,
-                title,
-                category: file.category,
-                subcategory: file.subcategory,
-                ext: file.ext,
-            };
+        // 무제한 중첩 디렉토리 구조로 재구성
+        function buildTree(files) {
+            const tree = {};
 
-            if (!tree[file.category]) {
-                tree[file.category] = {};
-            }
+            files.forEach((file) => {
+                const route = file.path;
+                const title = file.name.replace(/\.(md|template)$/, '');
+                const fileInfo = {
+                    path: file.path,
+                    route,
+                    title,
+                    directoryPath: file.directoryPath || [],
+                    category: file.category,
+                    subcategory: file.subcategory,
+                    ext: file.ext,
+                };
 
-            if (file.subcategory) {
-                if (!tree[file.category][file.subcategory]) {
-                    tree[file.category][file.subcategory] = [];
+                // 디렉토리 경로를 따라 트리 구조 생성
+                let current = tree;
+                const dirPath = file.directoryPath || [];
+
+                for (let i = 0; i < dirPath.length; i++) {
+                    const dirName = dirPath[i];
+                    if (!current[dirName]) {
+                        current[dirName] = {};
+                    }
+                    current = current[dirName];
                 }
-                tree[file.category][file.subcategory].push(fileInfo);
-            } else {
-                if (!tree[file.category]._files) {
-                    tree[file.category]._files = [];
-                }
-                tree[file.category]._files.push(fileInfo);
-            }
-        });
 
-        const categorized = {};
-        Object.keys(tree).forEach((category) => {
-            categorized[category] = tree[category];
-        });
+                // 파일을 _files 배열에 추가
+                if (!current._files) {
+                    current._files = [];
+                }
+                current._files.push(fileInfo);
+            });
+
+            return tree;
+        }
+
+        const categorized = buildTree(allFiles);
 
         const output = {
             files: allFiles.map((f) => ({
                 path: f.path,
                 route: f.path, // route는 path와 동일하게 확장자 포함
                 title: f.name.replace(/\.(md|template)$/, ''),
+                directoryPath: f.directoryPath || [],
                 category: f.category,
                 subcategory: f.subcategory,
                 ext: f.ext || '',
