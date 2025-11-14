@@ -47,7 +47,7 @@ export function LayoutPresenter({
                         </button>
                         {(!sidebarCollapsed || !isDesktop) && <DirectoryTree currentPath={currentPath} onNavigate={onNavigate} />}
                     </aside>
-                    {isDesktop && !sidebarCollapsed && <Resizer onResize={onSidebarResize} minSidebarWidth={200} minContentWidth={300} />}
+                    {isDesktop && !sidebarCollapsed && <Resizer onResize={onSidebarResize} minSidebarWidth={170} minContentWidth={300} />}
                     <main class="layout__main">{children}</main>
                 </div>
             </div>
