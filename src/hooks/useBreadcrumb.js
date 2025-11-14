@@ -10,7 +10,7 @@ export function useBreadcrumb(currentRoute) {
 
     // 홈일 때도 브레드크럼 표시
     if (!currentRoute || currentRoute === '/') {
-        const homeItems = [{ label: '홈', route: '/', type: 'link' }];
+        const homeItems = [{ label: 'Home', route: '/', type: 'link' }];
         return {
             items: homeItems,
             displayType: 'home',

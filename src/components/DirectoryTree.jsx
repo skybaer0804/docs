@@ -9,9 +9,8 @@ import './DirectoryTree.scss';
 export function DirectoryTreePresenter({ categorized, currentPath, expandedPaths, onFolderClick, onFileClick }) {
     // 재귀적으로 트리 렌더링
     function renderTree(node, path = '', level = 0) {
-        const keys = Object.keys(node)
-            .filter((key) => key !== '_files')
-            .sort();
+        // 정렬 제거: 원본 순서 유지 (대소문자, 한글 그대로 표시)
+        const keys = Object.keys(node).filter((key) => key !== '_files');
         const files = node._files || [];
 
         if (keys.length === 0 && files.length === 0) {
@@ -36,12 +35,15 @@ export function DirectoryTreePresenter({ categorized, currentPath, expandedPaths
 
                     if (!hasContent) return null;
 
-                    const isSubExpanded = expandedPaths[subPath] !== false; // 기본값 true
+                    const isSubExpanded = expandedPaths[subPath] === true; // 기본값 false
+
+                    const subcategoryRoute = `/category/${subPath}`;
+                    const isSubcategoryActive = currentPath === subcategoryRoute;
 
                     return (
                         <li key={key} class={level === 0 ? 'subcategory-item' : 'subcategory-item nested'} data-expanded={isSubExpanded}>
                             <div
-                                class={level === 0 ? 'subcategory-header' : 'subcategory-header nested'}
+                                class={`${level === 0 ? 'subcategory-header' : 'subcategory-header nested'} ${isSubcategoryActive ? 'active' : ''}`}
                                 onClick={() => onFolderClick(subPath)}
                                 title={subPath}
                             >
@@ -56,7 +58,8 @@ export function DirectoryTreePresenter({ categorized, currentPath, expandedPaths
         );
     }
 
-    const categoryKeys = Object.keys(categorized).sort();
+    // 정렬 제거: 원본 순서 유지 (대소문자, 한글 그대로 표시)
+    const categoryKeys = Object.keys(categorized);
 
     if (categoryKeys.length === 0) {
         return (
@@ -76,11 +79,14 @@ export function DirectoryTreePresenter({ categorized, currentPath, expandedPaths
             {categoryKeys.map((category) => {
                 const categoryData = categorized[category];
                 const categoryPath = category;
-                const isExpanded = expandedPaths[categoryPath] !== false; // 기본값 true
+                const isExpanded = expandedPaths[categoryPath] === true; // 기본값 false
+
+                const categoryRoute = `/category/${categoryPath}`;
+                const isCategoryActive = currentPath === categoryRoute;
 
                 return (
                     <div key={category} class="category-section" data-expanded={isExpanded}>
-                        <div class="category-header" onClick={() => onFolderClick(categoryPath)} title={category}>
+                        <div class={`category-header ${isCategoryActive ? 'active' : ''}`} onClick={() => onFolderClick(categoryPath)} title={category}>
                             <span class="folder-icon">📁</span>
                             <span class="category-title">{category}</span>
                         </div>

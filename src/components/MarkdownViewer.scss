@@ -34,3 +34,17 @@
 .markdown-content {
     // 기존 스타일은 style.scss에 있음
 }
+
+// 다크모드
+body[data-theme='dark'] {
+    .markdown-viewer {
+        &__download-btn {
+            color: #b0b0b0;
+
+            &:hover {
+                background-color: #333;
+                color: #64b5f6;
+            }
+        }
+    }
+}

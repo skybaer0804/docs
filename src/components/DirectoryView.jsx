@@ -9,7 +9,8 @@ import './DirectoryView.scss';
 export function DirectoryViewPresenter({ categorized, displayType, displayData, onFolderClick, onFileClick }) {
     // 루트 레벨: 모든 카테고리 표시
     if (displayType === 'root') {
-        const categoryKeys = Object.keys(categorized).sort();
+        // 정렬 제거: 원본 순서 유지 (대소문자, 한글 그대로 표시)
+        const categoryKeys = Object.keys(categorized);
         if (categoryKeys.length === 0) {
             return (
                 <div class="directory-view">
@@ -39,9 +40,8 @@ export function DirectoryViewPresenter({ categorized, displayType, displayData, 
     // 디렉토리 레벨: 해당 디렉토리의 하위 항목 표시
     if (displayType === 'directory' && displayData) {
         const { path, pathParts, node } = displayData;
-        const subdirectories = Object.keys(node)
-            .filter((key) => key !== '_files')
-            .sort();
+        // 정렬 제거: 원본 순서 유지 (대소문자, 한글 그대로 표시)
+        const subdirectories = Object.keys(node).filter((key) => key !== '_files');
         const directFiles = node._files || [];
 
         return (

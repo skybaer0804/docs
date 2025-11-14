@@ -13,6 +13,7 @@ export function useSwipeNavigation(currentRoute, onNavigate) {
     const [isSwiping, setIsSwiping] = useState(false);
     const [swipeOffset, setSwipeOffset] = useState(0);
     const isHorizontalSwipeRef = useRef(false);
+    const isNavigatingFromSwipeRef = useRef(false);
 
     const handleNavigate = useCallback(
         (path) => {
@@ -34,6 +35,7 @@ export function useSwipeNavigation(currentRoute, onNavigate) {
             };
             setIsSwiping(false);
             setSwipeOffset(0);
+            setSlideDirection('none');
             isHorizontalSwipeRef.current = false;
         };
 
@@ -61,9 +63,12 @@ export function useSwipeNavigation(currentRoute, onNavigate) {
                 if (distance < 0 && Math.abs(distance) > 10) {
                     const offset = Math.min(Math.abs(distance), window.innerWidth);
                     setSwipeOffset(offset);
+                    // 스와이프 중에도 상위 페이지가 보이도록 슬라이드 방향 설정
+                    setSlideDirection('right');
                     e.preventDefault(); // 스크롤 방지
                 } else {
                     setSwipeOffset(0);
+                    setSlideDirection('none');
                 }
             }
             // 수직 스크롤인 경우 preventDefault()를 호출하지 않음
@@ -134,17 +139,27 @@ export function useSwipeNavigation(currentRoute, onNavigate) {
                 }
 
                 // 애니메이션 완료 후 네비게이션
+                isNavigatingFromSwipeRef.current = true;
                 setTimeout(() => {
-                    handleNavigate(targetRoute);
+                    // SPA 구조: 애니메이션 옵션과 함께 네비게이션
+                    // 상위 페이지 콘텐츠가 이미 보이고 있으므로 즉시 네비게이션
+                    handleNavigate(targetRoute, {
+                        animate: true,
+                        direction: 'right',
+                        type: 'swipe',
+                    });
                     // Observer 패턴: 네비게이션 이벤트 알림
                     navigationObserver.notify(targetRoute, { from: currentRoute, type: 'swipe' });
+                    // 네비게이션 후 약간의 지연 후 슬라이드 방향 리셋 (콘텐츠 로드 대기)
                     setTimeout(() => {
                         setSlideDirection('none');
-                    }, 50);
+                        isNavigatingFromSwipeRef.current = false;
+                    }, 150);
                 }, 350);
             } else {
                 setIsSwiping(false);
                 setSwipeOffset(0);
+                setSlideDirection('none');
             }
 
             // 리셋
@@ -153,17 +168,17 @@ export function useSwipeNavigation(currentRoute, onNavigate) {
             isHorizontalSwipeRef.current = false;
         };
 
-        const pageElement = document.querySelector('.page');
-        if (pageElement && window.innerWidth <= 768) {
-            pageElement.addEventListener('touchstart', handleTouchStart, { passive: false });
-            pageElement.addEventListener('touchmove', handleTouchMove, { passive: false });
-            pageElement.addEventListener('touchend', handleTouchEnd, { passive: true });
+        const slideContainer = document.querySelector('.slide-container') || document.querySelector('.page');
+        if (slideContainer && window.innerWidth <= 768) {
+            slideContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
+            slideContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
+            slideContainer.addEventListener('touchend', handleTouchEnd, { passive: true });
 
             return () => {
-                if (pageElement) {
-                    pageElement.removeEventListener('touchstart', handleTouchStart);
-                    pageElement.removeEventListener('touchmove', handleTouchMove);
-                    pageElement.removeEventListener('touchend', handleTouchEnd);
+                if (slideContainer) {
+                    slideContainer.removeEventListener('touchstart', handleTouchStart);
+                    slideContainer.removeEventListener('touchmove', handleTouchMove);
+                    slideContainer.removeEventListener('touchend', handleTouchEnd);
                 }
             };
         }
@@ -172,8 +187,10 @@ export function useSwipeNavigation(currentRoute, onNavigate) {
     // 페이지 전환 애니메이션 처리
     useEffect(() => {
         if (window.innerWidth <= 768 && currentRoute && !isSwiping) {
-            // 이전 경로와 비교하여 방향 결정 (간단한 구현)
-            setSlideDirection('none');
+            // 스와이프로 인한 네비게이션이 아닌 경우에만 슬라이드 방향 리셋
+            if (!isNavigatingFromSwipeRef.current) {
+                setSlideDirection('none');
+            }
         }
     }, [currentRoute, isSwiping]);
 

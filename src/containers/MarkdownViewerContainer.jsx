@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from 'preact/hooks';
 import { marked } from 'marked';
-import { route } from 'preact-router';
 import { downloadFile } from '../utils/downloadUtils';
 import { getMarkdownFiles } from '../utils/markdownLoader';
 import { MarkdownViewerPresenter } from '../components/MarkdownViewer';
@@ -8,9 +7,10 @@ import { MarkdownViewerPresenter } from '../components/MarkdownViewer';
 /**
  * MarkdownViewer Container 컴포넌트
  * 마크다운 렌더링 로직과 이벤트 처리를 담당
+ * SPA 구조: onNavigate prop을 통한 네비게이션
  * TDD 친화적: 로직을 분리하여 테스트 시 Mock으로 대체 가능
  */
-export function MarkdownViewerContainer({ content, file }) {
+export function MarkdownViewerContainer({ content, file, onNavigate }) {
     const [html, setHtml] = useState('');
     const contentRef = useRef(null);
 
@@ -121,10 +121,14 @@ export function MarkdownViewerContainer({ content, file }) {
             }
 
             if (targetFile) {
-                route(targetFile.route);
+                if (onNavigate) {
+                    onNavigate(targetFile.route);
+                }
             } else {
                 // 찾지 못한 경우 routePath 그대로 시도
-                route(routePath);
+                if (onNavigate) {
+                    onNavigate(routePath);
+                }
             }
         };
 
@@ -135,7 +139,7 @@ export function MarkdownViewerContainer({ content, file }) {
                 contentEl.removeEventListener('click', handleLinkClick);
             };
         }
-    }, [html, file]);
+    }, [html, file, onNavigate]);
 
     const handleDownload = () => {
         if (file && file.path) {

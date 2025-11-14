@@ -27,3 +27,15 @@ body:has(.resizer:hover) {
     cursor: col-resize;
     user-select: none;
 }
+
+// 다크모드
+body[data-theme='dark'] {
+    .resizer {
+        background-color: #444;
+
+        &:hover,
+        &--dragging {
+            background-color: #64b5f6;
+        }
+    }
+}

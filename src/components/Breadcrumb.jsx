@@ -1,7 +1,8 @@
 import { BreadcrumbContainer } from '../containers/BreadcrumbContainer';
 import { useSidebar } from '../contexts/SidebarContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { handleBreadcrumbClick, getBreadcrumbLinkRoute, filterBreadcrumbItemsForMobile } from '../utils/breadcrumbUtils';
-import { IconChevronsRight, IconExternalLink } from '@tabler/icons-preact';
+import { IconChevronsRight, IconExternalLink, IconSun, IconMoon } from '@tabler/icons-preact';
 import './Breadcrumb.scss';
 
 /**
@@ -23,11 +24,14 @@ function BreadcrumbNavPresenter({ items, onNavigate, sidebarCollapsed, onToggleC
                             handleBreadcrumbClick(item, onNavigate);
                         }}
                         class="breadcrumb__link"
+                        title={item.label}
                     >
                         {item.label}
                     </a>
                 ) : (
-                    <span class="breadcrumb__current">{item.label}</span>
+                    <span class="breadcrumb__current" title={item.label}>
+                        {item.label}
+                    </span>
                 )}
                 {!isLast && <span class="breadcrumb__separator"> &gt; </span>}
             </span>
@@ -79,6 +83,7 @@ function BreadcrumbNavPresenter({ items, onNavigate, sidebarCollapsed, onToggleC
  */
 export function BreadcrumbPresenter({ items, displayType, currentRoute, onNavigate }) {
     const sidebar = useSidebar();
+    const theme = useTheme();
     const onToggleSidebar = sidebar?.toggleSidebar;
     const onToggleCollapse = sidebar?.toggleSidebarCollapse;
     const sidebarCollapsed = sidebar?.sidebarCollapsed;
@@ -108,6 +113,14 @@ export function BreadcrumbPresenter({ items, displayType, currentRoute, onNaviga
                         <IconExternalLink size={16} />
                     </a>
                 </h1>
+                <button
+                    class="header__theme-toggle"
+                    onClick={theme?.toggleTheme}
+                    aria-label={theme?.theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
+                    title={theme?.theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
+                >
+                    {theme?.theme === 'dark' ? <IconSun size={18} /> : <IconMoon size={18} />}
+                </button>
             </div>
             <BreadcrumbNavPresenter items={items} onNavigate={onNavigate} sidebarCollapsed={sidebarCollapsed} onToggleCollapse={onToggleCollapse} />
         </div>

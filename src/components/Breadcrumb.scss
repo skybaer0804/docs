@@ -1,3 +1,29 @@
+.header__theme-toggle {
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    padding: 6px;
+    cursor: pointer;
+    color: #666;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    margin-left: auto;
+
+    &:hover {
+        background-color: #f0f0f0;
+        color: #333;
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+}
+
 .breadcrumb {
     display: flex;
     align-items: center;
@@ -47,18 +73,43 @@
     }
 
     &__link {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 6px;
+        margin: 1px 2px 1px 0;
+        background-color: #e3f2fd;
         color: #1976d2;
+        border-radius: 6px;
         text-decoration: none;
-        transition: color 0.2s;
+        font-size: 0.75rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border: none;
+        outline: none;
 
         &:hover {
+            background-color: #bbdefb;
             color: #1565c0;
-            text-decoration: underline;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        &:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
         }
     }
 
     &__current {
-        color: #333;
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 6px;
+        margin: 1px 2px 1px 0;
+        background-color: #1976d2;
+        color: #fff;
+        border-radius: 6px;
+        font-size: 0.75rem;
         font-weight: 500;
     }
 
@@ -66,6 +117,51 @@
         margin: 0 8px;
         color: #999;
         user-select: none;
+    }
+}
+
+// 다크모드
+body[data-theme='dark'] {
+    .header__theme-toggle {
+        color: #e0e0e0;
+
+        &:hover {
+            background-color: #333;
+            color: #fff;
+        }
+    }
+
+    .breadcrumb {
+        color: #b0b0b0;
+
+        &__link {
+            background-color: #1e3a5f;
+            color: #64b5f6;
+
+            &:hover {
+                background-color: #2d4a6b;
+                color: #90caf9;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            }
+        }
+
+        &__current {
+            background-color: #1976d2;
+            color: #fff;
+        }
+
+        &__separator {
+            color: #666;
+        }
+
+        &__expand-btn {
+            color: #b0b0b0;
+
+            &:hover {
+                background-color: #333;
+                color: #e0e0e0;
+            }
+        }
     }
 }
 
@@ -83,37 +179,50 @@
             display: flex;
             flex-direction: row;
             align-items: center;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
             gap: 4px;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-
-            &::-webkit-scrollbar {
-                display: none;
-            }
-
-            -ms-overflow-style: none;
-            scrollbar-width: none;
+            overflow: hidden;
+            max-width: 100%;
         }
 
         &__item {
             display: inline-flex;
             align-items: center;
             white-space: nowrap;
+            flex-shrink: 0;
+            max-width: 100%;
+            overflow: hidden;
         }
 
-        &__link,
-        &__current {
-            font-size: 0.85rem;
-            padding: 4px 0;
+        &__link {
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            margin: 1px 2px 1px 0;
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        &__current {
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            margin: 1px 2px 1px 0;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         &__separator {
             margin: 0 4px;
             font-size: 0.85rem;
             color: #999;
+            flex-shrink: 0;
         }
     }
 }

@@ -26,3 +26,16 @@
         transform: rotate(360deg);
     }
 }
+
+// 다크모드
+body[data-theme='dark'] {
+    .loading-spinner {
+        &__icon {
+            color: #64b5f6;
+        }
+
+        &__text {
+            color: #b0b0b0;
+        }
+    }
+}

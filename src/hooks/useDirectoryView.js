@@ -1,5 +1,4 @@
 import { getMarkdownFiles } from '../utils/markdownLoader';
-import { route } from 'preact-router';
 import { navigationObserver } from '../observers/NavigationObserver';
 
 /**
@@ -14,8 +13,6 @@ export function useDirectoryView(currentRoute, onNavigate) {
         const folderRoute = `/category/${path}`;
         if (onNavigate) {
             onNavigate(folderRoute);
-        } else {
-            route(folderRoute);
         }
         // Observer 패턴: 네비게이션 이벤트 알림
         navigationObserver.notify(folderRoute, { type: 'folder' });
@@ -24,8 +21,6 @@ export function useDirectoryView(currentRoute, onNavigate) {
     const handleFileClick = (file) => {
         if (onNavigate) {
             onNavigate(file.route);
-        } else {
-            route(file.route);
         }
         // Observer 패턴: 네비게이션 이벤트 알림
         navigationObserver.notify(file.route, { type: 'file', file });
