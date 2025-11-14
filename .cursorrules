@@ -48,3 +48,359 @@
 - 관련 로직은 컴포넌트 내부 또는 별도의 훅/유틸리티로 분리합니다.
 - 타입 안정성을 위해 TypeScript를 사용하는 경우 타입을 명시합니다.
 
+# TDD 및 테스트 가이드
+
+## 테스트 라이브러리
+- 테스트 프레임워크: Jest 사용
+- 테스트 작성 방식: TDD(Test-Driven Development) 방식 준수
+- 테스트 파일 위치: 소스 파일과 동일한 디렉토리에 `*.test.js` 또는 `*.test.jsx` 형식으로 작성
+
+## 디자인 패턴 (TDD 친화적)
+
+### 1. Custom Hooks 패턴
+- 비즈니스 로직을 Custom Hook으로 분리하여 재사용성과 테스트 용이성 확보
+- Hook은 순수 함수로 작성하여 단위 테스트가 용이하도록 구성
+- 컴포넌트는 UI 렌더링에만 집중하고, 로직은 Hook으로 분리
+- Hook 파일은 `src/hooks/` 디렉토리에 위치
+
+**용도:**
+- 데이터 로딩 로직 (예: `useMarkdownContent`)
+- 사용자 인터랙션 로직 (예: `useSwipeNavigation`)
+- DOM 조작 로직 (예: `useResizer`)
+- 상태 관리 로직
+
+**구현 예시:**
+```javascript
+// hooks/useMarkdownContent.js
+export function useMarkdownContent(url) {
+  const [content, setContent] = useState('');
+  const [loading, setLoading] = useState(true);
+  // ... 로직
+  return { content, loading, fileExt, currentFile };
+}
+
+// 컴포넌트에서 사용
+export function DocPageContainer({ url }) {
+  const { content, loading, fileExt, currentFile } = useMarkdownContent(url);
+  // ... Container 로직
+}
+```
+
+**테스트 예시:**
+```javascript
+// hooks/useMarkdownContent.test.js
+import { renderHook, waitFor } from '@testing-library/preact-hooks';
+import { useMarkdownContent } from './useMarkdownContent';
+
+jest.mock('../utils/markdownLoader');
+
+describe('useMarkdownContent', () => {
+  it('should load markdown content', async () => {
+    const { result } = renderHook(() => useMarkdownContent('/docs/test.md'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.content).toBeTruthy();
+  });
+});
+```
+
+
+### 2. Presenter/Container 패턴
+- Container 컴포넌트: 데이터 로직과 상태 관리 담당 (테스트 시 Mock 가능)
+- Presenter 컴포넌트: 순수 UI 컴포넌트 (Props 기반 렌더링, 테스트 용이)
+- 로직과 UI를 분리하여 각각 독립적으로 테스트 가능
+- Container는 `src/containers/` 디렉토리에, Presenter는 원래 컴포넌트 위치에 유지
+
+**용도:**
+- 복잡한 로직이 있는 컴포넌트를 분리할 때
+- UI와 비즈니스 로직을 독립적으로 테스트하고 싶을 때
+- 컴포넌트 재사용성을 높이고 싶을 때
+
+**구조:**
+```
+src/
+├── containers/
+│   ├── DocPageContainer.jsx          # Container: 로직 담당
+│   └── MarkdownViewerContainer.jsx   # Container: 로직 담당
+├── pages/
+│   └── DocPage.jsx                   # Presenter: UI만 담당
+└── components/
+    └── MarkdownViewer.jsx            # Presenter: UI만 담당
+```
+
+**구현 예시:**
+```javascript
+// containers/DocPageContainer.jsx
+export function DocPageContainer({ url }) {
+  const { content, loading, fileExt, currentFile } = useMarkdownContent(url);
+  const { slideDirection, isSwiping, swipeOffset } = useSwipeNavigation(currentRoute, handleNavigate);
+  
+  return (
+    <DocPagePresenter
+      content={content}
+      loading={loading}
+      fileExt={fileExt}
+      currentFile={currentFile}
+      slideDirection={slideDirection}
+      isSwiping={isSwiping}
+      swipeOffset={swipeOffset}
+      onNavigate={handleNavigate}
+    />
+  );
+}
+
+// pages/DocPage.jsx (Presenter)
+export function DocPagePresenter({ content, loading, fileExt, currentFile, ... }) {
+  // 순수 UI 렌더링만 수행
+  if (loading) return <LoadingSpinner />;
+  if (!content) return <DirectoryView />;
+  return <MarkdownViewer content={content} file={currentFile} />;
+}
+```
+
+**테스트 예시:**
+```javascript
+// containers/DocPageContainer.test.jsx
+import { render } from '@testing-library/preact';
+import { DocPageContainer } from './DocPageContainer';
+
+jest.mock('../hooks/useMarkdownContent');
+jest.mock('../hooks/useSwipeNavigation');
+
+describe('DocPageContainer', () => {
+  it('should pass props to presenter', () => {
+    // Mock 설정
+    useMarkdownContent.mockReturnValue({ content: 'test', loading: false });
+    useSwipeNavigation.mockReturnValue({ slideDirection: 'none' });
+    
+    render(<DocPageContainer url="/docs/test.md" />);
+    // Container는 Presenter에 올바른 props를 전달하는지만 테스트
+  });
+});
+
+// pages/DocPage.test.jsx (Presenter 테스트)
+describe('DocPagePresenter', () => {
+  it('should render loading spinner when loading', () => {
+    const { getByTestId } = render(<DocPagePresenter loading={true} />);
+    expect(getByTestId('loading-spinner')).toBeInTheDocument();
+  });
+  
+  it('should render content when loaded', () => {
+    const { getByText } = render(<DocPagePresenter content="# Test" loading={false} />);
+    expect(getByText('Test')).toBeInTheDocument();
+  });
+});
+```
+
+
+
+### 3. Observer 패턴 (이벤트 처리)
+- 이벤트 기반 통신을 위한 구독/발행 패턴
+- 컴포넌트 간 느슨한 결합을 유지하면서 이벤트 전달
+- 이벤트 핸들러를 분리하여 단위 테스트 가능
+- Observer 클래스는 `src/observers/` 디렉토리에 위치
+- Hook을 통해 Observer를 쉽게 사용할 수 있도록 래핑
+
+**용도:**
+- 전역 이벤트 처리 (예: 네비게이션 이벤트)
+- 상태 변경 알림 (예: 사이드바 상태 변경)
+- 컴포넌트 간 통신이 필요하지만 직접적인 prop 전달을 피하고 싶을 때
+
+**구조:**
+```
+src/
+├── observers/
+│   ├── NavigationObserver.js    # 네비게이션 이벤트 관찰
+│   └── SidebarObserver.js      # 사이드바 상태 관찰
+└── hooks/
+    ├── useNavigationObserver.js # Observer를 Hook으로 래핑
+    └── useSidebarObserver.js    # Observer를 Hook으로 래핑
+```
+
+**구현 예시:**
+```javascript
+// observers/NavigationObserver.js
+export class NavigationObserver {
+  constructor() {
+    this.subscribers = new Set();
+  }
+  
+  subscribe(callback) {
+    this.subscribers.add(callback);
+    return () => this.subscribers.delete(callback);
+  }
+  
+  notify(path, context = {}) {
+    this.subscribers.forEach(callback => callback({ path, ...context }));
+  }
+}
+
+export const navigationObserver = new NavigationObserver();
+
+// hooks/useNavigationObserver.js
+export function useNavigationObserver(callback) {
+  useEffect(() => {
+    const unsubscribe = navigationObserver.subscribe(callback);
+    return unsubscribe;
+  }, [callback]);
+}
+
+// 컴포넌트에서 사용
+export function SomeComponent() {
+  useNavigationObserver(({ path }) => {
+    console.log('Navigation to:', path);
+  });
+  
+  const handleNavigate = (path) => {
+    navigationObserver.notify(path);
+  };
+}
+```
+
+**테스트 예시:**
+```javascript
+// observers/NavigationObserver.test.js
+import { NavigationObserver } from './NavigationObserver';
+
+describe('NavigationObserver', () => {
+  let observer;
+  
+  beforeEach(() => {
+    observer = new NavigationObserver();
+  });
+  
+  it('should notify subscribers on navigation', () => {
+    const callback = jest.fn();
+    observer.subscribe(callback);
+    
+    observer.notify('/docs/test');
+    
+    expect(callback).toHaveBeenCalledWith({ path: '/docs/test' });
+  });
+  
+  it('should allow unsubscribing', () => {
+    const callback = jest.fn();
+    const unsubscribe = observer.subscribe(callback);
+    
+    unsubscribe();
+    observer.notify('/docs/test');
+    
+    expect(callback).not.toHaveBeenCalled();
+  });
+});
+
+// hooks/useNavigationObserver.test.js
+import { renderHook } from '@testing-library/preact-hooks';
+import { useNavigationObserver } from './useNavigationObserver';
+import { navigationObserver } from '../observers/NavigationObserver';
+
+describe('useNavigationObserver', () => {
+  it('should subscribe to navigation events', () => {
+    const callback = jest.fn();
+    renderHook(() => useNavigationObserver(callback));
+    
+    navigationObserver.notify('/docs/test');
+    
+    expect(callback).toHaveBeenCalledWith({ path: '/docs/test' });
+  });
+});
+```
+
+## 테스트 작성 원칙 (TDD 체크리스트)
+
+### Red-Green-Refactor 사이클
+TDD 작업 시 다음 단계를 순서대로 진행:
+
+- [ ] **Red 단계**: 실패하는 테스트 작성
+  - [ ] 테스트 케이스 작성 (기능 명세 기반)
+  - [ ] 테스트 실행하여 실패 확인
+  - [ ] 실패 이유가 예상과 일치하는지 확인
+  
+- [ ] **Green 단계**: 테스트를 통과하는 최소한의 코드 작성
+  - [ ] 최소한의 코드만 작성하여 테스트 통과
+  - [ ] 테스트 실행하여 통과 확인
+  - [ ] 불필요한 코드 작성 금지
+  
+- [ ] **Refactor 단계**: 코드 개선
+  - [ ] 코드 중복 제거
+  - [ ] 가독성 개선
+  - [ ] 성능 최적화 (필요시)
+  - [ ] 리팩토링 후 모든 테스트 통과 확인
+
+### 테스트 구조 (AAA 패턴)
+각 테스트는 다음 구조를 따라야 함:
+
+- [ ] **Arrange (준비)**
+  - [ ] 테스트 데이터 준비
+  - [ ] Mock/Stub 설정
+  - [ ] 필요한 의존성 주입
+  
+- [ ] **Act (실행)**
+  - [ ] 테스트 대상 함수/컴포넌트 실행
+  - [ ] 사용자 인터랙션 시뮬레이션 (필요시)
+  
+- [ ] **Assert (검증)**
+  - [ ] 예상 결과와 실제 결과 비교
+  - [ ] 에러 케이스 검증 (필요시)
+  - [ ] 부수 효과(side effect) 검증 (필요시)
+
+### 테스트 작성 전 체크리스트
+테스트 작성 전 다음 사항을 확인:
+
+- [ ] 테스트할 기능/로직이 명확한가?
+- [ ] 테스트 시나리오가 사용자 관점에서 의미 있는가?
+- [ ] 경계값(boundary) 케이스를 포함하는가?
+- [ ] 에러 케이스를 포함하는가?
+- [ ] 테스트가 독립적으로 실행 가능한가? (다른 테스트에 의존하지 않는가?)
+
+### 테스트 커버리지 목표
+- [ ] **유틸리티 함수**: 100% 커버리지 목표
+  - [ ] 모든 함수에 대한 테스트 작성
+  - [ ] 모든 분기(branch) 테스트
+  
+- [ ] **컴포넌트**: 주요 비즈니스 로직 및 사용자 상호작용 테스트
+  - [ ] 주요 렌더링 케이스 테스트
+  - [ ] 사용자 인터랙션(클릭, 입력 등) 테스트
+  - [ ] Props 변경에 따른 렌더링 테스트
+  
+- [ ] **통합 테스트**: 주요 사용자 시나리오 중심
+  - [ ] 주요 사용자 플로우 테스트
+  - [ ] 컴포넌트 간 상호작용 테스트
+
+### Mock 및 Stub 사용 가이드
+외부 의존성 처리 체크리스트:
+
+- [ ] **외부 의존성 Mock 처리**
+  - [ ] API 호출 Mock 처리
+  - [ ] 파일 시스템 접근 Mock 처리
+  - [ ] 라우터/네비게이션 Mock 처리
+  - [ ] 브라우저 API (localStorage, fetch 등) Mock 처리
+  
+- [ ] **Mock 도구 선택**
+  - [ ] `jest.mock()` 사용 (모듈 전체 Mock)
+  - [ ] `jest.fn()` 사용 (함수 Mock)
+  - [ ] `jest.spyOn()` 사용 (기존 함수 감시)
+  
+- [ ] **Mock 데이터 관리**
+  - [ ] Factory 패턴으로 일관된 Mock 데이터 생성
+  - [ ] Mock 데이터를 별도 파일로 분리 (필요시)
+  - [ ] Mock 데이터 재사용성 고려
+
+### 테스트 파일 작성 체크리스트
+- [ ] **파일 네이밍 규칙 준수**
+  - [ ] 소스 파일: `Component.jsx` → 테스트 파일: `Component.test.jsx`
+  - [ ] 유틸리티 파일: `utils.js` → 테스트 파일: `utils.test.js`
+  - [ ] Hook 파일: `useHook.js` → 테스트 파일: `useHook.test.js`
+  
+- [ ] **테스트 파일 구조**
+  - [ ] `describe` 블록으로 테스트 그룹화
+  - [ ] 각 테스트는 명확한 `it` 또는 `test` 설명
+  - [ ] `beforeEach`, `afterEach` 적절히 사용
+  - [ ] 테스트 간 독립성 보장
+
+### 테스트 실행 전 최종 체크리스트
+- [ ] 모든 테스트가 통과하는가?
+- [ ] 테스트 실행 시간이 적절한가? (너무 느리지 않은가?)
+- [ ] 테스트 코드가 읽기 쉬운가?
+- [ ] 테스트가 유지보수하기 쉬운가?
+- [ ] 불필요한 테스트는 없는가?
+

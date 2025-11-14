@@ -1,19 +1,15 @@
-import { getMarkdownFiles } from '../utils/markdownLoader';
+import { BreadcrumbContainer } from '../containers/BreadcrumbContainer';
 import { useSidebar } from '../contexts/SidebarContext';
-import {
-    handleBreadcrumbClick,
-    getBreadcrumbLinkRoute,
-    buildCategoryBreadcrumbItems,
-    buildFileBreadcrumbItems,
-    filterBreadcrumbItemsForMobile,
-} from '../utils/breadcrumbUtils';
+import { handleBreadcrumbClick, getBreadcrumbLinkRoute, filterBreadcrumbItemsForMobile } from '../utils/breadcrumbUtils';
 import { IconChevronsRight, IconExternalLink } from '@tabler/icons-preact';
 import './Breadcrumb.scss';
 
 /**
- * 브레드크럼 네비게이션 컴포넌트
+ * BreadcrumbNav Presenter 컴포넌트
+ * 순수 UI 렌더링만 담당 (Props 기반)
+ * TDD 친화적: Props만으로 렌더링하므로 테스트 용이
  */
-function BreadcrumbNav({ items, onNavigate, sidebarCollapsed, onToggleCollapse }) {
+function BreadcrumbNavPresenter({ items, onNavigate, sidebarCollapsed, onToggleCollapse }) {
     const renderBreadcrumbItem = (item, index, isCurrent, isLast = false) => {
         const linkRoute = getBreadcrumbLinkRoute(item);
 
@@ -76,80 +72,25 @@ function BreadcrumbNav({ items, onNavigate, sidebarCollapsed, onToggleCollapse }
     );
 }
 
-export function Breadcrumb({ currentRoute, onNavigate }) {
+/**
+ * Breadcrumb Presenter 컴포넌트
+ * 순수 UI 렌더링만 담당 (Props 기반)
+ * TDD 친화적: Props만으로 렌더링하므로 테스트 용이
+ */
+export function BreadcrumbPresenter({ items, displayType, currentRoute, onNavigate }) {
     const sidebar = useSidebar();
     const onToggleSidebar = sidebar?.toggleSidebar;
     const onToggleCollapse = sidebar?.toggleSidebarCollapse;
     const sidebarCollapsed = sidebar?.sidebarCollapsed;
-    const { files } = getMarkdownFiles();
 
     const handleExternalLinkClick = (e) => {
         e.preventDefault();
         window.open('https://skybear.notion.site/Web-Developer-91775e3d66dd4b0893b871bce56894db?pvs=74', '_blank', 'noopener,noreferrer');
     };
 
-    // 홈일 때도 브레드크럼 표시
-    if (!currentRoute || currentRoute === '/') {
-        const homeItems = [{ label: '홈', route: '/', type: 'link' }];
-        return (
-            <div class="header__breadcrumb">
-                <div class="header__title-wrapper">
-                    <h1 class="header__title">
-                        Nodnjs Documentation
-                        <a
-                            href="https://skybear.notion.site/Web-Developer-91775e3d66dd4b0893b871bce56894db?pvs=74"
-                            onClick={handleExternalLinkClick}
-                            class="header__external-link"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label="외부 링크 열기"
-                        >
-                            <IconExternalLink size={16} />
-                        </a>
-                    </h1>
-                </div>
-                <BreadcrumbNav items={homeItems} onNavigate={onNavigate} sidebarCollapsed={sidebarCollapsed} onToggleCollapse={onToggleCollapse} />
-            </div>
-        );
-    }
-
-    // 카테고리/서브카테고리 경로인 경우
-    if (currentRoute.startsWith('/category/')) {
-        const parts = currentRoute.replace('/category/', '').split('/');
-        const category = parts[0];
-        const subcategory = parts[1];
-        const breadcrumbItems = buildCategoryBreadcrumbItems(category, subcategory);
-
-        return (
-            <div class="header__breadcrumb">
-                <div class="header__title-wrapper">
-                    <h1 class="header__title">
-                        Nodnjs Documentation
-                        <a
-                            href="https://skybear.notion.site/Web-Developer-91775e3d66dd4b0893b871bce56894db?pvs=74"
-                            onClick={handleExternalLinkClick}
-                            class="header__external-link"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label="외부 링크 열기"
-                        >
-                            <IconExternalLink size={16} />
-                        </a>
-                    </h1>
-                </div>
-                {/* 데스크톱 브레드크럼 */}
-                <BreadcrumbNav items={breadcrumbItems} onNavigate={onNavigate} sidebarCollapsed={sidebarCollapsed} onToggleCollapse={onToggleCollapse} />
-            </div>
-        );
-    }
-
-    const file = files.find((f) => f.route === currentRoute);
-
-    if (!file) {
+    if (displayType === 'none') {
         return null;
     }
-
-    const breadcrumbItems = buildFileBreadcrumbItems(file);
 
     return (
         <div class="header__breadcrumb">
@@ -168,7 +109,10 @@ export function Breadcrumb({ currentRoute, onNavigate }) {
                     </a>
                 </h1>
             </div>
-            <BreadcrumbNav items={breadcrumbItems} onNavigate={onNavigate} sidebarCollapsed={sidebarCollapsed} onToggleCollapse={onToggleCollapse} />
+            <BreadcrumbNavPresenter items={items} onNavigate={onNavigate} sidebarCollapsed={sidebarCollapsed} onToggleCollapse={onToggleCollapse} />
         </div>
     );
 }
+
+// 기존 API 호환성을 위한 기본 export (Container 사용)
+export const Breadcrumb = BreadcrumbContainer;

@@ -1,43 +1,12 @@
-import { useState } from 'preact/hooks';
-import { getMarkdownFiles } from '../utils/markdownLoader';
-import { route } from 'preact-router';
-import { devError } from '../utils/logger';
+import { DirectoryTreeContainer } from '../containers/DirectoryTreeContainer';
 import './DirectoryTree.scss';
 
-export function DirectoryTree({ currentPath, onNavigate }) {
-    const [expandedPaths, setExpandedPaths] = useState({});
-
-    let categorized = {};
-    try {
-        const result = getMarkdownFiles();
-        categorized = result.categorized || {};
-    } catch (error) {
-        devError('Error loading markdown files:', error);
-    }
-
-    const handleFolderClick = (path) => {
-        // 폴더 클릭 시 토글
-        setExpandedPaths((prev) => ({
-            ...prev,
-            [path]: prev[path] === undefined ? false : !prev[path],
-        }));
-
-        const categoryRoute = `/category/${path}`;
-        if (onNavigate) {
-            onNavigate(categoryRoute);
-        } else {
-            route(categoryRoute);
-        }
-    };
-
-    const handleClick = (file) => {
-        if (onNavigate) {
-            onNavigate(file.route);
-        } else {
-            route(file.route);
-        }
-    };
-
+/**
+ * DirectoryTree Presenter 컴포넌트
+ * 순수 UI 렌더링만 담당 (Props 기반)
+ * TDD 친화적: Props만으로 렌더링하므로 테스트 용이
+ */
+export function DirectoryTreePresenter({ categorized, currentPath, expandedPaths, onFolderClick, onFileClick }) {
     // 재귀적으로 트리 렌더링
     function renderTree(node, path = '', level = 0) {
         const keys = Object.keys(node)
@@ -53,7 +22,7 @@ export function DirectoryTree({ currentPath, onNavigate }) {
             <ul class={level === 0 ? 'file-list' : 'sub-file-list'}>
                 {/* 파일들 */}
                 {files.map((file) => (
-                    <li key={file.path} class={`file-item ${currentPath === file.route ? 'active' : ''}`} onClick={() => handleClick(file)} title={file.path}>
+                    <li key={file.path} class={`file-item ${currentPath === file.route ? 'active' : ''}`} onClick={() => onFileClick(file)} title={file.path}>
                         <span class="file-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
                         <span class="file-name">{file.title}</span>
                     </li>
@@ -73,7 +42,7 @@ export function DirectoryTree({ currentPath, onNavigate }) {
                         <li key={key} class={level === 0 ? 'subcategory-item' : 'subcategory-item nested'} data-expanded={isSubExpanded}>
                             <div
                                 class={level === 0 ? 'subcategory-header' : 'subcategory-header nested'}
-                                onClick={() => handleFolderClick(subPath)}
+                                onClick={() => onFolderClick(subPath)}
                                 title={subPath}
                             >
                                 <span class="folder-icon">📁</span>
@@ -111,7 +80,7 @@ export function DirectoryTree({ currentPath, onNavigate }) {
 
                 return (
                     <div key={category} class="category-section" data-expanded={isExpanded}>
-                        <div class="category-header" onClick={() => handleFolderClick(categoryPath)} title={category}>
+                        <div class="category-header" onClick={() => onFolderClick(categoryPath)} title={category}>
                             <span class="folder-icon">📁</span>
                             <span class="category-title">{category}</span>
                         </div>
@@ -122,3 +91,6 @@ export function DirectoryTree({ currentPath, onNavigate }) {
         </div>
     );
 }
+
+// 기존 API 호환성을 위한 기본 export (Container 사용)
+export const DirectoryTree = DirectoryTreeContainer;

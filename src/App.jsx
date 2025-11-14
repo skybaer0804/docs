@@ -1,8 +1,8 @@
 import { Router } from 'preact-router';
 import { useState } from 'preact/hooks';
-import { Layout } from './components/Layout';
+import { LayoutContainer } from './containers/LayoutContainer';
 import { Home } from './pages/Home';
-import { DocPage } from './pages/DocPage';
+import { DocPageContainer } from './containers/DocPageContainer';
 import { route } from 'preact-router';
 
 export function App() {
@@ -17,13 +17,13 @@ export function App() {
     };
 
     return (
-        <Layout currentPath={currentPath} onNavigate={handleNavigate}>
+        <LayoutContainer currentPath={currentPath} onNavigate={handleNavigate}>
             <Router onChange={handleRoute}>
                 <Home path="/" onNavigate={handleNavigate} />
-                <DocPage path="/category/:path*" onNavigate={handleNavigate} />
-                <DocPage path="/docs/:path*" onNavigate={handleNavigate} />
-                <DocPage path="/setup" onNavigate={handleNavigate} />
+                <DocPageContainer path="/category/:path*" />
+                <DocPageContainer path="/docs/:path*" />
+                <DocPageContainer path="/setup" />
             </Router>
-        </Layout>
+        </LayoutContainer>
     );
 }
