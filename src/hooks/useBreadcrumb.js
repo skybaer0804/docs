@@ -19,10 +19,13 @@ export function useBreadcrumb(currentRoute) {
 
     // 카테고리/서브카테고리 경로인 경우
     if (currentRoute.startsWith('/category/')) {
-        const parts = currentRoute.replace('/category/', '').split('/');
-        const category = parts[0];
-        const subcategory = parts[1];
-        const breadcrumbItems = buildCategoryBreadcrumbItems(category, subcategory);
+        // 무제한 중첩 경로 파싱
+        const pathParts = currentRoute
+            .replace('/category/', '')
+            .split('/')
+            .filter((p) => p); // 빈 문자열 제거
+        
+        const breadcrumbItems = buildCategoryBreadcrumbItems(pathParts);
 
         return {
             items: breadcrumbItems,
