@@ -142,16 +142,22 @@ body {
         background-color: #f4f4f4;
         padding: 1rem;
         border-radius: 4px;
-        overflow-x: hidden;
+        overflow-x: auto;
+        overflow-y: hidden;
         margin-bottom: 1rem;
         max-width: 100%;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
         transition: background-color 0.3s ease;
+        // 코드 블록을 감싸서 스크롤 가능하도록
+        position: relative;
 
         code {
             background-color: transparent;
             padding: 0;
+            // 코드는 줄바꿈하지 않고 스크롤 가능하도록
+            white-space: pre;
+            word-wrap: normal;
+            overflow-wrap: normal;
+            display: block;
         }
     }
 
@@ -169,9 +175,17 @@ body {
         max-width: 100%;
         border-collapse: collapse;
         margin-bottom: 1rem;
-        display: block;
-        overflow-x: hidden;
-        white-space: normal;
+        display: table;
+        overflow-x: auto;
+        overflow-y: hidden;
+        // 테이블을 감싸서 스크롤 가능하도록
+        position: relative;
+        
+        // 테이블이 컨테이너를 넘어갈 때 스크롤 가능하도록
+        @media (max-width: 768px) {
+            display: block;
+            white-space: nowrap;
+        }
     }
 
     th,
@@ -265,6 +279,12 @@ body[data-theme='dark'] {
 
         h3 {
             font-size: 1.15rem;
+        }
+
+        // 모바일에서 테이블 셀 줄바꿈 방지
+        th,
+        td {
+            white-space: nowrap;
         }
     }
 }
