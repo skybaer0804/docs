@@ -13,15 +13,24 @@ export function useMarkdownContent(url) {
     const [currentFile, setCurrentFile] = useState(null);
 
     useEffect(() => {
+        // URL 변경 시 즉시 이전 콘텐츠 초기화 (새로고침 시 깨짐 방지)
+        setContent('');
+        setFileExt('');
+        setCurrentFile(null);
+        setLoading(true);
+        
+        let cancelled = false; // 요청 취소 플래그
+        
         const loadContent = async () => {
-            setLoading(true);
             const routePath = url || '/';
 
             // 카테고리/서브카테고리 경로인 경우 파일을 로드하지 않음
             if (routePath.startsWith('/category/')) {
-                setContent('');
-                setCurrentFile(null);
-                setLoading(false);
+                if (!cancelled) {
+                    setContent('');
+                    setCurrentFile(null);
+                    setLoading(false);
+                }
                 return;
             }
 
@@ -53,27 +62,43 @@ export function useMarkdownContent(url) {
             }
 
             if (file) {
-                setCurrentFile(file);
-                setFileExt(file.ext || '');
+                if (!cancelled) {
+                    setCurrentFile(file);
+                    setFileExt(file.ext || '');
+                }
                 const mdContent = await getMarkdownContent(file.path);
-                if (mdContent) {
-                    if (file.path.toLowerCase().includes('readme')) {
-                        devLog(`[DEBUG] useMarkdownContent - 콘텐츠 로드 성공, 길이: ${mdContent.length}`);
-                        devLog(`[DEBUG] useMarkdownContent - 콘텐츠 첫 50자:`, mdContent.substring(0, 50));
-                    }
-                    setContent(mdContent);
-                } else {
-                    if (file.path.toLowerCase().includes('readme')) {
-                        devWarn(`[DEBUG] useMarkdownContent - 콘텐츠 로드 실패: ${file.path}`);
+                if (!cancelled) {
+                    if (mdContent) {
+                        if (file.path.toLowerCase().includes('readme')) {
+                            devLog(`[DEBUG] useMarkdownContent - 콘텐츠 로드 성공, 길이: ${mdContent.length}`);
+                            devLog(`[DEBUG] useMarkdownContent - 콘텐츠 첫 50자:`, mdContent.substring(0, 50));
+                        }
+                        setContent(mdContent);
+                    } else {
+                        if (file.path.toLowerCase().includes('readme')) {
+                            devWarn(`[DEBUG] useMarkdownContent - 콘텐츠 로드 실패: ${file.path}`);
+                        }
                     }
                 }
             } else {
-                setCurrentFile(null);
+                if (!cancelled) {
+                    setCurrentFile(null);
+                }
             }
-            setLoading(false);
+            if (!cancelled) {
+                setLoading(false);
+            }
         };
 
         loadContent();
+        
+        // cleanup 함수: URL 변경 시 이전 요청 취소 및 상태 초기화
+        return () => {
+            cancelled = true;
+            setContent('');
+            setFileExt('');
+            setCurrentFile(null);
+        };
     }, [url]);
 
     return {

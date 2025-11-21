@@ -22,6 +22,15 @@ function generateDocsPlugin() {
                 console.error('Error generating docs list:', err);
             });
 
+            // 마크다운 파일 요청 시 UTF-8 인코딩 헤더 추가
+            server.middlewares.use((req, res, next) => {
+                // 마크다운 파일 요청인 경우 UTF-8 인코딩 헤더 추가
+                if (req.url && (req.url.endsWith('.md') || req.url.endsWith('.template'))) {
+                    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+                }
+                next();
+            });
+
             // public/docs 디렉토리 변경 감지
             server.watcher.add('public/docs/**/*');
             server.watcher.on('change', (path) => {

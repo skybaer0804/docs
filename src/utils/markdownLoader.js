@@ -27,6 +27,7 @@ export async function getMarkdownContent(filePath) {
             headers: {
                 Accept: 'text/plain, text/markdown, text/*',
             },
+            cache: 'no-store', // 캐시 무시하여 항상 최신 파일 로드 및 인코딩 문제 방지
         });
 
         if (!response.ok) {
@@ -101,7 +102,12 @@ export async function getMarkdownContent(filePath) {
             devLog(`[DEBUG] 감지된 인코딩: ${encoding}, BOM 오프셋: ${offset}`);
         }
 
-        const textDecoder = new TextDecoder(encoding);
+        // TextDecoder 옵션: fatal을 false로 설정하여 잘못된 바이트 시퀀스도 처리
+        // ignoreBOM을 true로 설정하여 BOM을 무시하고 수동으로 처리
+        const textDecoder = new TextDecoder(encoding, {
+            fatal: false,
+            ignoreBOM: true,
+        });
         let content = textDecoder.decode(dataToDecode);
 
         // 추가 안전장치: 문자 레벨에서 BOM 제거 (혹시 모를 경우 대비)
