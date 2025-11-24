@@ -79,15 +79,21 @@ body {
     width: 100%;
     max-width: 100%;
     overflow-x: hidden;
+    padding-right: 20px;
 }
 
 // Markdown Viewer Styles
 .markdown-content {
     max-width: 100%;
-    overflow-x: hidden;
+    // PC에서 테이블과 코드 블록의 가로 스크롤을 위해 overflow-x: hidden 제거
     word-wrap: break-word;
     overflow-wrap: break-word;
     transition: color 0.3s ease;
+
+    // 모바일에서만 overflow-x: hidden 적용
+    @media (max-width: 768px) {
+        overflow-x: hidden;
+    }
 
     h1 {
         font-size: 2rem;
@@ -145,10 +151,33 @@ body {
         overflow-x: auto;
         overflow-y: hidden;
         margin-bottom: 1rem;
+        // PC에서도 가로 스크롤이 생기도록 설정
+        min-width: 0;
         max-width: 100%;
         transition: background-color 0.3s ease;
         // 코드 블록을 감싸서 스크롤 가능하도록
         position: relative;
+        -webkit-overflow-scrolling: touch;
+
+        // PC에서 스크롤바 표시
+        @media (min-width: 769px) {
+            &::-webkit-scrollbar {
+                height: 8px;
+            }
+
+            &::-webkit-scrollbar-track {
+                background: #f1f1f1;
+            }
+
+            &::-webkit-scrollbar-thumb {
+                background: #1976d2;
+                border-radius: 4px;
+
+                &:hover {
+                    background: #1565c0;
+                }
+            }
+        }
 
         code {
             background-color: transparent;
@@ -170,21 +199,54 @@ body {
         transition: border-color 0.3s ease, color 0.3s ease;
     }
 
-    table {
-        width: 100%;
-        max-width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 1rem;
-        display: table;
+    // 테이블을 감싸는 wrapper (가로 스크롤용)
+    .table-wrapper {
         overflow-x: auto;
         overflow-y: hidden;
-        // 테이블을 감싸서 스크롤 가능하도록
-        position: relative;
-        
+        margin-bottom: 1rem;
+        -webkit-overflow-scrolling: touch;
+
+        // PC에서 스크롤바 표시
+        @media (min-width: 769px) {
+            &::-webkit-scrollbar {
+                height: 8px;
+            }
+
+            &::-webkit-scrollbar-track {
+                background: #f1f1f1;
+            }
+
+            &::-webkit-scrollbar-thumb {
+                background: #1976d2;
+                border-radius: 4px;
+
+                &:hover {
+                    background: #1565c0;
+                }
+            }
+        }
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 0;
+        display: table;
+        // 테이블이 컨테이너를 넘어갈 수 있도록 min-width 설정
+        min-width: 100%;
+
         // 테이블이 컨테이너를 넘어갈 때 스크롤 가능하도록
         @media (max-width: 768px) {
             display: block;
             white-space: nowrap;
+        }
+
+        // PC에서 테이블 셀 줄바꿈 방지하여 가로 스크롤 활성화
+        @media (min-width: 769px) {
+            th,
+            td {
+                white-space: nowrap;
+            }
         }
     }
 
@@ -238,11 +300,43 @@ body[data-theme='dark'] {
         pre {
             background-color: #2a2a2a;
             color: #d4d4d4;
+
+            // 다크모드 스크롤바
+            @media (min-width: 769px) {
+                &::-webkit-scrollbar-track {
+                    background: #2a2a2a;
+                }
+
+                &::-webkit-scrollbar-thumb {
+                    background: #555;
+
+                    &:hover {
+                        background: #666;
+                    }
+                }
+            }
         }
 
         blockquote {
             border-left-color: #555;
             color: #b0b0b0;
+        }
+
+        .table-wrapper {
+            // 다크모드 스크롤바
+            @media (min-width: 769px) {
+                &::-webkit-scrollbar-track {
+                    background: #2a2a2a;
+                }
+
+                &::-webkit-scrollbar-thumb {
+                    background: #555;
+
+                    &:hover {
+                        background: #666;
+                    }
+                }
+            }
         }
 
         th,

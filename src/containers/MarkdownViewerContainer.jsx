@@ -29,6 +29,11 @@ export function MarkdownViewerContainer({ content, file, onNavigate }) {
                 return `<a href="javascript:void(0)" data-href="${href || ''}"${title ? ` title="${title}"` : ''} style="cursor: pointer;">${text}</a>`;
             };
 
+            // 테이블 렌더러 커스터마이징: 테이블을 wrapper로 감싸서 가로 스크롤 활성화
+            renderer.table = (header, body) => {
+                return `<div class="table-wrapper"><table><thead>${header}</thead><tbody>${body}</tbody></table></div>`;
+            };
+
             marked.setOptions({
                 renderer: renderer,
                 breaks: true,
