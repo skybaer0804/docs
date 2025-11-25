@@ -1,6 +1,9 @@
 import { useState, useEffect, useMemo, useRef } from 'preact/hooks';
 import { useMarkdownContent } from '../hooks/useMarkdownContent';
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation';
+import { useNotification } from '../hooks/useNotification';
+import { useReadingTracker } from '../hooks/useReadingTracker';
+import { useTimerNotification } from '../hooks/useTimerNotification';
 import { navigationObserver } from '../observers/NavigationObserver';
 import { getMarkdownFiles } from '../utils/markdownLoader';
 import { DocPagePresenter } from '../pages/DocPage';
@@ -93,6 +96,49 @@ export function DocPageContainer({ currentRoute, onNavigate }) {
     const displayFileExt = isNavigatingToParent && parentContent.fileExt ? parentContent.fileExt : fileExt;
     const displayFile = isNavigatingToParent && parentContent.currentFile ? parentContent.currentFile : currentFile;
 
+    // 알림 기능 관련 Hooks
+    const contentRef = useRef(null);
+    const { permission: notificationPermission, requestPermission, isGranted } = useNotification(false);
+
+    // 타이머 알림 (문서가 보이고 로딩이 완료되었을 때만 활성화)
+    const { resetTimer } = useTimerNotification({
+        enabled: isGranted && !displayLoading && !!displayContent && !!displayFile,
+    });
+
+    // 회독 추적 (마크다운 파일일 때만 활성화)
+    useReadingTracker({
+        contentRef: contentRef,
+        file: displayFile,
+        enabled: isGranted && !displayLoading && !!displayContent && !!displayFile && displayFileExt !== '.template',
+    });
+
+    // 문서 변경 시 타이머 리셋
+    useEffect(() => {
+        if (displayFile && !displayLoading && displayContent) {
+            resetTimer();
+        }
+    }, [displayFile?.path, displayLoading, displayContent, resetTimer]);
+
+    // 페이지 가시성 변경 감지 (탭 전환 시 타이머 일시정지/재개)
+    useEffect(() => {
+        if (typeof document === 'undefined') return;
+
+        const handleVisibilityChange = () => {
+            // 탭이 다시 보이면 타이머 리셋하지 않고 계속 진행
+            // (useTimerNotification에서 isDocumentVisible로 처리)
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, []);
+
+    // contentRef 콜백 함수
+    const handleContentRef = (ref) => {
+        contentRef.current = ref?.current || ref;
+    };
+
     return (
         <DocPagePresenter
             content={displayContent}
@@ -109,6 +155,9 @@ export function DocPageContainer({ currentRoute, onNavigate }) {
             isSwiping={isSwiping}
             swipeOffset={swipeOffset}
             onNavigate={handleNavigate}
+            onContentRef={handleContentRef}
+            notificationPermission={notificationPermission}
+            onRequestNotificationPermission={requestPermission}
         />
     );
 }

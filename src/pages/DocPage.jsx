@@ -1,7 +1,9 @@
+import { useState, useEffect } from 'preact/hooks';
 import { MarkdownViewerContainer } from '../containers/MarkdownViewerContainer';
 import { TemplateViewer } from '../components/TemplateViewer';
 import { DirectoryView } from '../components/DirectoryView';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { NotificationPermissionBanner } from '../components/NotificationPermissionBanner';
 import './DocPage.scss';
 
 /**
@@ -24,7 +26,33 @@ export function DocPagePresenter({
     isSwiping,
     swipeOffset,
     onNavigate,
+    onContentRef,
+    notificationPermission,
+    onRequestNotificationPermission,
 }) {
+    const [bannerDismissed, setBannerDismissed] = useState(false);
+    
+    // localStorage에서 배너 닫기 상태 확인
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const dismissed = localStorage.getItem('notificationBannerDismissed');
+            setBannerDismissed(dismissed === 'true');
+        }
+    }, []);
+    
+    const handleDismissBanner = () => {
+        setBannerDismissed(true);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('notificationBannerDismissed', 'true');
+        }
+    };
+    
+    const handleRequestPermission = async () => {
+        await onRequestNotificationPermission();
+        // 권한 요청 후 배너 닫기
+        handleDismissBanner();
+    };
+    
     const isSlidingRight = slideDirection === 'right';
     const showParentPage = (isSlidingRight || (isSwiping && swipeOffset > 0)) && parentRoute && window.innerWidth <= 768;
     // 슬라이드 애니메이션 중이거나 스와이프 중일 때만 애니메이션 적용
@@ -62,7 +90,12 @@ export function DocPagePresenter({
 
         return (
             <div class={pageClass} style={pageStyle}>
-                <MarkdownViewerContainer content={content} file={currentFile} onNavigate={onNavigate} />
+                <MarkdownViewerContainer 
+                    content={content} 
+                    file={currentFile} 
+                    onNavigate={onNavigate}
+                    onContentRef={onContentRef}
+                />
             </div>
         );
     };
@@ -103,15 +136,29 @@ export function DocPagePresenter({
 
         return (
             <div class={pageClass} style={parentPageStyle}>
-                <MarkdownViewerContainer content={parentContent} file={parentFile} onNavigate={onNavigate} />
+                <MarkdownViewerContainer 
+                    content={parentContent} 
+                    file={parentFile} 
+                    onNavigate={onNavigate}
+                    onContentRef={null}
+                />
             </div>
         );
     };
 
     return (
-        <div class="slide-container">
-            {renderParentPage()}
-            {renderCurrentPage()}
-        </div>
+        <>
+            <div class="slide-container">
+                {renderParentPage()}
+                {renderCurrentPage()}
+            </div>
+            {!bannerDismissed && notificationPermission === 'default' && (
+                <NotificationPermissionBanner
+                    permission={notificationPermission}
+                    onRequestPermission={handleRequestPermission}
+                    onDismiss={handleDismissBanner}
+                />
+            )}
+        </>
     );
 }

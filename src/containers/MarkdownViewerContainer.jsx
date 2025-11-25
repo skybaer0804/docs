@@ -10,9 +10,16 @@ import { MarkdownViewerPresenter } from '../components/MarkdownViewer';
  * SPA 구조: onNavigate prop을 통한 네비게이션
  * TDD 친화적: 로직을 분리하여 테스트 시 Mock으로 대체 가능
  */
-export function MarkdownViewerContainer({ content, file, onNavigate }) {
+export function MarkdownViewerContainer({ content, file, onNavigate, onContentRef }) {
     const [html, setHtml] = useState('');
     const contentRef = useRef(null);
+    
+    // contentRef를 외부로 노출 (알림 기능 등에서 사용)
+    useEffect(() => {
+        if (onContentRef) {
+            onContentRef(contentRef);
+        }
+    }, [onContentRef]);
 
     useEffect(() => {
         if (content) {
