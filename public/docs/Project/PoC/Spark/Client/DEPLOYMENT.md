@@ -28,8 +28,8 @@
 
 ```json
 {
-    "name": "spark-messaging-client",
-    "version": "1.0.0",
+    "name": "@skybaer0804/spark-messaging-client",
+    "version": "1.0.1",
     "main": "dist/index.js",
     "module": "dist/index.esm.js",
     "types": "dist/index.d.ts",
@@ -172,10 +172,10 @@ npm publish
 
 ```bash
 # 패키지 정보 확인
-npm view spark-messaging-client
+npm view @skybaer0804/@skybaer0804/spark-messaging-client
 
 # 설치 테스트
-npm install spark-messaging-client
+npm install @skybaer0804/@skybaer0804/spark-messaging-client
 ```
 
 ---
@@ -225,8 +225,8 @@ npm publish --tag beta
 **특정 버전 설치**:
 
 ```bash
-npm install spark-messaging-client@1.0.1
-npm install spark-messaging-client@beta
+npm install @skybaer0804/spark-messaging-client@1.0.1
+npm install @skybaer0804/spark-messaging-client@beta
 ```
 
 ---
@@ -236,7 +236,7 @@ npm install spark-messaging-client@beta
 ### 1. npm 레지스트리 확인
 
 ```bash
-npm view spark-messaging-client
+npm view @skybaer0804/spark-messaging-client
 ```
 
 **확인 사항**:
@@ -254,10 +254,10 @@ npm view spark-messaging-client
 mkdir test-install
 cd test-install
 npm init -y
-npm install spark-messaging-client
+npm install @skybaer0804/spark-messaging-client
 
 # 사용 테스트
-node -e "const SDK = require('spark-messaging-client'); console.log(SDK);"
+node -e "const SDK = require('@skybaer0804/spark-messaging-client'); console.log(SDK);"
 ```
 
 ### 3. 문서 확인
@@ -273,7 +273,7 @@ node -e "const SDK = require('spark-messaging-client'); console.log(SDK);"
 ### 24시간 이내
 
 ```bash
-npm unpublish spark-messaging-client@1.0.1
+npm unpublish @skybaer0804/spark-messaging-client@1.0.1
 ```
 
 **주의**:

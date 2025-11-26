@@ -17,19 +17,19 @@
 ### npm 설치
 
 ```bash
-npm install spark-messaging-client
+npm install @skybaer0804/spark-messaging-client
 ```
 
 ### yarn 설치
 
 ```bash
-yarn add spark-messaging-client
+yarn add @skybaer0804/spark-messaging-client
 ```
 
 ### pnpm 설치
 
 ```bash
-pnpm add spark-messaging-client
+pnpm add @skybaer0804/spark-messaging-client
 ```
 
 ---
@@ -43,7 +43,7 @@ pnpm add spark-messaging-client
 **방법 1: 옵션 객체로 초기화** (권장):
 
 ```typescript
-import SparkMessaging from 'spark-messaging-client';
+import SparkMessaging from '@skybaer0804/spark-messaging-client';
 
 const client = new SparkMessaging({
     serverUrl: 'http://localhost:3000',
@@ -56,7 +56,7 @@ const client = new SparkMessaging({
 **방법 2: 생성자 오버로드 (간단한 사용)**:
 
 ```typescript
-import SparkMessaging from 'spark-messaging-client';
+import SparkMessaging from '@skybaer0804/spark-messaging-client';
 
 // serverUrl과 projectKey를 직접 전달
 const client = new SparkMessaging('http://localhost:3000', 'default-project-key-12345');
@@ -65,7 +65,7 @@ const client = new SparkMessaging('http://localhost:3000', 'default-project-key-
 **CommonJS**:
 
 ```javascript
-const SparkMessaging = require('spark-messaging-client').default;
+const SparkMessaging = require('@skybaer0804/spark-messaging-client').default;
 
 // 옵션 객체로 초기화
 const client = new SparkMessaging({
@@ -182,7 +182,7 @@ VITE_PROJECT_KEY=default-project-key-12345
 
 ```typescript
 // config/sparkMessaging.ts
-import SparkMessaging from 'spark-messaging-client';
+import SparkMessaging from '@skybaer0804/spark-messaging-client';
 
 export const sparkMessagingClient = new SparkMessaging({
     serverUrl: import.meta.env.VITE_SERVER_URL,
@@ -220,7 +220,7 @@ REACT_APP_PROJECT_KEY=default-project-key-12345
 
 ```typescript
 // config/sparkMessaging.ts
-import SparkMessaging from 'spark-messaging-client';
+import SparkMessaging from '@skybaer0804/spark-messaging-client';
 
 export const sparkMessagingClient = new SparkMessaging({
     serverUrl: process.env.REACT_APP_SERVER_URL!,
@@ -243,7 +243,7 @@ NEXT_PUBLIC_PROJECT_KEY=default-project-key-12345
 
 ```typescript
 // lib/sparkMessaging.ts
-import SparkMessaging from 'spark-messaging-client';
+import SparkMessaging from '@skybaer0804/spark-messaging-client';
 
 export const sparkMessagingClient = new SparkMessaging({
     serverUrl: process.env.NEXT_PUBLIC_SERVER_URL!,
@@ -266,7 +266,7 @@ VITE_PROJECT_KEY=default-project-key-12345
 
 ```typescript
 // config/sparkMessaging.ts
-import SparkMessaging from 'spark-messaging-client';
+import SparkMessaging from '@skybaer0804/spark-messaging-client';
 
 export const sparkMessagingClient = new SparkMessaging({
     serverUrl: import.meta.env.VITE_SERVER_URL,
@@ -292,8 +292,8 @@ src/
 **`src/config/sparkMessaging.ts`**:
 
 ```typescript
-import SparkMessaging from 'spark-messaging-client';
-import type { SparkMessagingError } from 'spark-messaging-client';
+import SparkMessaging from '@skybaer0804/spark-messaging-client';
+import type { SparkMessagingError } from '@skybaer0804/spark-messaging-client';
 
 // 환경 변수에서 로드
 const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
@@ -353,7 +353,7 @@ VITE_PROJECT_KEY=your-project-key-here
 **`src/config/sparkMessaging.js`**:
 
 ```javascript
-import SparkMessaging from 'spark-messaging-client';
+import SparkMessaging from '@skybaer0804/spark-messaging-client';
 
 const serverUrl = process.env.REACT_APP_SERVER_URL || 'http://localhost:3000';
 const projectKey = process.env.REACT_APP_PROJECT_KEY || 'default-project-key-12345';
@@ -388,7 +388,7 @@ REACT_APP_PROJECT_KEY=default-project-key-12345
 **`lib/sparkMessaging.ts`**:
 
 ```typescript
-import SparkMessaging from 'spark-messaging-client';
+import SparkMessaging from '@skybaer0804/spark-messaging-client';
 
 const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000';
 const projectKey = process.env.NEXT_PUBLIC_PROJECT_KEY || 'default-project-key-12345';
@@ -423,7 +423,7 @@ NEXT_PUBLIC_PROJECT_KEY=default-project-key-12345
 **`src/config/sparkMessaging.ts`**:
 
 ```typescript
-import SparkMessaging from 'spark-messaging-client';
+import SparkMessaging from '@skybaer0804/spark-messaging-client';
 
 const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
 const projectKey = import.meta.env.VITE_PROJECT_KEY || 'default-project-key-12345';
@@ -481,7 +481,7 @@ VITE_PROJECT_KEY=default-project-key-12345
 **SDK 사용**:
 
 ```typescript
-import SparkMessaging from 'spark-messaging-client';
+import SparkMessaging from '@skybaer0804/spark-messaging-client';
 
 // 환경 변수에서 자동으로 로드됨
 const client = new SparkMessaging();
@@ -578,8 +578,8 @@ SDK는 **API 키를 받아 백엔드로 전달하는 역할만** 수행합니다
 
 ```typescript
 import { useEffect, useState } from 'react';
-import SparkMessaging, { SparkMessagingError } from 'spark-messaging-client';
-import type { MessageData, RoomMessageData, ConnectionStatus } from 'spark-messaging-client';
+import SparkMessaging, { SparkMessagingError } from '@skybaer0804/spark-messaging-client';
+import type { MessageData, RoomMessageData, ConnectionStatus } from '@skybaer0804/spark-messaging-client';
 
 const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
 const projectKey = import.meta.env.VITE_PROJECT_KEY || 'default-project-key-12345';
@@ -727,8 +727,8 @@ function App() {
 
 ```typescript
 import { ref, onMounted, onUnmounted } from 'vue';
-import SparkMessaging from 'spark-messaging-client';
-import type { MessageData } from 'spark-messaging-client';
+import SparkMessaging from '@skybaer0804/spark-messaging-client';
+import type { MessageData } from '@skybaer0804/spark-messaging-client';
 
 const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
 const projectKey = import.meta.env.VITE_PROJECT_KEY || 'default-project-key-12345';
@@ -777,8 +777,8 @@ export function useSparkMessaging() {
 
 ```typescript
 import { useEffect, useState } from 'preact/hooks';
-import SparkMessaging from 'spark-messaging-client';
-import type { MessageData } from 'spark-messaging-client';
+import SparkMessaging from '@skybaer0804/spark-messaging-client';
+import type { MessageData } from '@skybaer0804/spark-messaging-client';
 
 const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
 const projectKey = import.meta.env.VITE_PROJECT_KEY || 'default-project-key-12345';
@@ -959,10 +959,10 @@ import type {
     ConnectionData,
     ErrorData,
     SparkMessagingError,
-} from 'spark-messaging-client';
+} from '@skybaer0804/spark-messaging-client';
 
 // 에러 클래스 import
-import { SparkMessagingError } from 'spark-messaging-client';
+import { SparkMessagingError } from '@skybaer0804/spark-messaging-client';
 ```
 
 ## 트러블슈팅
