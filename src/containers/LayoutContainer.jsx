@@ -2,6 +2,7 @@ import { useEffect } from 'preact/hooks';
 import { useLayout } from '../hooks/useLayout';
 import { LayoutPresenter } from '../components/Layout';
 import { SidebarContext } from '../contexts/SidebarContext';
+import { SearchContainer } from './SearchContainer';
 
 /**
  * Layout Container 컴포넌트
@@ -9,7 +10,19 @@ import { SidebarContext } from '../contexts/SidebarContext';
  * TDD 친화적: 로직을 분리하여 테스트 시 Mock으로 대체 가능
  */
 export function LayoutContainer({ children, currentPath, onNavigate }) {
-    const { sidebarOpen, sidebarCollapsed, sidebarWidth, isDesktop, handleSidebarResize, toggleSidebar, closeSidebar, toggleSidebarCollapse } = useLayout();
+    const {
+        sidebarOpen,
+        sidebarCollapsed,
+        sidebarWidth,
+        isDesktop,
+        searchOpen,
+        handleSidebarResize,
+        toggleSidebar,
+        closeSidebar,
+        toggleSidebarCollapse,
+        openSearch,
+        closeSearch,
+    } = useLayout();
 
     // 라우트 변경 시 모바일에서 사이드바 닫기
     useEffect(() => {
@@ -41,8 +54,10 @@ export function LayoutContainer({ children, currentPath, onNavigate }) {
                 onCloseSidebar={closeSidebar}
                 onToggleSidebarCollapse={toggleSidebarCollapse}
                 onNavigate={handleNavigate}
+                onOpenSearch={openSearch}
             >
                 {children}
+                <SearchContainer isOpen={searchOpen} onClose={closeSearch} onNavigate={handleNavigate} />
             </LayoutPresenter>
         </SidebarContext.Provider>
     );

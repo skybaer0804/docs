@@ -2,7 +2,7 @@ import { LayoutContainer } from '../containers/LayoutContainer';
 import { DirectoryTree } from './DirectoryTree';
 import { Breadcrumb } from './Breadcrumb';
 import { Resizer } from './Resizer';
-import { IconChevronsLeft } from '@tabler/icons-preact';
+import { IconChevronsLeft, IconSearch } from '@tabler/icons-preact';
 import './Layout.scss';
 
 /**
@@ -22,13 +22,14 @@ export function LayoutPresenter({
     onCloseSidebar,
     onToggleSidebarCollapse,
     onNavigate,
+    onOpenSearch,
 }) {
     return (
         <div class="layout">
             <div class={`layout__overlay ${sidebarOpen ? 'layout__overlay--open' : ''}`} onClick={onCloseSidebar}></div>
             <div class="layout__container">
                 <header class="header">
-                    <Breadcrumb currentRoute={currentPath} onNavigate={onNavigate} />
+                    <Breadcrumb currentRoute={currentPath} onNavigate={onNavigate} onOpenSearch={onOpenSearch} />
                 </header>
                 <div class="layout__content-wrapper">
                     <aside

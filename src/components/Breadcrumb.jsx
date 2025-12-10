@@ -2,7 +2,7 @@ import { BreadcrumbContainer } from '../containers/BreadcrumbContainer';
 import { useSidebar } from '../contexts/SidebarContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { handleBreadcrumbClick, getBreadcrumbLinkRoute, filterBreadcrumbItemsForMobile } from '../utils/breadcrumbUtils';
-import { IconChevronsRight, IconExternalLink, IconSun, IconMoon } from '@tabler/icons-preact';
+import { IconChevronsRight, IconExternalLink, IconSun, IconMoon, IconSearch } from '@tabler/icons-preact';
 import './Breadcrumb.scss';
 
 /**
@@ -81,7 +81,7 @@ function BreadcrumbNavPresenter({ items, onNavigate, sidebarCollapsed, onToggleC
  * 순수 UI 렌더링만 담당 (Props 기반)
  * TDD 친화적: Props만으로 렌더링하므로 테스트 용이
  */
-export function BreadcrumbPresenter({ items, displayType, currentRoute, onNavigate }) {
+export function BreadcrumbPresenter({ items, displayType, currentRoute, onNavigate, onOpenSearch }) {
     const sidebar = useSidebar();
     const theme = useTheme();
     const onToggleSidebar = sidebar?.toggleSidebar;
@@ -113,14 +113,19 @@ export function BreadcrumbPresenter({ items, displayType, currentRoute, onNaviga
                         <IconExternalLink size={16} />
                     </a>
                 </h1>
-                <button
-                    class="header__theme-toggle"
-                    onClick={theme?.toggleTheme}
-                    aria-label={theme?.theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
-                    title={theme?.theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
-                >
-                    {theme?.theme === 'dark' ? <IconSun size={18} /> : <IconMoon size={18} />}
-                </button>
+                <div class="header__actions">
+                    <button class="header__search-btn" onClick={onOpenSearch} aria-label="검색 (Ctrl+K)" title="검색 (Ctrl+K)">
+                        <IconSearch size={18} />
+                    </button>
+                    <button
+                        class="header__theme-toggle"
+                        onClick={theme?.toggleTheme}
+                        aria-label={theme?.theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
+                        title={theme?.theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
+                    >
+                        {theme?.theme === 'dark' ? <IconSun size={18} /> : <IconMoon size={18} />}
+                    </button>
+                </div>
             </div>
             <BreadcrumbNavPresenter items={items} onNavigate={onNavigate} sidebarCollapsed={sidebarCollapsed} onToggleCollapse={onToggleCollapse} />
         </div>

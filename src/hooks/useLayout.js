@@ -16,6 +16,7 @@ export function useLayout() {
         return saved ? parseInt(saved, 10) : 250;
     });
     const [isDesktop, setIsDesktop] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
 
     useEffect(() => {
         const checkDesktop = () => {
@@ -74,6 +75,24 @@ export function useLayout() {
         sidebarObserver.setState({ isCollapsed: newCollapsed });
     };
 
+    // 검색 모달 관련 핸들러
+    const toggleSearch = () => setSearchOpen(!searchOpen);
+    const openSearch = () => setSearchOpen(true);
+    const closeSearch = () => setSearchOpen(false);
+
+    // Ctrl+K 단축키
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                setSearchOpen((prev) => !prev);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
     // 모바일에서 사이드바 외부 클릭 시 닫기
     useEffect(() => {
         const handleClickOutside = (e) => {
@@ -98,5 +117,9 @@ export function useLayout() {
         toggleSidebar,
         closeSidebar,
         toggleSidebarCollapse,
+        searchOpen,
+        toggleSearch,
+        openSearch,
+        closeSearch,
     };
 }
