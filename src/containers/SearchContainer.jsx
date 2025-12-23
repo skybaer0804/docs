@@ -37,14 +37,14 @@ export function SearchContainer({ isOpen, onClose, onNavigate }) {
             title: item.title,
             path: item.path,
             route: item.route,
-            type: item.type
+            type: item.type,
         };
 
-        setRecentSearches(prev => {
+        setRecentSearches((prev) => {
             // 중복 제거 및 최신 항목 맨 앞으로
-            const filtered = prev.filter(p => p.route !== newItem.route);
+            const filtered = prev.filter((p) => p.route !== newItem.route);
             const updated = [newItem, ...filtered].slice(0, MAX_RECENT_SEARCHES);
-            
+
             localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
             return updated;
         });
@@ -53,7 +53,7 @@ export function SearchContainer({ isOpen, onClose, onNavigate }) {
     // 결과 선택 핸들러
     const handleSelect = (item) => {
         saveRecentSearch(item);
-        
+
         if (onNavigate) {
             onNavigate(item.route);
         }

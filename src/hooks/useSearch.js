@@ -19,14 +19,14 @@ export function useSearch(query) {
         const directories = new Set();
         const dirObjects = [];
 
-        files.forEach(file => {
+        files.forEach((file) => {
             if (file.directoryPath && Array.isArray(file.directoryPath)) {
                 let currentPath = '';
                 file.directoryPath.forEach((dir, index) => {
                     // 경로 생성
                     const prevPath = currentPath;
                     currentPath = index === 0 ? dir : `${currentPath}/${dir}`;
-                    
+
                     if (!directories.has(currentPath)) {
                         directories.add(currentPath);
                         dirObjects.push({
@@ -34,7 +34,7 @@ export function useSearch(query) {
                             path: currentPath,
                             route: `/category/${currentPath}`, // 디렉토리 클릭 시 이동할 라우트
                             type: 'directory',
-                            depth: index
+                            depth: index,
                         });
                     }
                 });
@@ -55,15 +55,12 @@ export function useSearch(query) {
         const lowerQuery = query.toLowerCase();
 
         // 1. 디렉토리 검색
-        const matchedDirs = allDirectories.filter(dir => 
-            dir.title.toLowerCase().includes(lowerQuery) || 
-            dir.path.toLowerCase().includes(lowerQuery)
-        ).map(dir => ({ ...dir, type: 'directory' }));
+        const matchedDirs = allDirectories
+            .filter((dir) => dir.title.toLowerCase().includes(lowerQuery) || dir.path.toLowerCase().includes(lowerQuery))
+            .map((dir) => ({ ...dir, type: 'directory' }));
 
         // 2. 파일 검색
-        const matchedFiles = allFiles.filter(file => 
-            file.title.toLowerCase().includes(lowerQuery)
-        ).map(file => ({ ...file, type: 'file' }));
+        const matchedFiles = allFiles.filter((file) => file.title.toLowerCase().includes(lowerQuery)).map((file) => ({ ...file, type: 'file' }));
 
         // 결과 병합: 디렉토리 우선 표시
         return [...matchedDirs, ...matchedFiles];
@@ -71,12 +68,3 @@ export function useSearch(query) {
 
     return { results };
 }
-
-
-
-
-
-
-
-
-

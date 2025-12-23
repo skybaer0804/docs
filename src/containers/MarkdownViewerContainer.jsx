@@ -1,19 +1,23 @@
-import { useEffect, useState, useRef } from 'preact/hooks';
+import { useEffect, useState, useRef, useMemo } from 'preact/hooks';
 import { marked } from 'marked';
 import { downloadFile } from '../utils/downloadUtils';
 import { getMarkdownFiles } from '../utils/markdownLoader';
 import { MarkdownViewerPresenter } from '../components/MarkdownViewer';
+import { MarkdownParser, resolvePath, findTargetFile } from '../tdd/MarkdownLogic';
 
 /**
  * MarkdownViewer Container 컴포넌트
  * 마크다운 렌더링 로직과 이벤트 처리를 담당
  * SPA 구조: onNavigate prop을 통한 네비게이션
- * TDD 친화적: 로직을 분리하여 테스트 시 Mock으로 대체 가능
+ * TDD 친화적: 핵심 로직을 src/tdd/MarkdownLogic으로 분리하여 의존성 최소화
  */
 export function MarkdownViewerContainer({ content, file, onNavigate, onContentRef }) {
     const [html, setHtml] = useState('');
     const contentRef = useRef(null);
-    
+
+    // MarkdownParser 인스턴스 메모이제이션 (marked 라이브러리 주입)
+    const parser = useMemo(() => new MarkdownParser(marked), []);
+
     // contentRef를 외부로 노출 (알림 기능 등에서 사용)
     useEffect(() => {
         if (onContentRef) {
@@ -23,34 +27,10 @@ export function MarkdownViewerContainer({ content, file, onNavigate, onContentRe
 
     useEffect(() => {
         if (content) {
-            // marked 옵션 설정: 자동 링크 비활성화
-            const renderer = new marked.Renderer();
-
-            // 링크 렌더러 커스터마이징
-            renderer.link = (href, title, text) => {
-                // 외부 링크는 그대로 처리
-                if (href && (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('mailto:'))) {
-                    return `<a href="${href}"${title ? ` title="${title}"` : ''} target="_blank" rel="noopener noreferrer">${text}</a>`;
-                }
-                // 내부 링크는 data-href 속성 사용
-                return `<a href="javascript:void(0)" data-href="${href || ''}"${title ? ` title="${title}"` : ''} style="cursor: pointer;">${text}</a>`;
-            };
-
-            // 테이블 렌더러 커스터마이징: 테이블을 wrapper로 감싸서 가로 스크롤 활성화
-            renderer.table = (header, body) => {
-                return `<div class="table-wrapper"><table><thead>${header}</thead><tbody>${body}</tbody></table></div>`;
-            };
-
-            marked.setOptions({
-                renderer: renderer,
-                breaks: true,
-                gfm: true,
-            });
-
-            const rendered = marked.parse(content);
+            const rendered = parser.parse(content);
             setHtml(rendered);
         }
-    }, [content]);
+    }, [content, parser]);
 
     useEffect(() => {
         // 렌더링된 HTML의 링크를 수정하여 브라우저의 자동 리소스 로드 방지
@@ -96,41 +76,13 @@ export function MarkdownViewerContainer({ content, file, onNavigate, onContentRe
             let routePath = href;
 
             // 상대 경로인 경우 현재 파일의 경로를 기준으로 절대 경로로 변환
-            if (!href.startsWith('/')) {
-                if (file && file.path) {
-                    const currentDir = file.path.substring(0, file.path.lastIndexOf('/'));
-                    // 상대 경로 정규화 (../ 처리)
-                    const parts = (currentDir + '/' + href).split('/').filter((p) => p);
-                    const normalized = [];
-                    for (const part of parts) {
-                        if (part === '..') {
-                            normalized.pop();
-                        } else if (part !== '.') {
-                            normalized.push(part);
-                        }
-                    }
-                    routePath = '/' + normalized.join('/');
-                }
+            if (!href.startsWith('/') && file && file.path) {
+                routePath = resolvePath(file.path, href);
             }
 
             // docs-list에서 해당 route 찾기
             const { files } = getMarkdownFiles();
-
-            // route 또는 path로 파일 찾기
-            let targetFile = files.find((f) => {
-                // route와 정확히 일치
-                if (f.route === routePath) return true;
-                // path와 정확히 일치
-                if (f.path === routePath) return true;
-                return false;
-            });
-
-            // 찾지 못한 경우 확장자 없는 경로로도 시도 (하위 호환성)
-            if (!targetFile) {
-                const routePathWithMd = routePath + '.md';
-                const routePathWithTemplate = routePath + '.template';
-                targetFile = files.find((f) => f.route === routePathWithMd || f.route === routePathWithTemplate);
-            }
+            const targetFile = findTargetFile(files, routePath);
 
             if (targetFile) {
                 if (onNavigate) {
