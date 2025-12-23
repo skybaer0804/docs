@@ -2,6 +2,7 @@ import { useState, useEffect } from 'preact/hooks';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { LayoutContainer } from './containers/LayoutContainer';
 import { DocPageContainer } from './containers/DocPageContainer';
+import { LoginPage } from './pages/LoginPage';
 
 /**
  * SPA 구조의 App 컴포넌트
@@ -77,6 +78,10 @@ export function App() {
 
     // 경로에 따라 컴포넌트 렌더링
     const renderContent = () => {
+        if (currentRoute === '/login') {
+            return <LoginPage />;
+        }
+
         // 홈 페이지인 경우
         if (currentRoute === '/') {
             return <DocPageContainer currentRoute="/" onNavigate={handleNavigate} />;

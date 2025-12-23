@@ -2,13 +2,13 @@ import { LayoutContainer } from '../containers/LayoutContainer';
 import { DirectoryTree } from './DirectoryTree';
 import { Breadcrumb } from './Breadcrumb';
 import { Resizer } from './Resizer';
-import { IconChevronsLeft, IconSearch } from '@tabler/icons-preact';
+import { IconChevronsLeft, IconLogin, IconLogout } from '@tabler/icons-preact';
+import { useAuth } from '../contexts/AuthContext';
+import { route } from 'preact-router';
 import './Layout.scss';
 
 /**
  * Layout Presenter 컴포넌트
- * 순수 UI 렌더링만 담당 (Props 기반)
- * TDD 친화적: Props만으로 렌더링하므로 테스트 용이
  */
 export function LayoutPresenter({
     children,
@@ -24,13 +24,40 @@ export function LayoutPresenter({
     onNavigate,
     onOpenSearch,
 }) {
+    const { user, signOut } = useAuth();
+
+    const handleLogin = () => {
+        onNavigate('/login');
+    };
+
+    const handleLogout = async () => {
+        try {
+            await signOut();
+            onNavigate('/');
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+    };
+
     return (
         <div class="layout">
             <div class={`layout__overlay ${sidebarOpen ? 'layout__overlay--open' : ''}`} onClick={onCloseSidebar}></div>
             <div class="layout__container">
                 <header class="header">
                     <Breadcrumb currentRoute={currentPath} onNavigate={onNavigate} onOpenSearch={onOpenSearch} />
+                    <div class="header__actions">
+                        {user ? (
+                            <button class="header__auth-btn" onClick={handleLogout} title="로그아웃">
+                                <IconLogout size={20} />
+                            </button>
+                        ) : (
+                            <button class="header__auth-btn" onClick={handleLogin} title="관리자 로그인">
+                                <IconLogin size={20} />
+                            </button>
+                        )}
+                    </div>
                 </header>
+
                 <div class="layout__content-wrapper">
                     <aside
                         class={`layout__sidebar ${sidebarOpen ? 'layout__sidebar--open' : ''} ${

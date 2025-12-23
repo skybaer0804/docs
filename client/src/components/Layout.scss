@@ -202,9 +202,10 @@
         display: flex;
         align-items: center;
         gap: 8px;
+        margin-left: auto; // 오른쪽 끝으로 밀기
     }
 
-    &__search-btn {
+    &__auth-btn {
         display: flex;
         align-items: center;
         justify-content: center;
@@ -226,6 +227,7 @@
         }
     }
 }
+
 
 // 다크모드
 body[data-theme='dark'] {

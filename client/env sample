@@ -1,0 +1,2 @@
+VITE_SUPABASE_URL=https://[본인프로젝트ID].supabase.co
+VITE_SUPABASE_ANON_KEY=[본인AnonKey]
