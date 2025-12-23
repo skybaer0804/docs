@@ -2,7 +2,7 @@ import { LayoutContainer } from '../containers/LayoutContainer';
 import { DirectoryTree } from './DirectoryTree';
 import { Breadcrumb } from './Breadcrumb';
 import { Resizer } from './Resizer';
-import { IconChevronsLeft, IconLogin, IconLogout } from '@tabler/icons-preact';
+import { IconChevronsLeft, IconLogin, IconLogout, IconFilePlus } from '@tabler/icons-preact';
 import { useAuth } from '../contexts/AuthContext';
 import { route } from 'preact-router';
 import './Layout.scss';
@@ -30,6 +30,10 @@ export function LayoutPresenter({
         onNavigate('/login');
     };
 
+    const handleNewDoc = () => {
+        onNavigate('/write');
+    };
+
     const handleLogout = async () => {
         try {
             await signOut();
@@ -46,6 +50,11 @@ export function LayoutPresenter({
                 <header class="header">
                     <Breadcrumb currentRoute={currentPath} onNavigate={onNavigate} onOpenSearch={onOpenSearch} />
                     <div class="header__actions">
+                        {user && (
+                            <button class="header__auth-btn" onClick={handleNewDoc} title="새 문서 작성">
+                                <IconFilePlus size={20} />
+                            </button>
+                        )}
                         {user ? (
                             <button class="header__auth-btn" onClick={handleLogout} title="로그아웃">
                                 <IconLogout size={20} />
@@ -57,6 +66,7 @@ export function LayoutPresenter({
                         )}
                     </div>
                 </header>
+
 
                 <div class="layout__content-wrapper">
                     <aside

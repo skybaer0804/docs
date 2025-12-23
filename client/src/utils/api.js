@@ -49,3 +49,43 @@ export async function fetchDocContent(path) {
     }
     return response.json();
 }
+
+/**
+ * 새 문서를 생성합니다. (관리자 전용)
+ */
+export async function createDoc(data, token) {
+    const response = await fetch(API_BASE, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to create document');
+    }
+    return response.json();
+}
+
+/**
+ * 문서를 수정합니다. (관리자 전용)
+ */
+export async function updateDoc(id, data, token) {
+    const response = await fetch(`${API_BASE}/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to update document');
+    }
+    return response.json();
+}

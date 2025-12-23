@@ -113,5 +113,12 @@ export function MarkdownViewerContainer({ content, file, onNavigate, onContentRe
         }
     };
 
-    return <MarkdownViewerPresenter html={html} file={file} contentRef={contentRef} onDownload={handleDownload} />;
+    const handleEdit = (path) => {
+        if (onNavigate) {
+            onNavigate(`/edit${path}`);
+        }
+    };
+
+    return <MarkdownViewerPresenter html={html} file={file} contentRef={contentRef} onDownload={handleDownload} onEdit={handleEdit} />;
 }
+
