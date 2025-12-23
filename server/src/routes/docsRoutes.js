@@ -1,0 +1,25 @@
+const express = require('express');
+const router = express.Router();
+const docsController = require('../controllers/docsController');
+const upload = require('multer')(); 
+const authMiddleware = require('../middleware/authMiddleware');
+
+// 모든 문서 구조 조회 (공개)
+router.get('/', docsController.getAllDocs);
+
+// 문서 생성 (🔐 인증 필요)
+router.post('/', authMiddleware, docsController.createDoc);
+
+// 파일 업로드 (🔐 인증 필요)
+router.post('/upload', authMiddleware, upload.single('file'), docsController.uploadFile);
+
+// 문서 수정 (🔐 인증 필요)
+router.put('/:id', authMiddleware, docsController.updateDoc);
+
+// 문서 삭제 (🔐 인증 필요)
+router.delete('/:id', authMiddleware, docsController.deleteDoc);
+
+// 특정 문서 조회 (공개/비공개 로직은 컨트롤러 내부에서 처리)
+router.get('/*', docsController.getDocByPath);
+
+module.exports = router;

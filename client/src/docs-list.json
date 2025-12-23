@@ -1,0 +1,1774 @@
+{
+  "files": [
+    {
+      "path": "/docs/Archtecture/BCP/RTO-RPO.md",
+      "route": "/docs/Archtecture/BCP/RTO-RPO.md",
+      "title": "RTO-RPO",
+      "directoryPath": [
+        "Archtecture",
+        "BCP"
+      ],
+      "category": "Archtecture",
+      "subcategory": "BCP",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Archtecture/DB/MySQL_vs_PostgreSQL.md",
+      "route": "/docs/Archtecture/DB/MySQL_vs_PostgreSQL.md",
+      "title": "MySQL_vs_PostgreSQL",
+      "directoryPath": [
+        "Archtecture",
+        "DB"
+      ],
+      "category": "Archtecture",
+      "subcategory": "DB",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Archtecture/DB/NoSQL/Key-Value Store/Redis-advanced.md",
+      "route": "/docs/Archtecture/DB/NoSQL/Key-Value Store/Redis-advanced.md",
+      "title": "Redis-advanced",
+      "directoryPath": [
+        "Archtecture",
+        "DB",
+        "NoSQL",
+        "Key-Value Store"
+      ],
+      "category": "Archtecture",
+      "subcategory": "DB",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Archtecture/DB/NoSQL/Key-Value Store/Redis-learning.md",
+      "route": "/docs/Archtecture/DB/NoSQL/Key-Value Store/Redis-learning.md",
+      "title": "Redis-learning",
+      "directoryPath": [
+        "Archtecture",
+        "DB",
+        "NoSQL",
+        "Key-Value Store"
+      ],
+      "category": "Archtecture",
+      "subcategory": "DB",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Archtecture/Design Pattern/GoF 구조패턴.md",
+      "route": "/docs/Archtecture/Design Pattern/GoF 구조패턴.md",
+      "title": "GoF 구조패턴",
+      "directoryPath": [
+        "Archtecture",
+        "Design Pattern"
+      ],
+      "category": "Archtecture",
+      "subcategory": "Design Pattern",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Archtecture/Design Pattern/GoF 생성패턴.md",
+      "route": "/docs/Archtecture/Design Pattern/GoF 생성패턴.md",
+      "title": "GoF 생성패턴",
+      "directoryPath": [
+        "Archtecture",
+        "Design Pattern"
+      ],
+      "category": "Archtecture",
+      "subcategory": "Design Pattern",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Archtecture/Design Pattern/GoF 행위패턴.md",
+      "route": "/docs/Archtecture/Design Pattern/GoF 행위패턴.md",
+      "title": "GoF 행위패턴",
+      "directoryPath": [
+        "Archtecture",
+        "Design Pattern"
+      ],
+      "category": "Archtecture",
+      "subcategory": "Design Pattern",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Archtecture/DesignSystem/KRDS-Design-Tokens.md",
+      "route": "/docs/Archtecture/DesignSystem/KRDS-Design-Tokens.md",
+      "title": "KRDS-Design-Tokens",
+      "directoryPath": [
+        "Archtecture",
+        "DesignSystem"
+      ],
+      "category": "Archtecture",
+      "subcategory": "DesignSystem",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Archtecture/Network/HTTP-2-Guide.md",
+      "route": "/docs/Archtecture/Network/HTTP-2-Guide.md",
+      "title": "HTTP-2-Guide",
+      "directoryPath": [
+        "Archtecture",
+        "Network"
+      ],
+      "category": "Archtecture",
+      "subcategory": "Network",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Archtecture/Security/Cryptography/Hash Function/SHA-1-guide.md",
+      "route": "/docs/Archtecture/Security/Cryptography/Hash Function/SHA-1-guide.md",
+      "title": "SHA-1-guide",
+      "directoryPath": [
+        "Archtecture",
+        "Security",
+        "Cryptography",
+        "Hash Function"
+      ],
+      "category": "Archtecture",
+      "subcategory": "Security",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Development/CSS/cursorrules.md",
+      "route": "/docs/Development/CSS/cursorrules.md",
+      "title": "cursorrules",
+      "directoryPath": [
+        "Development",
+        "CSS"
+      ],
+      "category": "Development",
+      "subcategory": "CSS",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Development/CSS/SCSS와-BEM-네이밍-규칙-적용-및-효과.md",
+      "route": "/docs/Development/CSS/SCSS와-BEM-네이밍-규칙-적용-및-효과.md",
+      "title": "SCSS와-BEM-네이밍-규칙-적용-및-효과",
+      "directoryPath": [
+        "Development",
+        "CSS"
+      ],
+      "category": "Development",
+      "subcategory": "CSS",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Development/DevGuides/Frontend/preact-design-system.md",
+      "route": "/docs/Development/DevGuides/Frontend/preact-design-system.md",
+      "title": "preact-design-system",
+      "directoryPath": [
+        "Development",
+        "DevGuides",
+        "Frontend"
+      ],
+      "category": "Development",
+      "subcategory": "DevGuides",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Development/DevGuides/Supabase/supabase-complete-guide.md",
+      "route": "/docs/Development/DevGuides/Supabase/supabase-complete-guide.md",
+      "title": "supabase-complete-guide",
+      "directoryPath": [
+        "Development",
+        "DevGuides",
+        "Supabase"
+      ],
+      "category": "Development",
+      "subcategory": "DevGuides",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Development/DevGuides/웹앱 국제화(i18n)/i18n_architecture_guide.md",
+      "route": "/docs/Development/DevGuides/웹앱 국제화(i18n)/i18n_architecture_guide.md",
+      "title": "i18n_architecture_guide",
+      "directoryPath": [
+        "Development",
+        "DevGuides",
+        "웹앱 국제화(i18n)"
+      ],
+      "category": "Development",
+      "subcategory": "DevGuides",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Development/DevGuides/웹앱 국제화(i18n)/Time&Locale/timezone-tdd-guide.md",
+      "route": "/docs/Development/DevGuides/웹앱 국제화(i18n)/Time&Locale/timezone-tdd-guide.md",
+      "title": "timezone-tdd-guide",
+      "directoryPath": [
+        "Development",
+        "DevGuides",
+        "웹앱 국제화(i18n)",
+        "Time&Locale"
+      ],
+      "category": "Development",
+      "subcategory": "DevGuides",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Development/DevGuides/웹앱 국제화(i18n)/Time&Locale/utc-and-locale-event-query-guide.md",
+      "route": "/docs/Development/DevGuides/웹앱 국제화(i18n)/Time&Locale/utc-and-locale-event-query-guide.md",
+      "title": "utc-and-locale-event-query-guide",
+      "directoryPath": [
+        "Development",
+        "DevGuides",
+        "웹앱 국제화(i18n)",
+        "Time&Locale"
+      ],
+      "category": "Development",
+      "subcategory": "DevGuides",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Development/Languages/Rust/Rust_architecture_five_guide.md",
+      "route": "/docs/Development/Languages/Rust/Rust_architecture_five_guide.md",
+      "title": "Rust_architecture_five_guide",
+      "directoryPath": [
+        "Development",
+        "Languages",
+        "Rust"
+      ],
+      "category": "Development",
+      "subcategory": "Languages",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Development/Languages/Rust/Rust_beginner_guide_final.md",
+      "route": "/docs/Development/Languages/Rust/Rust_beginner_guide_final.md",
+      "title": "Rust_beginner_guide_final",
+      "directoryPath": [
+        "Development",
+        "Languages",
+        "Rust"
+      ],
+      "category": "Development",
+      "subcategory": "Languages",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Development/Languages/Rust/Rust_wasm_guide.md",
+      "route": "/docs/Development/Languages/Rust/Rust_wasm_guide.md",
+      "title": "Rust_wasm_guide",
+      "directoryPath": [
+        "Development",
+        "Languages",
+        "Rust"
+      ],
+      "category": "Development",
+      "subcategory": "Languages",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Development/Library/NPM/NPM Guide/npm update guide preact-ui .md",
+      "route": "/docs/Development/Library/NPM/NPM Guide/npm update guide preact-ui .md",
+      "title": "npm update guide preact-ui ",
+      "directoryPath": [
+        "Development",
+        "Library",
+        "NPM",
+        "NPM Guide"
+      ],
+      "category": "Development",
+      "subcategory": "Library",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Development/Library/NPM/tdd/cursorrules.md",
+      "route": "/docs/Development/Library/NPM/tdd/cursorrules.md",
+      "title": "cursorrules",
+      "directoryPath": [
+        "Development",
+        "Library",
+        "NPM",
+        "tdd"
+      ],
+      "category": "Development",
+      "subcategory": "Library",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Platform/Deploy/Mobile/Expo/Expo+Firebase 설정.md",
+      "route": "/docs/Platform/Deploy/Mobile/Expo/Expo+Firebase 설정.md",
+      "title": "Expo+Firebase 설정",
+      "directoryPath": [
+        "Platform",
+        "Deploy",
+        "Mobile",
+        "Expo"
+      ],
+      "category": "Platform",
+      "subcategory": "Deploy",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Platform/Deploy/Mobile/Expo/Expo-Guide.md",
+      "route": "/docs/Platform/Deploy/Mobile/Expo/Expo-Guide.md",
+      "title": "Expo-Guide",
+      "directoryPath": [
+        "Platform",
+        "Deploy",
+        "Mobile",
+        "Expo"
+      ],
+      "category": "Platform",
+      "subcategory": "Deploy",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Platform/Deploy/Web/PWA-TWA/PWA 구글플레이스토어, 앱스토어 배포 Guide.md",
+      "route": "/docs/Platform/Deploy/Web/PWA-TWA/PWA 구글플레이스토어, 앱스토어 배포 Guide.md",
+      "title": "PWA 구글플레이스토어, 앱스토어 배포 Guide",
+      "directoryPath": [
+        "Platform",
+        "Deploy",
+        "Web",
+        "PWA-TWA"
+      ],
+      "category": "Platform",
+      "subcategory": "Deploy",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Platform/Deploy/Web/PWA-TWA/PWA_TWA_Deployment_with_Bubblewrap_GooglePlayStore.md.md",
+      "route": "/docs/Platform/Deploy/Web/PWA-TWA/PWA_TWA_Deployment_with_Bubblewrap_GooglePlayStore.md.md",
+      "title": "PWA_TWA_Deployment_with_Bubblewrap_GooglePlayStore.md",
+      "directoryPath": [
+        "Platform",
+        "Deploy",
+        "Web",
+        "PWA-TWA"
+      ],
+      "category": "Platform",
+      "subcategory": "Deploy",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Platform/Deploy/Web/PWA-TWA/PWA_TWA_Deployment_with_Bubblewrap_GooglePlayStore.md_v4.md",
+      "route": "/docs/Platform/Deploy/Web/PWA-TWA/PWA_TWA_Deployment_with_Bubblewrap_GooglePlayStore.md_v4.md",
+      "title": "PWA_TWA_Deployment_with_Bubblewrap_GooglePlayStore.md_v4",
+      "directoryPath": [
+        "Platform",
+        "Deploy",
+        "Web",
+        "PWA-TWA"
+      ],
+      "category": "Platform",
+      "subcategory": "Deploy",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Platform/Deploy/Web/PWA-TWA/Vite-PWA-Setup-Guide.md",
+      "route": "/docs/Platform/Deploy/Web/PWA-TWA/Vite-PWA-Setup-Guide.md",
+      "title": "Vite-PWA-Setup-Guide",
+      "directoryPath": [
+        "Platform",
+        "Deploy",
+        "Web",
+        "PWA-TWA"
+      ],
+      "category": "Platform",
+      "subcategory": "Deploy",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Platform/Template/rules/rules-guide.md",
+      "route": "/docs/Platform/Template/rules/rules-guide.md",
+      "title": "rules-guide",
+      "directoryPath": [
+        "Platform",
+        "Template",
+        "rules"
+      ],
+      "category": "Platform",
+      "subcategory": "Template",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Platform/Template/workspace-templates/cursorrules.md",
+      "route": "/docs/Platform/Template/workspace-templates/cursorrules.md",
+      "title": "cursorrules",
+      "directoryPath": [
+        "Platform",
+        "Template",
+        "workspace-templates"
+      ],
+      "category": "Platform",
+      "subcategory": "Template",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Platform/Template/workspace-templates/README.md",
+      "route": "/docs/Platform/Template/workspace-templates/README.md",
+      "title": "README",
+      "directoryPath": [
+        "Platform",
+        "Template",
+        "workspace-templates"
+      ],
+      "category": "Platform",
+      "subcategory": "Template",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Platform/Template/workspace-templates/spark-messaging.code-workspace.md",
+      "route": "/docs/Platform/Template/workspace-templates/spark-messaging.code-workspace.md",
+      "title": "spark-messaging.code-workspace",
+      "directoryPath": [
+        "Platform",
+        "Template",
+        "workspace-templates"
+      ],
+      "category": "Platform",
+      "subcategory": "Template",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Platform/Template/workspace-templates/WORKSPACE_SETUP.md",
+      "route": "/docs/Platform/Template/workspace-templates/WORKSPACE_SETUP.md",
+      "title": "WORKSPACE_SETUP",
+      "directoryPath": [
+        "Platform",
+        "Template",
+        "workspace-templates"
+      ],
+      "category": "Platform",
+      "subcategory": "Template",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Platform/Web/Web browser react guide.md",
+      "route": "/docs/Platform/Web/Web browser react guide.md",
+      "title": "Web browser react guide",
+      "directoryPath": [
+        "Platform",
+        "Web"
+      ],
+      "category": "Platform",
+      "subcategory": "Web",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Platform/Web/API/Web notification api guide.md",
+      "route": "/docs/Platform/Web/API/Web notification api guide.md",
+      "title": "Web notification api guide",
+      "directoryPath": [
+        "Platform",
+        "Web",
+        "API"
+      ],
+      "category": "Platform",
+      "subcategory": "Web",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Platform/Web/Streaming/Web streaming improved.md",
+      "route": "/docs/Platform/Web/Streaming/Web streaming improved.md",
+      "title": "Web streaming improved",
+      "directoryPath": [
+        "Platform",
+        "Web",
+        "Streaming"
+      ],
+      "category": "Platform",
+      "subcategory": "Web",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Platform/Web3/Web 3.0 Deep Analysis for Developers.md",
+      "route": "/docs/Platform/Web3/Web 3.0 Deep Analysis for Developers.md",
+      "title": "Web 3.0 Deep Analysis for Developers",
+      "directoryPath": [
+        "Platform",
+        "Web3"
+      ],
+      "category": "Platform",
+      "subcategory": "Web3",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Platform/Web3/Web 3.0 Required Terminology Perfect Guide for Developers.md",
+      "route": "/docs/Platform/Web3/Web 3.0 Required Terminology Perfect Guide for Developers.md",
+      "title": "Web 3.0 Required Terminology Perfect Guide for Developers",
+      "directoryPath": [
+        "Platform",
+        "Web3"
+      ],
+      "category": "Platform",
+      "subcategory": "Web3",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Project/PoC/Spark/API Gateway/API_SPEC.md",
+      "route": "/docs/Project/PoC/Spark/API Gateway/API_SPEC.md",
+      "title": "API_SPEC",
+      "directoryPath": [
+        "Project",
+        "PoC",
+        "Spark",
+        "API Gateway"
+      ],
+      "category": "Project",
+      "subcategory": "PoC",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Project/PoC/Spark/API Gateway/ARCHITECTURE.md",
+      "route": "/docs/Project/PoC/Spark/API Gateway/ARCHITECTURE.md",
+      "title": "ARCHITECTURE",
+      "directoryPath": [
+        "Project",
+        "PoC",
+        "Spark",
+        "API Gateway"
+      ],
+      "category": "Project",
+      "subcategory": "PoC",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Project/PoC/Spark/API Gateway/DEVELOPMENT.md",
+      "route": "/docs/Project/PoC/Spark/API Gateway/DEVELOPMENT.md",
+      "title": "DEVELOPMENT",
+      "directoryPath": [
+        "Project",
+        "PoC",
+        "Spark",
+        "API Gateway"
+      ],
+      "category": "Project",
+      "subcategory": "PoC",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Project/PoC/Spark/API Gateway/MIGRATION.md",
+      "route": "/docs/Project/PoC/Spark/API Gateway/MIGRATION.md",
+      "title": "MIGRATION",
+      "directoryPath": [
+        "Project",
+        "PoC",
+        "Spark",
+        "API Gateway"
+      ],
+      "category": "Project",
+      "subcategory": "PoC",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Project/PoC/Spark/API Gateway/README.md",
+      "route": "/docs/Project/PoC/Spark/API Gateway/README.md",
+      "title": "README",
+      "directoryPath": [
+        "Project",
+        "PoC",
+        "Spark",
+        "API Gateway"
+      ],
+      "category": "Project",
+      "subcategory": "PoC",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Project/PoC/Spark/API Gateway/SUMMARY.md",
+      "route": "/docs/Project/PoC/Spark/API Gateway/SUMMARY.md",
+      "title": "SUMMARY",
+      "directoryPath": [
+        "Project",
+        "PoC",
+        "Spark",
+        "API Gateway"
+      ],
+      "category": "Project",
+      "subcategory": "PoC",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Project/PoC/Spark/Architecture/Flow.md",
+      "route": "/docs/Project/PoC/Spark/Architecture/Flow.md",
+      "title": "Flow",
+      "directoryPath": [
+        "Project",
+        "PoC",
+        "Spark",
+        "Architecture"
+      ],
+      "category": "Project",
+      "subcategory": "PoC",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Project/PoC/Spark/Architecture/Redis.md",
+      "route": "/docs/Project/PoC/Spark/Architecture/Redis.md",
+      "title": "Redis",
+      "directoryPath": [
+        "Project",
+        "PoC",
+        "Spark",
+        "Architecture"
+      ],
+      "category": "Project",
+      "subcategory": "PoC",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Project/PoC/Spark/Client/DEPLOYMENT.md",
+      "route": "/docs/Project/PoC/Spark/Client/DEPLOYMENT.md",
+      "title": "DEPLOYMENT",
+      "directoryPath": [
+        "Project",
+        "PoC",
+        "Spark",
+        "Client"
+      ],
+      "category": "Project",
+      "subcategory": "PoC",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Project/PoC/Spark/Client/DEVELOPER_GUIDE.md",
+      "route": "/docs/Project/PoC/Spark/Client/DEVELOPER_GUIDE.md",
+      "title": "DEVELOPER_GUIDE",
+      "directoryPath": [
+        "Project",
+        "PoC",
+        "Spark",
+        "Client"
+      ],
+      "category": "Project",
+      "subcategory": "PoC",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Project/PoC/Spark/Client/FRONTEND_SETUP.md",
+      "route": "/docs/Project/PoC/Spark/Client/FRONTEND_SETUP.md",
+      "title": "FRONTEND_SETUP",
+      "directoryPath": [
+        "Project",
+        "PoC",
+        "Spark",
+        "Client"
+      ],
+      "category": "Project",
+      "subcategory": "PoC",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Project/PoC/Spark/Client/README.md",
+      "route": "/docs/Project/PoC/Spark/Client/README.md",
+      "title": "README",
+      "directoryPath": [
+        "Project",
+        "PoC",
+        "Spark",
+        "Client"
+      ],
+      "category": "Project",
+      "subcategory": "PoC",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Project/PoC/Spark/FrontDemo/README.md",
+      "route": "/docs/Project/PoC/Spark/FrontDemo/README.md",
+      "title": "README",
+      "directoryPath": [
+        "Project",
+        "PoC",
+        "Spark",
+        "FrontDemo"
+      ],
+      "category": "Project",
+      "subcategory": "PoC",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Project/PoC/Spark/Server/README.md",
+      "route": "/docs/Project/PoC/Spark/Server/README.md",
+      "title": "README",
+      "directoryPath": [
+        "Project",
+        "PoC",
+        "Spark",
+        "Server"
+      ],
+      "category": "Project",
+      "subcategory": "PoC",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Project/PoC/Spark/Server/SDK_API_DOCS.md",
+      "route": "/docs/Project/PoC/Spark/Server/SDK_API_DOCS.md",
+      "title": "SDK_API_DOCS",
+      "directoryPath": [
+        "Project",
+        "PoC",
+        "Spark",
+        "Server"
+      ],
+      "category": "Project",
+      "subcategory": "PoC",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Project/PoC/Spark/Server/SDK_CONNECTION_FIX.md",
+      "route": "/docs/Project/PoC/Spark/Server/SDK_CONNECTION_FIX.md",
+      "title": "SDK_CONNECTION_FIX",
+      "directoryPath": [
+        "Project",
+        "PoC",
+        "Spark",
+        "Server"
+      ],
+      "category": "Project",
+      "subcategory": "PoC",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Project/PoC/Spark/Server/TECHNICAL_DOCS.md",
+      "route": "/docs/Project/PoC/Spark/Server/TECHNICAL_DOCS.md",
+      "title": "TECHNICAL_DOCS",
+      "directoryPath": [
+        "Project",
+        "PoC",
+        "Spark",
+        "Server"
+      ],
+      "category": "Project",
+      "subcategory": "PoC",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Project/PoC/Spark/Server/TEST_GUIDE.md",
+      "route": "/docs/Project/PoC/Spark/Server/TEST_GUIDE.md",
+      "title": "TEST_GUIDE",
+      "directoryPath": [
+        "Project",
+        "PoC",
+        "Spark",
+        "Server"
+      ],
+      "category": "Project",
+      "subcategory": "PoC",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Project/PoC/Spark/spark-reverse-auction/MVP/mvp.md",
+      "route": "/docs/Project/PoC/Spark/spark-reverse-auction/MVP/mvp.md",
+      "title": "mvp",
+      "directoryPath": [
+        "Project",
+        "PoC",
+        "Spark",
+        "spark-reverse-auction",
+        "MVP"
+      ],
+      "category": "Project",
+      "subcategory": "PoC",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Project/PoC/Spark/spark-reverse-auction/MVP/REVERSE-AUCTION-POC-MVP.md",
+      "route": "/docs/Project/PoC/Spark/spark-reverse-auction/MVP/REVERSE-AUCTION-POC-MVP.md",
+      "title": "REVERSE-AUCTION-POC-MVP",
+      "directoryPath": [
+        "Project",
+        "PoC",
+        "Spark",
+        "spark-reverse-auction",
+        "MVP"
+      ],
+      "category": "Project",
+      "subcategory": "PoC",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Project/PoC/Spark/spark-reverse-auction/prompt/REVERSE_ACUTION_PROMPT.md",
+      "route": "/docs/Project/PoC/Spark/spark-reverse-auction/prompt/REVERSE_ACUTION_PROMPT.md",
+      "title": "REVERSE_ACUTION_PROMPT",
+      "directoryPath": [
+        "Project",
+        "PoC",
+        "Spark",
+        "spark-reverse-auction",
+        "prompt"
+      ],
+      "category": "Project",
+      "subcategory": "PoC",
+      "ext": ".md"
+    },
+    {
+      "path": "/docs/Project/sprout/ARCHITECTURE.md",
+      "route": "/docs/Project/sprout/ARCHITECTURE.md",
+      "title": "ARCHITECTURE",
+      "directoryPath": [
+        "Project",
+        "sprout"
+      ],
+      "category": "Project",
+      "subcategory": "sprout",
+      "ext": ".md"
+    }
+  ],
+  "categorized": {
+    "Archtecture": {
+      "BCP": {
+        "_files": [
+          {
+            "path": "/docs/Archtecture/BCP/RTO-RPO.md",
+            "route": "/docs/Archtecture/BCP/RTO-RPO.md",
+            "title": "RTO-RPO",
+            "directoryPath": [
+              "Archtecture",
+              "BCP"
+            ],
+            "category": "Archtecture",
+            "subcategory": "BCP",
+            "ext": ".md"
+          }
+        ]
+      },
+      "DB": {
+        "_files": [
+          {
+            "path": "/docs/Archtecture/DB/MySQL_vs_PostgreSQL.md",
+            "route": "/docs/Archtecture/DB/MySQL_vs_PostgreSQL.md",
+            "title": "MySQL_vs_PostgreSQL",
+            "directoryPath": [
+              "Archtecture",
+              "DB"
+            ],
+            "category": "Archtecture",
+            "subcategory": "DB",
+            "ext": ".md"
+          }
+        ],
+        "NoSQL": {
+          "Key-Value Store": {
+            "_files": [
+              {
+                "path": "/docs/Archtecture/DB/NoSQL/Key-Value Store/Redis-advanced.md",
+                "route": "/docs/Archtecture/DB/NoSQL/Key-Value Store/Redis-advanced.md",
+                "title": "Redis-advanced",
+                "directoryPath": [
+                  "Archtecture",
+                  "DB",
+                  "NoSQL",
+                  "Key-Value Store"
+                ],
+                "category": "Archtecture",
+                "subcategory": "DB",
+                "ext": ".md"
+              },
+              {
+                "path": "/docs/Archtecture/DB/NoSQL/Key-Value Store/Redis-learning.md",
+                "route": "/docs/Archtecture/DB/NoSQL/Key-Value Store/Redis-learning.md",
+                "title": "Redis-learning",
+                "directoryPath": [
+                  "Archtecture",
+                  "DB",
+                  "NoSQL",
+                  "Key-Value Store"
+                ],
+                "category": "Archtecture",
+                "subcategory": "DB",
+                "ext": ".md"
+              }
+            ]
+          }
+        }
+      },
+      "Design Pattern": {
+        "_files": [
+          {
+            "path": "/docs/Archtecture/Design Pattern/GoF 구조패턴.md",
+            "route": "/docs/Archtecture/Design Pattern/GoF 구조패턴.md",
+            "title": "GoF 구조패턴",
+            "directoryPath": [
+              "Archtecture",
+              "Design Pattern"
+            ],
+            "category": "Archtecture",
+            "subcategory": "Design Pattern",
+            "ext": ".md"
+          },
+          {
+            "path": "/docs/Archtecture/Design Pattern/GoF 생성패턴.md",
+            "route": "/docs/Archtecture/Design Pattern/GoF 생성패턴.md",
+            "title": "GoF 생성패턴",
+            "directoryPath": [
+              "Archtecture",
+              "Design Pattern"
+            ],
+            "category": "Archtecture",
+            "subcategory": "Design Pattern",
+            "ext": ".md"
+          },
+          {
+            "path": "/docs/Archtecture/Design Pattern/GoF 행위패턴.md",
+            "route": "/docs/Archtecture/Design Pattern/GoF 행위패턴.md",
+            "title": "GoF 행위패턴",
+            "directoryPath": [
+              "Archtecture",
+              "Design Pattern"
+            ],
+            "category": "Archtecture",
+            "subcategory": "Design Pattern",
+            "ext": ".md"
+          }
+        ]
+      },
+      "DesignSystem": {
+        "_files": [
+          {
+            "path": "/docs/Archtecture/DesignSystem/KRDS-Design-Tokens.md",
+            "route": "/docs/Archtecture/DesignSystem/KRDS-Design-Tokens.md",
+            "title": "KRDS-Design-Tokens",
+            "directoryPath": [
+              "Archtecture",
+              "DesignSystem"
+            ],
+            "category": "Archtecture",
+            "subcategory": "DesignSystem",
+            "ext": ".md"
+          }
+        ]
+      },
+      "Network": {
+        "_files": [
+          {
+            "path": "/docs/Archtecture/Network/HTTP-2-Guide.md",
+            "route": "/docs/Archtecture/Network/HTTP-2-Guide.md",
+            "title": "HTTP-2-Guide",
+            "directoryPath": [
+              "Archtecture",
+              "Network"
+            ],
+            "category": "Archtecture",
+            "subcategory": "Network",
+            "ext": ".md"
+          }
+        ]
+      },
+      "Security": {
+        "Cryptography": {
+          "Hash Function": {
+            "_files": [
+              {
+                "path": "/docs/Archtecture/Security/Cryptography/Hash Function/SHA-1-guide.md",
+                "route": "/docs/Archtecture/Security/Cryptography/Hash Function/SHA-1-guide.md",
+                "title": "SHA-1-guide",
+                "directoryPath": [
+                  "Archtecture",
+                  "Security",
+                  "Cryptography",
+                  "Hash Function"
+                ],
+                "category": "Archtecture",
+                "subcategory": "Security",
+                "ext": ".md"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "Development": {
+      "CSS": {
+        "_files": [
+          {
+            "path": "/docs/Development/CSS/cursorrules.md",
+            "route": "/docs/Development/CSS/cursorrules.md",
+            "title": "cursorrules",
+            "directoryPath": [
+              "Development",
+              "CSS"
+            ],
+            "category": "Development",
+            "subcategory": "CSS",
+            "ext": ".md"
+          },
+          {
+            "path": "/docs/Development/CSS/SCSS와-BEM-네이밍-규칙-적용-및-효과.md",
+            "route": "/docs/Development/CSS/SCSS와-BEM-네이밍-규칙-적용-및-효과.md",
+            "title": "SCSS와-BEM-네이밍-규칙-적용-및-효과",
+            "directoryPath": [
+              "Development",
+              "CSS"
+            ],
+            "category": "Development",
+            "subcategory": "CSS",
+            "ext": ".md"
+          }
+        ]
+      },
+      "DevGuides": {
+        "Frontend": {
+          "_files": [
+            {
+              "path": "/docs/Development/DevGuides/Frontend/preact-design-system.md",
+              "route": "/docs/Development/DevGuides/Frontend/preact-design-system.md",
+              "title": "preact-design-system",
+              "directoryPath": [
+                "Development",
+                "DevGuides",
+                "Frontend"
+              ],
+              "category": "Development",
+              "subcategory": "DevGuides",
+              "ext": ".md"
+            }
+          ]
+        },
+        "Supabase": {
+          "_files": [
+            {
+              "path": "/docs/Development/DevGuides/Supabase/supabase-complete-guide.md",
+              "route": "/docs/Development/DevGuides/Supabase/supabase-complete-guide.md",
+              "title": "supabase-complete-guide",
+              "directoryPath": [
+                "Development",
+                "DevGuides",
+                "Supabase"
+              ],
+              "category": "Development",
+              "subcategory": "DevGuides",
+              "ext": ".md"
+            }
+          ]
+        },
+        "웹앱 국제화(i18n)": {
+          "_files": [
+            {
+              "path": "/docs/Development/DevGuides/웹앱 국제화(i18n)/i18n_architecture_guide.md",
+              "route": "/docs/Development/DevGuides/웹앱 국제화(i18n)/i18n_architecture_guide.md",
+              "title": "i18n_architecture_guide",
+              "directoryPath": [
+                "Development",
+                "DevGuides",
+                "웹앱 국제화(i18n)"
+              ],
+              "category": "Development",
+              "subcategory": "DevGuides",
+              "ext": ".md"
+            }
+          ],
+          "Time&Locale": {
+            "_files": [
+              {
+                "path": "/docs/Development/DevGuides/웹앱 국제화(i18n)/Time&Locale/timezone-tdd-guide.md",
+                "route": "/docs/Development/DevGuides/웹앱 국제화(i18n)/Time&Locale/timezone-tdd-guide.md",
+                "title": "timezone-tdd-guide",
+                "directoryPath": [
+                  "Development",
+                  "DevGuides",
+                  "웹앱 국제화(i18n)",
+                  "Time&Locale"
+                ],
+                "category": "Development",
+                "subcategory": "DevGuides",
+                "ext": ".md"
+              },
+              {
+                "path": "/docs/Development/DevGuides/웹앱 국제화(i18n)/Time&Locale/utc-and-locale-event-query-guide.md",
+                "route": "/docs/Development/DevGuides/웹앱 국제화(i18n)/Time&Locale/utc-and-locale-event-query-guide.md",
+                "title": "utc-and-locale-event-query-guide",
+                "directoryPath": [
+                  "Development",
+                  "DevGuides",
+                  "웹앱 국제화(i18n)",
+                  "Time&Locale"
+                ],
+                "category": "Development",
+                "subcategory": "DevGuides",
+                "ext": ".md"
+              }
+            ]
+          }
+        }
+      },
+      "Languages": {
+        "Rust": {
+          "_files": [
+            {
+              "path": "/docs/Development/Languages/Rust/Rust_architecture_five_guide.md",
+              "route": "/docs/Development/Languages/Rust/Rust_architecture_five_guide.md",
+              "title": "Rust_architecture_five_guide",
+              "directoryPath": [
+                "Development",
+                "Languages",
+                "Rust"
+              ],
+              "category": "Development",
+              "subcategory": "Languages",
+              "ext": ".md"
+            },
+            {
+              "path": "/docs/Development/Languages/Rust/Rust_beginner_guide_final.md",
+              "route": "/docs/Development/Languages/Rust/Rust_beginner_guide_final.md",
+              "title": "Rust_beginner_guide_final",
+              "directoryPath": [
+                "Development",
+                "Languages",
+                "Rust"
+              ],
+              "category": "Development",
+              "subcategory": "Languages",
+              "ext": ".md"
+            },
+            {
+              "path": "/docs/Development/Languages/Rust/Rust_wasm_guide.md",
+              "route": "/docs/Development/Languages/Rust/Rust_wasm_guide.md",
+              "title": "Rust_wasm_guide",
+              "directoryPath": [
+                "Development",
+                "Languages",
+                "Rust"
+              ],
+              "category": "Development",
+              "subcategory": "Languages",
+              "ext": ".md"
+            }
+          ]
+        }
+      },
+      "Library": {
+        "NPM": {
+          "NPM Guide": {
+            "_files": [
+              {
+                "path": "/docs/Development/Library/NPM/NPM Guide/npm update guide preact-ui .md",
+                "route": "/docs/Development/Library/NPM/NPM Guide/npm update guide preact-ui .md",
+                "title": "npm update guide preact-ui ",
+                "directoryPath": [
+                  "Development",
+                  "Library",
+                  "NPM",
+                  "NPM Guide"
+                ],
+                "category": "Development",
+                "subcategory": "Library",
+                "ext": ".md"
+              }
+            ]
+          },
+          "tdd": {
+            "_files": [
+              {
+                "path": "/docs/Development/Library/NPM/tdd/cursorrules.md",
+                "route": "/docs/Development/Library/NPM/tdd/cursorrules.md",
+                "title": "cursorrules",
+                "directoryPath": [
+                  "Development",
+                  "Library",
+                  "NPM",
+                  "tdd"
+                ],
+                "category": "Development",
+                "subcategory": "Library",
+                "ext": ".md"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "Platform": {
+      "Deploy": {
+        "Mobile": {
+          "Expo": {
+            "_files": [
+              {
+                "path": "/docs/Platform/Deploy/Mobile/Expo/Expo+Firebase 설정.md",
+                "route": "/docs/Platform/Deploy/Mobile/Expo/Expo+Firebase 설정.md",
+                "title": "Expo+Firebase 설정",
+                "directoryPath": [
+                  "Platform",
+                  "Deploy",
+                  "Mobile",
+                  "Expo"
+                ],
+                "category": "Platform",
+                "subcategory": "Deploy",
+                "ext": ".md"
+              },
+              {
+                "path": "/docs/Platform/Deploy/Mobile/Expo/Expo-Guide.md",
+                "route": "/docs/Platform/Deploy/Mobile/Expo/Expo-Guide.md",
+                "title": "Expo-Guide",
+                "directoryPath": [
+                  "Platform",
+                  "Deploy",
+                  "Mobile",
+                  "Expo"
+                ],
+                "category": "Platform",
+                "subcategory": "Deploy",
+                "ext": ".md"
+              }
+            ]
+          }
+        },
+        "Web": {
+          "PWA-TWA": {
+            "_files": [
+              {
+                "path": "/docs/Platform/Deploy/Web/PWA-TWA/PWA 구글플레이스토어, 앱스토어 배포 Guide.md",
+                "route": "/docs/Platform/Deploy/Web/PWA-TWA/PWA 구글플레이스토어, 앱스토어 배포 Guide.md",
+                "title": "PWA 구글플레이스토어, 앱스토어 배포 Guide",
+                "directoryPath": [
+                  "Platform",
+                  "Deploy",
+                  "Web",
+                  "PWA-TWA"
+                ],
+                "category": "Platform",
+                "subcategory": "Deploy",
+                "ext": ".md"
+              },
+              {
+                "path": "/docs/Platform/Deploy/Web/PWA-TWA/PWA_TWA_Deployment_with_Bubblewrap_GooglePlayStore.md.md",
+                "route": "/docs/Platform/Deploy/Web/PWA-TWA/PWA_TWA_Deployment_with_Bubblewrap_GooglePlayStore.md.md",
+                "title": "PWA_TWA_Deployment_with_Bubblewrap_GooglePlayStore.md",
+                "directoryPath": [
+                  "Platform",
+                  "Deploy",
+                  "Web",
+                  "PWA-TWA"
+                ],
+                "category": "Platform",
+                "subcategory": "Deploy",
+                "ext": ".md"
+              },
+              {
+                "path": "/docs/Platform/Deploy/Web/PWA-TWA/PWA_TWA_Deployment_with_Bubblewrap_GooglePlayStore.md_v4.md",
+                "route": "/docs/Platform/Deploy/Web/PWA-TWA/PWA_TWA_Deployment_with_Bubblewrap_GooglePlayStore.md_v4.md",
+                "title": "PWA_TWA_Deployment_with_Bubblewrap_GooglePlayStore.md_v4",
+                "directoryPath": [
+                  "Platform",
+                  "Deploy",
+                  "Web",
+                  "PWA-TWA"
+                ],
+                "category": "Platform",
+                "subcategory": "Deploy",
+                "ext": ".md"
+              },
+              {
+                "path": "/docs/Platform/Deploy/Web/PWA-TWA/Vite-PWA-Setup-Guide.md",
+                "route": "/docs/Platform/Deploy/Web/PWA-TWA/Vite-PWA-Setup-Guide.md",
+                "title": "Vite-PWA-Setup-Guide",
+                "directoryPath": [
+                  "Platform",
+                  "Deploy",
+                  "Web",
+                  "PWA-TWA"
+                ],
+                "category": "Platform",
+                "subcategory": "Deploy",
+                "ext": ".md"
+              }
+            ]
+          }
+        }
+      },
+      "Template": {
+        "rules": {
+          "_files": [
+            {
+              "path": "/docs/Platform/Template/rules/rules-guide.md",
+              "route": "/docs/Platform/Template/rules/rules-guide.md",
+              "title": "rules-guide",
+              "directoryPath": [
+                "Platform",
+                "Template",
+                "rules"
+              ],
+              "category": "Platform",
+              "subcategory": "Template",
+              "ext": ".md"
+            }
+          ]
+        },
+        "workspace-templates": {
+          "_files": [
+            {
+              "path": "/docs/Platform/Template/workspace-templates/cursorrules.md",
+              "route": "/docs/Platform/Template/workspace-templates/cursorrules.md",
+              "title": "cursorrules",
+              "directoryPath": [
+                "Platform",
+                "Template",
+                "workspace-templates"
+              ],
+              "category": "Platform",
+              "subcategory": "Template",
+              "ext": ".md"
+            },
+            {
+              "path": "/docs/Platform/Template/workspace-templates/README.md",
+              "route": "/docs/Platform/Template/workspace-templates/README.md",
+              "title": "README",
+              "directoryPath": [
+                "Platform",
+                "Template",
+                "workspace-templates"
+              ],
+              "category": "Platform",
+              "subcategory": "Template",
+              "ext": ".md"
+            },
+            {
+              "path": "/docs/Platform/Template/workspace-templates/spark-messaging.code-workspace.md",
+              "route": "/docs/Platform/Template/workspace-templates/spark-messaging.code-workspace.md",
+              "title": "spark-messaging.code-workspace",
+              "directoryPath": [
+                "Platform",
+                "Template",
+                "workspace-templates"
+              ],
+              "category": "Platform",
+              "subcategory": "Template",
+              "ext": ".md"
+            },
+            {
+              "path": "/docs/Platform/Template/workspace-templates/WORKSPACE_SETUP.md",
+              "route": "/docs/Platform/Template/workspace-templates/WORKSPACE_SETUP.md",
+              "title": "WORKSPACE_SETUP",
+              "directoryPath": [
+                "Platform",
+                "Template",
+                "workspace-templates"
+              ],
+              "category": "Platform",
+              "subcategory": "Template",
+              "ext": ".md"
+            }
+          ]
+        }
+      },
+      "Web": {
+        "_files": [
+          {
+            "path": "/docs/Platform/Web/Web browser react guide.md",
+            "route": "/docs/Platform/Web/Web browser react guide.md",
+            "title": "Web browser react guide",
+            "directoryPath": [
+              "Platform",
+              "Web"
+            ],
+            "category": "Platform",
+            "subcategory": "Web",
+            "ext": ".md"
+          }
+        ],
+        "API": {
+          "_files": [
+            {
+              "path": "/docs/Platform/Web/API/Web notification api guide.md",
+              "route": "/docs/Platform/Web/API/Web notification api guide.md",
+              "title": "Web notification api guide",
+              "directoryPath": [
+                "Platform",
+                "Web",
+                "API"
+              ],
+              "category": "Platform",
+              "subcategory": "Web",
+              "ext": ".md"
+            }
+          ]
+        },
+        "Streaming": {
+          "_files": [
+            {
+              "path": "/docs/Platform/Web/Streaming/Web streaming improved.md",
+              "route": "/docs/Platform/Web/Streaming/Web streaming improved.md",
+              "title": "Web streaming improved",
+              "directoryPath": [
+                "Platform",
+                "Web",
+                "Streaming"
+              ],
+              "category": "Platform",
+              "subcategory": "Web",
+              "ext": ".md"
+            }
+          ]
+        }
+      },
+      "Web3": {
+        "_files": [
+          {
+            "path": "/docs/Platform/Web3/Web 3.0 Deep Analysis for Developers.md",
+            "route": "/docs/Platform/Web3/Web 3.0 Deep Analysis for Developers.md",
+            "title": "Web 3.0 Deep Analysis for Developers",
+            "directoryPath": [
+              "Platform",
+              "Web3"
+            ],
+            "category": "Platform",
+            "subcategory": "Web3",
+            "ext": ".md"
+          },
+          {
+            "path": "/docs/Platform/Web3/Web 3.0 Required Terminology Perfect Guide for Developers.md",
+            "route": "/docs/Platform/Web3/Web 3.0 Required Terminology Perfect Guide for Developers.md",
+            "title": "Web 3.0 Required Terminology Perfect Guide for Developers",
+            "directoryPath": [
+              "Platform",
+              "Web3"
+            ],
+            "category": "Platform",
+            "subcategory": "Web3",
+            "ext": ".md"
+          }
+        ]
+      }
+    },
+    "Project": {
+      "PoC": {
+        "Spark": {
+          "API Gateway": {
+            "_files": [
+              {
+                "path": "/docs/Project/PoC/Spark/API Gateway/API_SPEC.md",
+                "route": "/docs/Project/PoC/Spark/API Gateway/API_SPEC.md",
+                "title": "API_SPEC",
+                "directoryPath": [
+                  "Project",
+                  "PoC",
+                  "Spark",
+                  "API Gateway"
+                ],
+                "category": "Project",
+                "subcategory": "PoC",
+                "ext": ".md"
+              },
+              {
+                "path": "/docs/Project/PoC/Spark/API Gateway/ARCHITECTURE.md",
+                "route": "/docs/Project/PoC/Spark/API Gateway/ARCHITECTURE.md",
+                "title": "ARCHITECTURE",
+                "directoryPath": [
+                  "Project",
+                  "PoC",
+                  "Spark",
+                  "API Gateway"
+                ],
+                "category": "Project",
+                "subcategory": "PoC",
+                "ext": ".md"
+              },
+              {
+                "path": "/docs/Project/PoC/Spark/API Gateway/DEVELOPMENT.md",
+                "route": "/docs/Project/PoC/Spark/API Gateway/DEVELOPMENT.md",
+                "title": "DEVELOPMENT",
+                "directoryPath": [
+                  "Project",
+                  "PoC",
+                  "Spark",
+                  "API Gateway"
+                ],
+                "category": "Project",
+                "subcategory": "PoC",
+                "ext": ".md"
+              },
+              {
+                "path": "/docs/Project/PoC/Spark/API Gateway/MIGRATION.md",
+                "route": "/docs/Project/PoC/Spark/API Gateway/MIGRATION.md",
+                "title": "MIGRATION",
+                "directoryPath": [
+                  "Project",
+                  "PoC",
+                  "Spark",
+                  "API Gateway"
+                ],
+                "category": "Project",
+                "subcategory": "PoC",
+                "ext": ".md"
+              },
+              {
+                "path": "/docs/Project/PoC/Spark/API Gateway/README.md",
+                "route": "/docs/Project/PoC/Spark/API Gateway/README.md",
+                "title": "README",
+                "directoryPath": [
+                  "Project",
+                  "PoC",
+                  "Spark",
+                  "API Gateway"
+                ],
+                "category": "Project",
+                "subcategory": "PoC",
+                "ext": ".md"
+              },
+              {
+                "path": "/docs/Project/PoC/Spark/API Gateway/SUMMARY.md",
+                "route": "/docs/Project/PoC/Spark/API Gateway/SUMMARY.md",
+                "title": "SUMMARY",
+                "directoryPath": [
+                  "Project",
+                  "PoC",
+                  "Spark",
+                  "API Gateway"
+                ],
+                "category": "Project",
+                "subcategory": "PoC",
+                "ext": ".md"
+              }
+            ]
+          },
+          "Architecture": {
+            "_files": [
+              {
+                "path": "/docs/Project/PoC/Spark/Architecture/Flow.md",
+                "route": "/docs/Project/PoC/Spark/Architecture/Flow.md",
+                "title": "Flow",
+                "directoryPath": [
+                  "Project",
+                  "PoC",
+                  "Spark",
+                  "Architecture"
+                ],
+                "category": "Project",
+                "subcategory": "PoC",
+                "ext": ".md"
+              },
+              {
+                "path": "/docs/Project/PoC/Spark/Architecture/Redis.md",
+                "route": "/docs/Project/PoC/Spark/Architecture/Redis.md",
+                "title": "Redis",
+                "directoryPath": [
+                  "Project",
+                  "PoC",
+                  "Spark",
+                  "Architecture"
+                ],
+                "category": "Project",
+                "subcategory": "PoC",
+                "ext": ".md"
+              }
+            ]
+          },
+          "Client": {
+            "_files": [
+              {
+                "path": "/docs/Project/PoC/Spark/Client/DEPLOYMENT.md",
+                "route": "/docs/Project/PoC/Spark/Client/DEPLOYMENT.md",
+                "title": "DEPLOYMENT",
+                "directoryPath": [
+                  "Project",
+                  "PoC",
+                  "Spark",
+                  "Client"
+                ],
+                "category": "Project",
+                "subcategory": "PoC",
+                "ext": ".md"
+              },
+              {
+                "path": "/docs/Project/PoC/Spark/Client/DEVELOPER_GUIDE.md",
+                "route": "/docs/Project/PoC/Spark/Client/DEVELOPER_GUIDE.md",
+                "title": "DEVELOPER_GUIDE",
+                "directoryPath": [
+                  "Project",
+                  "PoC",
+                  "Spark",
+                  "Client"
+                ],
+                "category": "Project",
+                "subcategory": "PoC",
+                "ext": ".md"
+              },
+              {
+                "path": "/docs/Project/PoC/Spark/Client/FRONTEND_SETUP.md",
+                "route": "/docs/Project/PoC/Spark/Client/FRONTEND_SETUP.md",
+                "title": "FRONTEND_SETUP",
+                "directoryPath": [
+                  "Project",
+                  "PoC",
+                  "Spark",
+                  "Client"
+                ],
+                "category": "Project",
+                "subcategory": "PoC",
+                "ext": ".md"
+              },
+              {
+                "path": "/docs/Project/PoC/Spark/Client/README.md",
+                "route": "/docs/Project/PoC/Spark/Client/README.md",
+                "title": "README",
+                "directoryPath": [
+                  "Project",
+                  "PoC",
+                  "Spark",
+                  "Client"
+                ],
+                "category": "Project",
+                "subcategory": "PoC",
+                "ext": ".md"
+              }
+            ]
+          },
+          "FrontDemo": {
+            "_files": [
+              {
+                "path": "/docs/Project/PoC/Spark/FrontDemo/README.md",
+                "route": "/docs/Project/PoC/Spark/FrontDemo/README.md",
+                "title": "README",
+                "directoryPath": [
+                  "Project",
+                  "PoC",
+                  "Spark",
+                  "FrontDemo"
+                ],
+                "category": "Project",
+                "subcategory": "PoC",
+                "ext": ".md"
+              }
+            ]
+          },
+          "Server": {
+            "_files": [
+              {
+                "path": "/docs/Project/PoC/Spark/Server/README.md",
+                "route": "/docs/Project/PoC/Spark/Server/README.md",
+                "title": "README",
+                "directoryPath": [
+                  "Project",
+                  "PoC",
+                  "Spark",
+                  "Server"
+                ],
+                "category": "Project",
+                "subcategory": "PoC",
+                "ext": ".md"
+              },
+              {
+                "path": "/docs/Project/PoC/Spark/Server/SDK_API_DOCS.md",
+                "route": "/docs/Project/PoC/Spark/Server/SDK_API_DOCS.md",
+                "title": "SDK_API_DOCS",
+                "directoryPath": [
+                  "Project",
+                  "PoC",
+                  "Spark",
+                  "Server"
+                ],
+                "category": "Project",
+                "subcategory": "PoC",
+                "ext": ".md"
+              },
+              {
+                "path": "/docs/Project/PoC/Spark/Server/SDK_CONNECTION_FIX.md",
+                "route": "/docs/Project/PoC/Spark/Server/SDK_CONNECTION_FIX.md",
+                "title": "SDK_CONNECTION_FIX",
+                "directoryPath": [
+                  "Project",
+                  "PoC",
+                  "Spark",
+                  "Server"
+                ],
+                "category": "Project",
+                "subcategory": "PoC",
+                "ext": ".md"
+              },
+              {
+                "path": "/docs/Project/PoC/Spark/Server/TECHNICAL_DOCS.md",
+                "route": "/docs/Project/PoC/Spark/Server/TECHNICAL_DOCS.md",
+                "title": "TECHNICAL_DOCS",
+                "directoryPath": [
+                  "Project",
+                  "PoC",
+                  "Spark",
+                  "Server"
+                ],
+                "category": "Project",
+                "subcategory": "PoC",
+                "ext": ".md"
+              },
+              {
+                "path": "/docs/Project/PoC/Spark/Server/TEST_GUIDE.md",
+                "route": "/docs/Project/PoC/Spark/Server/TEST_GUIDE.md",
+                "title": "TEST_GUIDE",
+                "directoryPath": [
+                  "Project",
+                  "PoC",
+                  "Spark",
+                  "Server"
+                ],
+                "category": "Project",
+                "subcategory": "PoC",
+                "ext": ".md"
+              }
+            ]
+          },
+          "spark-reverse-auction": {
+            "MVP": {
+              "_files": [
+                {
+                  "path": "/docs/Project/PoC/Spark/spark-reverse-auction/MVP/mvp.md",
+                  "route": "/docs/Project/PoC/Spark/spark-reverse-auction/MVP/mvp.md",
+                  "title": "mvp",
+                  "directoryPath": [
+                    "Project",
+                    "PoC",
+                    "Spark",
+                    "spark-reverse-auction",
+                    "MVP"
+                  ],
+                  "category": "Project",
+                  "subcategory": "PoC",
+                  "ext": ".md"
+                },
+                {
+                  "path": "/docs/Project/PoC/Spark/spark-reverse-auction/MVP/REVERSE-AUCTION-POC-MVP.md",
+                  "route": "/docs/Project/PoC/Spark/spark-reverse-auction/MVP/REVERSE-AUCTION-POC-MVP.md",
+                  "title": "REVERSE-AUCTION-POC-MVP",
+                  "directoryPath": [
+                    "Project",
+                    "PoC",
+                    "Spark",
+                    "spark-reverse-auction",
+                    "MVP"
+                  ],
+                  "category": "Project",
+                  "subcategory": "PoC",
+                  "ext": ".md"
+                }
+              ]
+            },
+            "prompt": {
+              "_files": [
+                {
+                  "path": "/docs/Project/PoC/Spark/spark-reverse-auction/prompt/REVERSE_ACUTION_PROMPT.md",
+                  "route": "/docs/Project/PoC/Spark/spark-reverse-auction/prompt/REVERSE_ACUTION_PROMPT.md",
+                  "title": "REVERSE_ACUTION_PROMPT",
+                  "directoryPath": [
+                    "Project",
+                    "PoC",
+                    "Spark",
+                    "spark-reverse-auction",
+                    "prompt"
+                  ],
+                  "category": "Project",
+                  "subcategory": "PoC",
+                  "ext": ".md"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "sprout": {
+        "_files": [
+          {
+            "path": "/docs/Project/sprout/ARCHITECTURE.md",
+            "route": "/docs/Project/sprout/ARCHITECTURE.md",
+            "title": "ARCHITECTURE",
+            "directoryPath": [
+              "Project",
+              "sprout"
+            ],
+            "category": "Project",
+            "subcategory": "sprout",
+            "ext": ".md"
+          }
+        ]
+      }
+    }
+  }
+}

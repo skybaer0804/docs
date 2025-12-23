@@ -121,10 +121,9 @@ CREATE INDEX idx_nodes_path ON nodes(path);
 ## 5. 비즈니스 로직 (Business Logic)
 
 ### 5.1 인증 (Authentication)
+-   **로그인**: Supabase Auth 기능을 사용하거나, 직접 구현 시 Supabase가 발급한 JWT Secret을 사용하여 토큰을 검증합니다.
+-   **미들웨어**: API 요청 헤더(`Authorization: Bearer <token>`)에 포함된 토큰을 Supabase의 JWT Secret으로 검증하여 사용자 신원을 확인합니다.
 
--   **로그인**: `POST /api/auth/login`
-    -   ID/PW 검증 후 JWT Access Token 발급 (HttpOnly Cookie 또는 Header).
--   **미들웨어**: 문서 생성/수정/삭제 요청 시 JWT 토큰 유효성 검사.
 
 ### 5.2 라우팅 및 SPA Fallback (새로고침 문제 해결)
 
