@@ -1,53 +1,62 @@
 import { createContext } from 'preact';
 import { useContext, useState, useEffect } from 'preact/hooks';
-import { createClient } from '@supabase/supabase-js';
-
-// Supabase 클라이언트 초기화
-// Vite 환경변수는 import.meta.env 로 접근
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-export const supabase = createClient(supabaseUrl, supabaseKey);
+import {
+  login as apiLogin,
+  register as apiRegister,
+  logout as apiLogout,
+  getCurrentUser,
+  getToken,
+} from '../utils/api';
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        // 현재 세션 확인
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setUser(session?.user ?? null);
-            setLoading(false);
+  useEffect(() => {
+    // 토큰이 있으면 사용자 정보 조회
+    const token = getToken();
+    if (token) {
+      getCurrentUser()
+        .then((data) => {
+          setUser(data.user);
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error('Failed to get user:', err);
+          setUser(null);
+          setLoading(false);
         });
+    } else {
+      setLoading(false);
+    }
+  }, []);
 
-        // 인증 상태 변경 리스너
-        const {
-            data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
-            setUser(session?.user ?? null);
-        });
+  const signIn = async (email, password) => {
+    const data = await apiLogin(email, password);
+    setUser(data.user);
+    return data;
+  };
 
-        return () => subscription.unsubscribe();
-    }, []);
+  const signUp = async (username, email, password) => {
+    const data = await apiRegister(username, email, password);
+    setUser(data.user);
+    return data;
+  };
 
-    const signIn = async (email, password) => {
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        });
-        if (error) throw error;
-    };
+  const signOut = async () => {
+    apiLogout();
+    setUser(null);
+  };
 
-    const signOut = async () => {
-        const { error } = await supabase.auth.signOut();
-        if (error) throw error;
-    };
-
-    return <AuthContext.Provider value={{ user, loading, signIn, signOut }}>{!loading && children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+      {!loading && children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
-    return useContext(AuthContext);
+  return useContext(AuthContext);
 }

@@ -1,6 +1,6 @@
 @use '../style.scss' as *;
 
-.login-page {
+.register-page {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -8,7 +8,7 @@
     background-color: var(--bg-color);
 }
 
-.login-container {
+.register-container {
     background-color: var(--card-bg);
     padding: 2rem;
     border-radius: 8px;
@@ -50,20 +50,25 @@
             background-color: var(--input-bg-color, #ffffff);
             color: var(--text-color);
             transition: border-color 0.2s;
+            box-sizing: border-box;
 
             &:focus {
                 outline: none;
                 border-color: var(--primary-color);
             }
+
+            &::placeholder {
+                color: var(--text-muted-color, #999);
+            }
         }
     }
 
-    .login-button {
+    .register-button {
         width: 100%;
         margin-bottom: 1rem;
     }
 
-    .login-footer {
+    .register-footer {
         text-align: center;
         margin-top: 1.5rem;
         padding-top: 1.5rem;
@@ -96,3 +101,4 @@
         }
     }
 }
+

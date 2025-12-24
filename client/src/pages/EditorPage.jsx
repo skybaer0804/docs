@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../contexts/AuthContext';
 import { fetchDocContent, createDoc, updateDoc } from '../utils/api';
 import { route } from 'preact-router';
 import { Button } from '../components/Button';
@@ -61,10 +60,6 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
         setLoading(true);
 
         try {
-            // Supabase 세션에서 토큰 가져오기
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
-
             if (mode === 'create') {
                 const name = `${title}.md`;
                 await createDoc({
@@ -73,7 +68,7 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
                     name,
                     content,
                     is_public: isPublic
-                }, token);
+                });
                 
                 alert('문서가 생성되었습니다.');
                 route(`${parentPath}/${name}`.replace('//', '/')); // 생성된 페이지로 이동
@@ -82,7 +77,7 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
                     content,
                     is_public: isPublic,
                     name: `${title}.md` // 제목 수정 시 이름도 변경
-                }, token);
+                });
                 
                 alert('문서가 수정되었습니다.');
                 route(path); // 원래 페이지로 이동

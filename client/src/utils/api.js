@@ -1,17 +1,138 @@
 // API 유틸리티: 백엔드 서버 통신 담당
 
 const API_BASE = '/api/docs';
+const AUTH_API_BASE = '/api/auth';
+
+/**
+ * 로컬 스토리지에서 토큰 가져오기
+ */
+export function getToken() {
+  return localStorage.getItem('auth_token');
+}
+
+/**
+ * 로컬 스토리지에 토큰 저장
+ */
+export function setToken(token) {
+  localStorage.setItem('auth_token', token);
+}
+
+/**
+ * 로컬 스토리지에서 토큰 제거
+ */
+export function removeToken() {
+  localStorage.removeItem('auth_token');
+}
+
+/**
+ * 회원가입 API 호출
+ * @param {string} username
+ * @param {string} email
+ * @param {string} password
+ * @returns {Promise<Object>} { token, user }
+ */
+export async function register(username, email, password) {
+  const response = await fetch(`${AUTH_API_BASE}/register`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ username, email, password }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error || 'Registration failed');
+  }
+
+  const data = await response.json();
+
+  // 토큰을 로컬 스토리지에 저장
+  if (data.token) {
+    setToken(data.token);
+  }
+
+  return data;
+}
+
+/**
+ * 로그인 API 호출
+ * @param {string} email
+ * @param {string} password
+ * @returns {Promise<Object>} { token, user }
+ */
+export async function login(email, password) {
+  const response = await fetch(`${AUTH_API_BASE}/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error || 'Login failed');
+  }
+
+  const data = await response.json();
+
+  // 토큰을 로컬 스토리지에 저장
+  if (data.token) {
+    setToken(data.token);
+  }
+
+  return data;
+}
+
+/**
+ * 현재 사용자 정보 조회
+ * @returns {Promise<Object>} { user }
+ */
+export async function getCurrentUser() {
+  const token = getToken();
+  if (!token) {
+    throw new Error('No token found');
+  }
+
+  const response = await fetch(`${AUTH_API_BASE}/me`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      // 토큰이 만료되었거나 유효하지 않음
+      removeToken();
+      throw new Error('Session expired');
+    }
+    const err = await response.json();
+    throw new Error(err.error || 'Failed to get user info');
+  }
+
+  return response.json();
+}
+
+/**
+ * 로그아웃 (클라이언트 측 토큰 제거)
+ */
+export function logout() {
+  removeToken();
+}
 
 /**
  * 모든 문서 구조(Nodes)를 가져옵니다.
  * @returns {Promise<Array>} 노드 목록 (id, parent_id, name, type, path 등)
  */
 export async function fetchAllDocs() {
-    const response = await fetch(API_BASE);
-    if (!response.ok) {
-        throw new Error('Failed to fetch docs structure');
-    }
-    return response.json();
+  const response = await fetch(API_BASE);
+  if (!response.ok) {
+    throw new Error('Failed to fetch docs structure');
+  }
+  return response.json();
 }
 
 /**
@@ -20,72 +141,82 @@ export async function fetchAllDocs() {
  * @returns {Promise<Object>} 문서 객체 (content 포함)
  */
 export async function fetchDocContent(path) {
-    // path가 /로 시작하지 않으면 붙여줌
-    const cleanPath = path.startsWith('/') ? path : `/${path}`;
-    const encodedPath = cleanPath.split('/').map(encodeURIComponent).join('/');
+  // path가 /로 시작하지 않으면 붙여줌
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  const encodedPath = cleanPath.split('/').map(encodeURIComponent).join('/');
 
-    // API 라우팅상 /api/docs/some/path 로 요청해야 함
-    // 주의: API_BASE가 /api/docs 이므로, /api/docs/docs/guide 처럼 중복될 수 있음.
-    // 백엔드 라우터가 /api/docs/* 로 되어 있고, DB path가 /docs/... 로 저장되어 있다면
-    // 요청 URL은 /api/docs/docs/guide 가 맞음.
+  // API 라우팅상 /api/docs/some/path 로 요청해야 함
+  // 주의: API_BASE가 /api/docs 이므로, /api/docs/docs/guide 처럼 중복될 수 있음.
+  // 백엔드 라우터가 /api/docs/* 로 되어 있고, DB path가 /docs/... 로 저장되어 있다면
+  // 요청 URL은 /api/docs/docs/guide 가 맞음.
 
-    // 하지만 현재 백엔드 로직:
-    // router.get('/*', docsController.getDocByPath);
-    // getDocByPath: req.params[0] (와일드카드 전체)를 사용.
-    // 만약 DB에 path가 "/docs/guide"로 저장되어 있다면,
-    // 클라이언트는 GET /api/docs/docs/guide 라고 호출해야 req.params[0]이 "docs/guide"가 됨.
+  // 하지만 현재 백엔드 로직:
+  // router.get('/*', docsController.getDocByPath);
+  // getDocByPath: req.params[0] (와일드카드 전체)를 사용.
+  // 만약 DB에 path가 "/docs/guide"로 저장되어 있다면,
+  // 클라이언트는 GET /api/docs/docs/guide 라고 호출해야 req.params[0]이 "docs/guide"가 됨.
 
-    // DB 저장 시 path 규칙을 어떻게 했느냐에 따라 다름.
-    // 로컬 파일 시스템 마이그레이션 시, 기존 URL이 "/docs/..." 였으므로 DB path도 "/docs/..." 일 것임.
+  // DB 저장 시 path 규칙을 어떻게 했느냐에 따라 다름.
+  // 로컬 파일 시스템 마이그레이션 시, 기존 URL이 "/docs/..." 였으므로 DB path도 "/docs/..." 일 것임.
 
-    // 따라서 요청은 /api/docs/docs/... 형태가 되어야 함.
-    // 하지만 path 파라미터가 이미 "/docs/..."를 포함하고 있다면:
-    const url = `${API_BASE}${cleanPath}`;
+  // 따라서 요청은 /api/docs/docs/... 형태가 되어야 함.
+  // 하지만 path 파라미터가 이미 "/docs/..."를 포함하고 있다면:
+  const url = `${API_BASE}${cleanPath}`;
 
-    const response = await fetch(url);
-    if (!response.ok) {
-        if (response.status === 404) return null;
-        throw new Error('Failed to fetch document content');
-    }
-    return response.json();
+  const response = await fetch(url);
+  if (!response.ok) {
+    if (response.status === 404) return null;
+    throw new Error('Failed to fetch document content');
+  }
+  return response.json();
 }
 
 /**
  * 새 문서를 생성합니다. (관리자 전용)
  */
-export async function createDoc(data, token) {
-    const response = await fetch(API_BASE, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-    });
+export async function createDoc(data, token = null) {
+  const authToken = token || getToken();
+  if (!authToken) {
+    throw new Error('Authentication required');
+  }
 
-    if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Failed to create document');
-    }
-    return response.json();
+  const response = await fetch(API_BASE, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${authToken}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error || 'Failed to create document');
+  }
+  return response.json();
 }
 
 /**
  * 문서를 수정합니다. (관리자 전용)
  */
-export async function updateDoc(id, data, token) {
-    const response = await fetch(`${API_BASE}/${id}`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-    });
+export async function updateDoc(id, data, token = null) {
+  const authToken = token || getToken();
+  if (!authToken) {
+    throw new Error('Authentication required');
+  }
 
-    if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Failed to update document');
-    }
-    return response.json();
+  const response = await fetch(`${API_BASE}/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${authToken}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error || 'Failed to update document');
+  }
+  return response.json();
 }

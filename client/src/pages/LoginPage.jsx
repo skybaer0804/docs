@@ -39,6 +39,12 @@ export function LoginPage({ onNavigate }) {
     }
   };
 
+  const handleRegisterClick = () => {
+    if (onNavigate) {
+      onNavigate('/register', { force: true });
+    }
+  };
+
   return (
     <div className="login-page">
       <div className="login-container">
@@ -63,6 +69,12 @@ export function LoginPage({ onNavigate }) {
             {loading ? '로그인 중...' : '로그인'}
           </Button>
         </form>
+        <div className="login-footer">
+          <span>계정이 없으신가요?</span>
+          <button type="button" className="link-button" onClick={handleRegisterClick}>
+            회원가입
+          </button>
+        </div>
       </div>
     </div>
   );

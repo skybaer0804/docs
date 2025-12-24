@@ -3,6 +3,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { LayoutContainer } from './containers/LayoutContainer';
 import { DocPageContainer } from './containers/DocPageContainer';
 import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
 import { EditorPage } from './pages/EditorPage';
 
 /**
@@ -81,6 +82,10 @@ export function App() {
   const renderContent = () => {
     if (currentRoute === '/login') {
       return <LoginPage onNavigate={handleNavigate} />;
+    }
+
+    if (currentRoute === '/register') {
+      return <RegisterPage onNavigate={handleNavigate} />;
     }
 
     // 문서 작성/수정 페이지

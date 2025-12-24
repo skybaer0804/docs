@@ -1,2 +1,4 @@
-VITE_SUPABASE_URL=https://[본인프로젝트ID].supabase.co
-VITE_SUPABASE_ANON_KEY=[본인AnonKey]
+# 클라이언트 환경변수
+# JWT 인증은 백엔드에서 처리되므로 클라이언트 환경변수 불필요
+# 필요시 백엔드 API URL 설정 가능
+# VITE_API_URL=http://localhost:5000
