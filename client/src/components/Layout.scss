@@ -134,7 +134,9 @@
         color: #666;
         cursor: pointer;
         transition: all 0.2s;
-        margin-left: auto;
+        width: 34px;
+        height: 34px;
+        box-sizing: border-box;
 
         &:hover {
             background-color: #f5f5f5;
@@ -205,21 +207,26 @@
         margin-left: auto; // 오른쪽 끝으로 밀기
     }
 
-    &__auth-btn {
+    &__auth-btn,
+    &__theme-toggle {
         display: flex;
         align-items: center;
         justify-content: center;
         background: transparent;
-        border: 1px solid transparent;
-        border-radius: 4px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
         padding: 6px;
         color: #666;
         cursor: pointer;
         transition: all 0.2s;
+        width: 34px;
+        height: 34px;
+        box-sizing: border-box;
 
         &:hover {
             background-color: #f5f5f5;
             color: #333;
+            border-color: #ccc;
         }
 
         &:active {
@@ -227,7 +234,6 @@
         }
     }
 }
-
 
 // 다크모드
 body[data-theme='dark'] {
@@ -286,12 +292,16 @@ body[data-theme='dark'] {
             }
         }
 
-        &__search-btn {
+        &__search-btn,
+        &__auth-btn,
+        &__theme-toggle {
             color: #b0b0b0;
+            border-color: #444;
 
             &:hover {
                 background-color: #333;
                 color: #e0e0e0;
+                border-color: #555;
             }
         }
     }

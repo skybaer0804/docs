@@ -57,6 +57,29 @@
         }
     }
 
+    &__close-btn {
+        background: transparent;
+        border: none;
+        color: #999;
+        cursor: pointer;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        transition: all 0.2s;
+        margin-left: 8px;
+
+        &:hover {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        &:active {
+            transform: scale(0.9);
+        }
+    }
+
     &__body {
         overflow-y: auto;
         max-height: 60vh;
@@ -199,6 +222,15 @@
 
         &__search-icon {
             color: #888;
+        }
+
+        &__close-btn {
+            color: #888;
+
+            &:hover {
+                background-color: #444;
+                color: #fff;
+            }
         }
 
         &__section-title {

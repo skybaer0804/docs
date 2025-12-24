@@ -36,31 +36,35 @@ export function DocPageContainer({ currentRoute, onNavigate }) {
     const parentRoute = useMemo(() => {
         if (!currentRoute) return null;
 
-        const { files } = getMarkdownFiles();
-        const file = files.find((f) => f.route === currentRoute);
+        if (currentRoute === '/') return null;
 
-        if (file) {
-            // 현재 파일의 상위 디렉토리 경로 계산
-            if (file.directoryPath && file.directoryPath.length > 0) {
-                const parentPath = file.directoryPath.slice(0, -1);
-                if (parentPath.length > 0) {
-                    return `/category/${parentPath.join('/')}`;
-                } else {
-                    return `/category/${file.category}`;
-                }
-            } else if (file.category) {
-                return `/category/${file.category}`;
-            }
-        } else if (currentRoute.startsWith('/category/')) {
-            // 카테고리 경로인 경우 상위로 이동
+        if (currentRoute.startsWith('/category/')) {
             const parts = currentRoute
                 .replace('/category/', '')
                 .split('/')
                 .filter((p) => p);
             if (parts.length > 1) {
-                return `/category/${parts[0]}`;
+                return `/category/${parts.slice(0, -1).join('/')}`;
             } else if (parts.length === 1) {
                 return '/';
+            }
+        } else {
+            // 파일 경로인 경우 (예: /docs/Platform/Web/guide)
+            const parts = currentRoute.split('/').filter(Boolean);
+            if (parts.length > 1) {
+                // parts[0] === 'docs' 가정
+                let categoryPath = '';
+                if (parts[0] === 'docs') {
+                    categoryPath = parts.slice(1, -1).join('/');
+                } else {
+                    categoryPath = parts.slice(0, -1).join('/');
+                }
+                
+                if (categoryPath) {
+                    return `/category/${categoryPath}`;
+                } else {
+                    return '/';
+                }
             }
         }
 

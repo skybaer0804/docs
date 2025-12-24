@@ -75,7 +75,7 @@ function cleanTreeStructure(dirtyTree) {
     
     // files 배열 처리
     if (dirtyTree.files) {
-        clean.files = dirtyTree.files;
+        clean._files = dirtyTree.files;
     }
 
     Object.keys(dirtyTree).forEach(key => {
@@ -89,7 +89,7 @@ function cleanTreeStructure(dirtyTree) {
         
         // 현재 폴더의 파일들
         if (node.files && node.files.length > 0) {
-            cleanChildren.files = node.files;
+            cleanChildren._files = node.files;
         }
 
         clean[key] = cleanChildren;
@@ -97,4 +97,7 @@ function cleanTreeStructure(dirtyTree) {
 
     return clean;
 }
+
+
+
 

@@ -9,7 +9,14 @@ export const handleBreadcrumbClick = (item, onNavigate) => {
         // 카테고리/서브카테고리 클릭 시 해당 폴더 뷰로 이동
         if (item.type === 'category') {
             // path가 있으면 사용 (directoryPath 기반)
-            const categoryRoute = item.path ? `/category/${item.path}` : `/category/${item.category}`;
+            // path에서 /docs/ 로 시작하는 부분은 category 라우팅을 위해 처리 필요할 수 있음
+            let cleanPath = item.path || item.category;
+            if (cleanPath.startsWith('/docs/')) {
+                cleanPath = cleanPath.substring(6);
+            } else if (cleanPath.startsWith('docs/')) {
+                cleanPath = cleanPath.substring(5);
+            }
+            const categoryRoute = `/category/${cleanPath}`;
             onNavigate(categoryRoute);
         } else if (item.type === 'subcategory') {
             const subcategoryRoute = `/category/${item.category}/${item.subcategory}`;
@@ -24,10 +31,13 @@ export const handleBreadcrumbClick = (item, onNavigate) => {
 export const getBreadcrumbLinkRoute = (item) => {
     if (item.type === 'category') {
         // path가 있으면 사용 (directoryPath 기반)
-        if (item.path) {
-            return `/category/${item.path}`;
+        let cleanPath = item.path || item.category;
+        if (cleanPath.startsWith('/docs/')) {
+            cleanPath = cleanPath.substring(6);
+        } else if (cleanPath.startsWith('docs/')) {
+            cleanPath = cleanPath.substring(5);
         }
-        return `/category/${item.category}`;
+        return `/category/${cleanPath}`;
     }
     if (item.type === 'subcategory') {
         return `/category/${item.category}/${item.subcategory}`;

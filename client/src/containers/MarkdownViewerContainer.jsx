@@ -1,9 +1,10 @@
 import { useEffect, useState, useRef, useMemo } from 'preact/hooks';
 import { marked } from 'marked';
 import { downloadFile } from '../utils/downloadUtils';
-import { getMarkdownFiles } from '../utils/markdownLoader';
+import { fetchAllDocs } from '../utils/api';
 import { MarkdownViewerPresenter } from '../components/MarkdownViewer';
 import { MarkdownParser, resolvePath, findTargetFile } from '../tdd/MarkdownLogic';
+import { devError } from '../utils/logger';
 
 /**
  * MarkdownViewer Container 컴포넌트
@@ -13,10 +14,32 @@ import { MarkdownParser, resolvePath, findTargetFile } from '../tdd/MarkdownLogi
  */
 export function MarkdownViewerContainer({ content, file, onNavigate, onContentRef }) {
     const [html, setHtml] = useState('');
+    const [allFiles, setAllFiles] = useState([]);
     const contentRef = useRef(null);
 
     // MarkdownParser 인스턴스 메모이제이션 (marked 라이브러리 주입)
     const parser = useMemo(() => new MarkdownParser(marked), []);
+
+    // 전체 문서 구조 조회 (내부 링크 처리용)
+    useEffect(() => {
+        async function loadData() {
+            try {
+                const nodes = await fetchAllDocs();
+                const files = nodes
+                    .filter(n => n.type === 'FILE')
+                    .map(n => ({
+                        path: n.path,
+                        route: n.path,
+                        title: n.name.replace(/\.md$/, ''),
+                        name: n.name
+                    }));
+                setAllFiles(files);
+            } catch (error) {
+                devError('Error loading docs for link resolver:', error);
+            }
+        }
+        loadData();
+    }, []);
 
     // contentRef를 외부로 노출 (알림 기능 등에서 사용)
     useEffect(() => {
@@ -80,9 +103,8 @@ export function MarkdownViewerContainer({ content, file, onNavigate, onContentRe
                 routePath = resolvePath(file.path, href);
             }
 
-            // docs-list에서 해당 route 찾기
-            const { files } = getMarkdownFiles();
-            const targetFile = findTargetFile(files, routePath);
+            // 매칭되는 파일 찾기
+            const targetFile = findTargetFile(allFiles, routePath);
 
             if (targetFile) {
                 if (onNavigate) {
@@ -103,7 +125,7 @@ export function MarkdownViewerContainer({ content, file, onNavigate, onContentRe
                 contentEl.removeEventListener('click', handleLinkClick);
             };
         }
-    }, [html, file, onNavigate]);
+    }, [html, file, onNavigate, allFiles]);
 
     const handleDownload = () => {
         if (file && file.path) {

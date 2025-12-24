@@ -21,14 +21,10 @@ exports.getDocByPath = async (req, res) => {
   try {
     const pathParam = req.params[0]; // wildcard capture
     const fullPath = `/${pathParam}`;
-    
+
     // 로그인 여부 확인 (미들웨어에서 req.user 설정 가정)
     // 비로그인 상태면 is_public 체크
-    let query = supabase
-      .from('nodes')
-      .select('*')
-      .eq('path', fullPath)
-      .single();
+    let query = supabase.from('nodes').select('*').eq('path', fullPath).single();
 
     const { data: doc, error } = await query;
 
@@ -53,22 +49,18 @@ exports.getDocByPath = async (req, res) => {
 exports.createDoc = async (req, res) => {
   try {
     const { type, parent_path, name, content, is_public } = req.body;
-    
+
     // 1. 부모 ID 찾기 (Root인 경우 parent_path가 없거나 '/'일 수 있음)
     let parent_id = null;
     if (parent_path && parent_path !== '/') {
-      const { data: parent } = await supabase
-        .from('nodes')
-        .select('id')
-        .eq('path', parent_path)
-        .single();
-      
+      const { data: parent } = await supabase.from('nodes').select('id').eq('path', parent_path).single();
+
       if (!parent) return res.status(404).json({ error: 'Parent directory not found' });
       parent_id = parent.id;
     }
 
     // 2. 전체 경로 생성
-    const cleanParentPath = parent_path === '/' ? '' : (parent_path || '');
+    const cleanParentPath = parent_path === '/' ? '' : parent_path || '';
     const newPath = `${cleanParentPath}/${name}`;
 
     // 3. DB 저장
@@ -81,8 +73,8 @@ exports.createDoc = async (req, res) => {
           name,
           content: type === 'FILE' ? content : null,
           path: newPath,
-          is_public: is_public !== undefined ? is_public : true
-        }
+          is_public: is_public !== undefined ? is_public : true,
+        },
       ])
       .select()
       .single();
@@ -98,7 +90,7 @@ exports.createDoc = async (req, res) => {
 exports.uploadFile = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-    
+
     const { parent_path, is_public } = req.body;
     const content = req.file.buffer.toString('utf8');
     const originalName = req.file.originalname;
@@ -108,17 +100,13 @@ exports.uploadFile = async (req, res) => {
     // 여기선 복붙 형태로 간결하게
     let parent_id = null;
     if (parent_path && parent_path !== '/') {
-      const { data: parent } = await supabase
-        .from('nodes')
-        .select('id')
-        .eq('path', parent_path)
-        .single();
-      
+      const { data: parent } = await supabase.from('nodes').select('id').eq('path', parent_path).single();
+
       if (!parent) return res.status(404).json({ error: 'Parent directory not found' });
       parent_id = parent.id;
     }
 
-    const cleanParentPath = parent_path === '/' ? '' : (parent_path || '');
+    const cleanParentPath = parent_path === '/' ? '' : parent_path || '';
     const newPath = `${cleanParentPath}/${name}`;
 
     const { data, error } = await supabase
@@ -130,15 +118,14 @@ exports.uploadFile = async (req, res) => {
           name,
           content,
           path: newPath,
-          is_public: is_public !== undefined ? is_public : true
-        }
+          is_public: is_public !== undefined ? is_public : true,
+        },
       ])
       .select()
       .single();
 
     if (error) throw error;
     res.status(201).json(data);
-
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -157,12 +144,7 @@ exports.updateDoc = async (req, res) => {
     if (name !== undefined) updates.name = name;
     // 이름 변경 시 path 업데이트 로직 필요 (복잡하므로 일단 생략하거나 추후 구현)
 
-    const { data, error } = await supabase
-      .from('nodes')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
+    const { data, error } = await supabase.from('nodes').update(updates).eq('id', id).select().single();
 
     if (error) throw error;
     res.json(data);
@@ -175,10 +157,7 @@ exports.updateDoc = async (req, res) => {
 exports.deleteDoc = async (req, res) => {
   try {
     const { id } = req.params;
-    const { error } = await supabase
-      .from('nodes')
-      .delete()
-      .eq('id', id);
+    const { error } = await supabase.from('nodes').delete().eq('id', id);
 
     if (error) throw error;
     res.json({ message: 'Deleted successfully' });
@@ -186,4 +165,3 @@ exports.deleteDoc = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-

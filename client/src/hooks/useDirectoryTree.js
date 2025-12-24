@@ -106,14 +106,13 @@ export function useDirectoryTree(currentPath, onNavigate) {
     const handleFolderClick = (path) => {
         setExpandedPaths((prev) => ({
             ...prev,
-            [path]: prev[path] === undefined ? false : !prev[path],
+            [path]: !prev[path],
         }));
 
         // 카테고리 라우팅은 트리 구조상 가상 경로일 수 있음
         const categoryRoute = `/category/${path}`;
         if (onNavigate) {
-            // 폴더 클릭 시 네비게이션이 필요한지? 보통은 펼치기만 함.
-            // onNavigate(categoryRoute); 
+            onNavigate(categoryRoute);
         }
         navigationObserver.notify(categoryRoute, { type: 'folder' });
     };
