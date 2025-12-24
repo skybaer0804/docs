@@ -47,4 +47,3 @@ export function Toast({ message, type = 'info', isOpen, onClose, duration = 3000
     </div>
   );
 }
-

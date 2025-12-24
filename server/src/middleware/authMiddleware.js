@@ -18,12 +18,19 @@ module.exports = (req, res, next) => {
 
     jwt.verify(token, secret, (err, decoded) => {
         if (err) {
+            console.error('authMiddleware: Token verification failed', { error: err.message });
             return res.status(403).json({ error: 'Invalid token' });
         }
 
         // 3. 검증 성공 시 req.user에 사용자 정보 저장
         // 토큰에는 { id: 'user_id', email: 'user@example.com' } 등이 들어있음
+        if (!decoded || !decoded.id) {
+            console.error('authMiddleware: Decoded token missing id', { decoded });
+            return res.status(403).json({ error: 'Invalid token: missing user ID' });
+        }
+
         req.user = decoded;
+        console.log('authMiddleware: User authenticated', { userId: req.user.id, email: req.user.email });
         next();
     });
 };

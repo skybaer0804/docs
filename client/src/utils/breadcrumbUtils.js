@@ -70,11 +70,20 @@ export const buildCategoryBreadcrumbItems = (pathParts, category = null, subcate
                 currentPath = `${currentPath}/${dir}`;
             }
 
+            // URL 디코딩 처리
+            let decodedDir = dir;
+            try {
+                decodedDir = decodeURIComponent(dir);
+            } catch (e) {
+                // 디코딩 실패 시 원본 사용
+                decodedDir = dir;
+            }
+
             items.push({
-                label: dir,
+                label: decodedDir,
                 route: null,
                 type: 'category',
-                category: dir,
+                category: decodedDir,
                 path: currentPath,
                 level: index + 1,
             });
@@ -131,11 +140,20 @@ export const buildFileBreadcrumbItems = (file) => {
                 currentPath = `${currentPath}/${dir}`;
             }
 
+            // URL 디코딩 처리
+            let decodedDir = dir;
+            try {
+                decodedDir = decodeURIComponent(dir);
+            } catch (e) {
+                // 디코딩 실패 시 원본 사용
+                decodedDir = dir;
+            }
+
             items.push({
-                label: dir,
+                label: decodedDir,
                 route: null,
                 type: 'category',
-                category: dir,
+                category: decodedDir,
                 path: currentPath,
                 level: index + 1, // 들여쓰기 레벨 (1부터 시작)
             });

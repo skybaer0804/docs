@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'preact/hooks';
 import { useAuth } from '../contexts/AuthContext';
-import { fetchDocContent, createDoc, updateDoc } from '../utils/api';
+import { useToast } from '../contexts/ToastContext';
+import { fetchDocContent, createDoc, updateDoc, deleteDoc } from '../utils/api';
 import { route } from 'preact-router';
 import { Button } from '../components/Button';
 import { FileLocationModal } from '../components/FileEditor/FileLocationModal';
-import { IconFolder } from '@tabler/icons-preact';
+import { IconFolder, IconEye, IconEyeOff, IconTrash } from '@tabler/icons-preact';
+import { navigationObserver } from '../observers/NavigationObserver';
 import './EditorPage.scss';
 
 /**
@@ -15,6 +17,7 @@ import './EditorPage.scss';
  */
 export function EditorPage({ mode = 'create', path, onNavigate }) {
   const { user, loading: authLoading } = useAuth();
+  const { showSuccess, showError } = useToast();
 
   // URL 쿼리 파라미터에서 parent 경로 가져오기
   const getParentPathFromQuery = () => {
@@ -35,7 +38,12 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
     // 파일 경로인 경우 부모 디렉토리 추출
     const parts = currentPath.split('/').filter(Boolean);
     if (parts.length > 1) {
-      parts.pop(); // 파일명 제거
+      // 마지막 부분이 파일명인지 확인 (확장자가 있는 경우)
+      const lastPart = parts[parts.length - 1];
+      if (lastPart.includes('.') && !lastPart.startsWith('.')) {
+        // 파일명인 경우 제거
+        parts.pop();
+      }
       return '/' + parts.join('/');
     }
     return '/docs';
@@ -59,11 +67,17 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
     return params.get('type') === 'file';
   };
 
-  // 생성 모드일 때 URL 쿼리 파라미터에서 parent 경로 읽기
+  // 생성 모드일 때 URL 쿼리 파라미터에서 parent 경로 읽기 및 초기화
   useEffect(() => {
     if (mode === 'create') {
       const newParentPath = getParentPathFromQuery();
       setParentPath(newParentPath);
+      // 생성 모드일 때 폼 초기화
+      setTitle('');
+      setContent('# 제목\n\n내용을 입력하세요.');
+      setIsPublic(true);
+      setDocId(null);
+      setError('');
     }
   }, [mode]);
 
@@ -105,7 +119,7 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
     try {
       if (mode === 'create') {
         const name = `${title}.md`;
-        await createDoc({
+        const result = await createDoc({
           type: 'FILE',
           parent_path: parentPath,
           name,
@@ -113,21 +127,29 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
           is_public: isPublic,
         });
 
-        alert('문서가 생성되었습니다.');
+        showSuccess('문서가 생성되었습니다.');
         const newPath = `${parentPath}/${name}`.replace('//', '/');
+
+        // 트리 업데이트를 위한 이벤트 발생
+        navigationObserver.notify(newPath, { type: 'file', action: 'create', file: result });
+
         if (onNavigate) {
           onNavigate(newPath);
         } else {
           route(newPath);
         }
       } else {
-        await updateDoc(docId, {
+        const result = await updateDoc(docId, {
           content,
           is_public: isPublic,
           name: `${title}.md`, // 제목 수정 시 이름도 변경
         });
 
-        alert('문서가 수정되었습니다.');
+        showSuccess('문서가 수정되었습니다.');
+
+        // 트리 업데이트를 위한 이벤트 발생
+        navigationObserver.notify(path, { type: 'file', action: 'update', file: result });
+
         if (onNavigate) {
           onNavigate(path);
         } else {
@@ -137,6 +159,7 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
     } catch (err) {
       console.error(err);
       setError(err.message);
+      showError(err.message || '작업에 실패했습니다.');
     } finally {
       setLoading(false);
     }
@@ -158,15 +181,58 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
     setParentPath(selectedPath);
   };
 
+  const handleDelete = async () => {
+    if (!docId) return;
+
+    if (!confirm('정말 이 문서를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      await deleteDoc(docId);
+      showSuccess('문서가 삭제되었습니다.');
+
+      // 트리 업데이트를 위한 이벤트 발생
+      navigationObserver.notify(path, { type: 'file', action: 'delete' });
+
+      if (onNavigate) {
+        onNavigate('/');
+      } else {
+        route('/');
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+      showError(err.message || '삭제에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="editor-page">
-      <h1>{mode === 'create' ? (isFileType() ? '새 파일 생성' : '새 문서 작성') : '문서 수정'}</h1>
       {error && <div className="error-message">{error}</div>}
 
       <form onSubmit={handleSubmit} className="editor-form">
+        {/* 전체 공개 토글 - 우상단 */}
+        <div className="editor-page__public-toggle">
+          <button
+            type="button"
+            className={`editor-page__toggle-btn ${isPublic ? 'editor-page__toggle-btn--active' : ''}`}
+            onClick={() => setIsPublic(!isPublic)}
+            aria-label={isPublic ? '전체 공개' : '비공개'}
+            title={isPublic ? '전체 공개 (로그인 없이 열람 가능)' : '비공개 (로그인 필요)'}
+          >
+            {isPublic ? <IconEye size={20} /> : <IconEyeOff size={20} />}
+          </button>
+        </div>
+
         <div className="form-row">
           <div className="form-group">
-            <label>제목 (파일명)</label>
+            <label>제목</label>
             <input
               type="text"
               value={title}
@@ -204,16 +270,24 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
         </div>
 
         <div className="form-group editor-area">
-          <label>내용 (Markdown)</label>
+          <label>내용</label>
           <textarea value={content} onInput={(e) => setContent(e.target.value)} required></textarea>
         </div>
 
         <div className="editor-footer">
-          <div className="form-group checkbox-group">
-            <div className="checkbox-wrapper">
-              <input type="checkbox" id="isPublic" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} />
-              <label htmlFor="isPublic">전체 공개 (로그인 없이 열람 가능)</label>
-            </div>
+          <div className="editor-footer__left">
+            {mode === 'edit' && docId && (
+              <Button
+                type="button"
+                variant="danger"
+                onClick={handleDelete}
+                disabled={loading}
+                className="editor-footer__delete-btn"
+              >
+                <IconTrash size={18} />
+                삭제
+              </Button>
+            )}
           </div>
           <div className="button-group">
             <Button type="button" variant="secondary" onClick={handleCancel} disabled={loading}>

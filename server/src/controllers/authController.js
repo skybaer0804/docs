@@ -167,12 +167,53 @@ exports.getMe = async (req, res) => {
       id: user.id,
       username: user.username,
       email: user.email,
+      document_title: user.document_title,
+      personal_link: user.personal_link,
       created_at: user.created_at,
     };
 
     res.json({ user: userInfo });
   } catch (err) {
     console.error('Get me error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+/**
+ * 사용자 프로필 업데이트
+ * PUT /api/auth/profile
+ */
+exports.updateProfile = async (req, res) => {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const { document_title, personal_link } = req.body;
+
+    // 업데이트할 필드만 추출
+    const updates = {};
+    if (document_title !== undefined) updates.document_title = document_title;
+    if (personal_link !== undefined) updates.personal_link = personal_link;
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    const updatedUser = await UserModel.updateProfile(req.user.id, updates);
+
+    const userInfo = {
+      id: updatedUser.id,
+      username: updatedUser.username,
+      email: updatedUser.email,
+      document_title: updatedUser.document_title,
+      personal_link: updatedUser.personal_link,
+      created_at: updatedUser.created_at,
+    };
+
+    res.json({ user: userInfo });
+  } catch (err) {
+    console.error('Update profile error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 };

@@ -18,6 +18,9 @@
 export function buildDirectoryTree(nodes) {
     const tree = {};
     const idMap = {}; // id -> node 객체 매핑 (참조용)
+    
+    // /docs 폴더의 ID 찾기 (경로가 '/docs'이고 parent_id가 null인 노드)
+    const docsRootId = nodes.find(n => n.path === '/docs' && (n.parent_id === null || n.parent_id === undefined))?.id;
 
     // 1. 모든 노드를 idMap에 저장하고, children 배열 초기화
     nodes.forEach(node => {
@@ -32,13 +35,27 @@ export function buildDirectoryTree(nodes) {
     nodes.forEach(node => {
         const current = idMap[node.id];
         
-        if (node.parent_id === null) {
-            // 최상위 노드인 경우 (하지만 보통 최상위는 'public/docs' 폴더가 아니라 그 내용물들이 루트로 옴)
-            // 기존 로직상 'Platform' 같은 대분류가 최상위 키가 됨.
+        // /docs 폴더 자체는 트리에서 제외
+        if (docsRootId && node.id === docsRootId) {
+            return;
+        }
+        
+        // /docs의 직접 하위 노드들은 최상위로 처리
+        if (docsRootId && node.parent_id === docsRootId) {
             if (node.type === 'DIRECTORY') {
-                tree[node.name] = current; // 잠시 전체 객체를 넣음
+                tree[node.name] = current;
             } else {
-                // 루트 파일
+                if (!tree.files) tree.files = [];
+                tree.files.push(transformFileNode(node));
+            }
+            return;
+        }
+        
+        if (node.parent_id === null || node.parent_id === undefined) {
+            // 최상위 노드인 경우 (/docs가 없는 경우를 대비)
+            if (node.type === 'DIRECTORY') {
+                tree[node.name] = current;
+            } else {
                 if (!tree.files) tree.files = [];
                 tree.files.push(transformFileNode(node));
             }
@@ -49,6 +66,30 @@ export function buildDirectoryTree(nodes) {
                     parent.children[node.name] = current;
                 } else {
                     parent.files.push(transformFileNode(node));
+                }
+            } else {
+                // 부모가 없는 경우 경로 기반으로 처리 시도
+                console.warn('Parent not found for node:', node.path, 'parent_id:', node.parent_id);
+                
+                // 경로 기반으로 부모 찾기 시도
+                if (node.path && node.path.startsWith('/docs/')) {
+                    const pathParts = node.path.split('/').filter(Boolean);
+                    if (pathParts.length > 1 && pathParts[0] === 'docs') {
+                        // /docs/Archtecture/BCP 같은 경우
+                        // 부모 경로를 찾아서 처리
+                        const parentPath = '/' + pathParts.slice(0, -1).join('/');
+                        const parentNode = nodes.find(n => n.path === parentPath);
+                        if (parentNode && idMap[parentNode.id]) {
+                            const foundParent = idMap[parentNode.id];
+                            if (node.type === 'DIRECTORY') {
+                                foundParent.children[node.name] = current;
+                            } else {
+                                foundParent.files.push(transformFileNode(node));
+                            }
+                        } else {
+                            console.warn('Parent node not found by path:', parentPath);
+                        }
+                    }
                 }
             }
         }

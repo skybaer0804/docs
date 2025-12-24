@@ -5,6 +5,7 @@ import { DocPageContainer } from './containers/DocPageContainer';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { EditorPage } from './pages/EditorPage';
+import { ProfilePage } from './pages/ProfilePage';
 
 /**
  * SPA 구조의 App 컴포넌트
@@ -86,6 +87,10 @@ export function App() {
 
     if (currentRoute === '/register') {
       return <RegisterPage onNavigate={handleNavigate} />;
+    }
+
+    if (currentRoute === '/profile') {
+      return <ProfilePage onNavigate={handleNavigate} />;
     }
 
     // 문서 작성/수정 페이지

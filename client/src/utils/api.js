@@ -244,3 +244,31 @@ export async function deleteDoc(id, token = null) {
     }
     return response.json();
 }
+
+/**
+ * 사용자 프로필 업데이트
+ * @param {Object} data - { document_title, personal_link }
+ * @returns {Promise<Object>} { user }
+ */
+export async function updateProfile(data) {
+    const token = getToken();
+    if (!token) {
+        throw new Error('Authentication required');
+    }
+
+    const response = await fetch(`${AUTH_API_BASE}/profile`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to update profile');
+    }
+
+    return response.json();
+}

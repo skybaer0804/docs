@@ -64,6 +64,27 @@ class UserModel {
     }
     return data;
   }
+
+  /**
+   * 사용자 프로필 업데이트
+   * @param {string} id
+   * @param {Object} updates - 업데이트할 필드들 (document_title, personal_link)
+   * @returns {Promise<Object>} 업데이트된 사용자 객체
+   */
+  static async updateProfile(id, updates) {
+    const { data, error } = await supabase
+      .from('users')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('UserModel.updateProfile error:', error);
+      throw error;
+    }
+    return data;
+  }
 }
 
 module.exports = UserModel;

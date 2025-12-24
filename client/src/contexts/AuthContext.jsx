@@ -65,8 +65,12 @@ export function AuthProvider({ children }) {
     showSuccess('로그아웃되었습니다');
   };
 
+  const updateUser = (updatedUser) => {
+    setUser(updatedUser);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, updateUser }}>
       {!loading && children}
     </AuthContext.Provider>
   );

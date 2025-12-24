@@ -1,6 +1,7 @@
 import { BreadcrumbContainer } from '../containers/BreadcrumbContainer';
 import { useSidebar } from '../contexts/SidebarContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 import {
   handleBreadcrumbClick,
   getBreadcrumbLinkRoute,
@@ -88,17 +89,20 @@ function BreadcrumbNavPresenter({ items, onNavigate, sidebarCollapsed, onToggleC
 export function BreadcrumbPresenter({ items, displayType, currentRoute, onNavigate }) {
   const sidebar = useSidebar();
   const theme = useTheme();
+  const { user } = useAuth();
   const onToggleSidebar = sidebar?.toggleSidebar;
   const onToggleCollapse = sidebar?.toggleSidebarCollapse;
   const sidebarCollapsed = sidebar?.sidebarCollapsed;
 
+  // 사용자의 document_title이 있으면 사용, 없으면 기본값
+  const documentTitle = user?.document_title || 'Nodnjs Documentation';
+  // 사용자의 personal_link가 있으면 사용, 없으면 기본값
+  const personalLink =
+    user?.personal_link || 'https://skybear.notion.site/Web-Developer-91775e3d66dd4b0893b871bce56894db?pvs=74';
+
   const handleExternalLinkClick = (e) => {
     e.preventDefault();
-    window.open(
-      'https://skybear.notion.site/Web-Developer-91775e3d66dd4b0893b871bce56894db?pvs=74',
-      '_blank',
-      'noopener,noreferrer',
-    );
+    window.open(personalLink, '_blank', 'noopener,noreferrer');
   };
 
   if (displayType === 'none') {
@@ -109,17 +113,19 @@ export function BreadcrumbPresenter({ items, displayType, currentRoute, onNaviga
     <div class="header__breadcrumb">
       <div class="header__title-wrapper">
         <h1 class="header__title">
-          Nodnjs Documentation
-          <a
-            href="https://skybear.notion.site/Web-Developer-91775e3d66dd4b0893b871bce56894db?pvs=74"
-            onClick={handleExternalLinkClick}
-            class="header__external-link"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="외부 링크 열기"
-          >
-            <IconExternalLink size={16} />
-          </a>
+          {documentTitle}
+          {personalLink && (
+            <a
+              href={personalLink}
+              onClick={handleExternalLinkClick}
+              class="header__external-link"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="외부 링크 열기"
+            >
+              <IconExternalLink size={16} />
+            </a>
+          )}
         </h1>
       </div>
       <BreadcrumbNavPresenter

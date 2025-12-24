@@ -1,5 +1,8 @@
 import { useDirectoryTree } from '../hooks/useDirectoryTree';
 import { DirectoryTreePresenter } from '../components/DirectoryTree';
+import { useState } from 'preact/hooks';
+import { DirectoryCreateModal } from '../components/DirectoryCreateModal';
+import { route } from 'preact-router';
 
 /**
  * DirectoryTree Container 컴포넌트
@@ -7,16 +10,49 @@ import { DirectoryTreePresenter } from '../components/DirectoryTree';
  * TDD 친화적: 로직을 분리하여 테스트 시 Mock으로 대체 가능
  */
 export function DirectoryTreeContainer({ currentPath, onNavigate }) {
-    const { categorized, expandedPaths, handleFolderClick, handleClick, loading } = useDirectoryTree(currentPath, onNavigate);
+  const { categorized, expandedPaths, handleFolderClick, handleClick, loading } = useDirectoryTree(
+    currentPath,
+    onNavigate,
+  );
+  const [directoryModalOpen, setDirectoryModalOpen] = useState(false);
+  const [directoryModalPath, setDirectoryModalPath] = useState('/docs');
 
-    return (
-        <DirectoryTreePresenter
-            categorized={categorized}
-            currentPath={currentPath}
-            expandedPaths={expandedPaths}
-            onFolderClick={handleFolderClick}
-            onFileClick={handleClick}
-            loading={loading}
-        />
-    );
+  const handleCreateDocument = async (parentPath) => {
+    if (onNavigate) {
+      onNavigate(`/write?parent=${encodeURIComponent(parentPath)}`);
+    } else {
+      route(`/write?parent=${encodeURIComponent(parentPath)}`);
+    }
+  };
+
+  const handleCreateFolder = (parentPath) => {
+    setDirectoryModalPath(parentPath);
+    setDirectoryModalOpen(true);
+  };
+
+  const handleFolderCreated = (folder) => {
+    // Toast는 DirectoryCreateModal에서 이미 표시하므로 중복 제거
+    // navigationObserver 이벤트는 createFolder 함수에서 이미 발생하므로 여기서는 추가 작업 불필요
+  };
+
+  return (
+    <>
+      <DirectoryTreePresenter
+        categorized={categorized}
+        currentPath={currentPath}
+        expandedPaths={expandedPaths}
+        onFolderClick={handleFolderClick}
+        onFileClick={handleClick}
+        onCreateDocument={handleCreateDocument}
+        onCreateFolder={handleCreateFolder}
+        loading={loading}
+      />
+      <DirectoryCreateModal
+        isOpen={directoryModalOpen}
+        onClose={() => setDirectoryModalOpen(false)}
+        onSuccess={handleFolderCreated}
+        currentPath={directoryModalPath}
+      />
+    </>
+  );
 }

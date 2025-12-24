@@ -41,7 +41,7 @@ export function FileLocationModal({ isOpen, onClose, onSelect, currentPath = '/d
       if (currentPath) {
         const parts = currentPath.split('/').filter(Boolean);
         if (parts[0] === 'docs') parts.shift();
-        
+
         const newExpanded = {};
         let accumulated = '';
         parts.forEach((part) => {
@@ -59,9 +59,7 @@ export function FileLocationModal({ isOpen, onClose, onSelect, currentPath = '/d
   };
 
   // 검색 필터링
-  const filteredTree = searchQuery
-    ? filterTreeBySearch(fileTree, searchQuery)
-    : fileTree;
+  const filteredTree = searchQuery ? filterTreeBySearch(fileTree, searchQuery) : fileTree;
 
   // 폴더 클릭 핸들러
   const handleFolderClick = (path) => {
@@ -130,7 +128,10 @@ export function FileLocationModal({ isOpen, onClose, onSelect, currentPath = '/d
   if (!isOpen) return null;
 
   return (
-    <div className="file-location-modal__overlay" onClick={(e) => e.target.classList.contains('file-location-modal__overlay') && onClose()}>
+    <div
+      className="file-location-modal__overlay"
+      onClick={(e) => e.target.classList.contains('file-location-modal__overlay') && onClose()}
+    >
       <div className="file-location-modal__container">
         <div className="file-location-modal__header">
           <h2 className="file-location-modal__title">파일 위치 선택</h2>
@@ -185,4 +186,3 @@ export function FileLocationModal({ isOpen, onClose, onSelect, currentPath = '/d
     </div>
   );
 }
-

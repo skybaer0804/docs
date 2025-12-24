@@ -50,6 +50,19 @@ exports.createDoc = async (req, res) => {
   try {
     const { type, parent_path, name, content, is_public } = req.body;
 
+    // author_id 필수 체크
+    if (!req.user || !req.user.id) {
+      console.error('createDoc: req.user is missing or has no id', { user: req.user });
+      return res.status(401).json({ error: 'Authentication required. User ID is missing.' });
+    }
+    const author_id = req.user.id;
+    
+    // author_id가 유효한지 확인
+    if (!author_id || author_id === null || author_id === undefined) {
+      console.error('createDoc: author_id is invalid', { author_id, user: req.user });
+      return res.status(401).json({ error: 'Invalid user ID. Please login again.' });
+    }
+
     // 1. 부모 ID 찾기 (Root인 경우 parent_path가 없거나 '/'일 수 있음)
     let parent_id = null;
     if (parent_path && parent_path !== '/') {
@@ -64,22 +77,36 @@ exports.createDoc = async (req, res) => {
     const newPath = `${cleanParentPath}/${name}`;
 
     // 3. DB 저장
+    const insertData = {
+      parent_id,
+      type,
+      name,
+      content: type === 'FILE' ? content : null,
+      path: newPath,
+      is_public: is_public !== undefined ? is_public : true,
+      author_id: author_id, // 필수 필드 추가 (명시적으로 설정)
+    };
+
+    // 디버깅: author_id 확인
+    console.log('createDoc: Inserting node with author_id:', {
+      author_id,
+      author_id_type: typeof author_id,
+      user_id: req.user.id,
+      type,
+      name,
+      path: newPath,
+    });
+
     const { data, error } = await supabase
       .from('nodes')
-      .insert([
-        {
-          parent_id,
-          type,
-          name,
-          content: type === 'FILE' ? content : null,
-          path: newPath,
-          is_public: is_public !== undefined ? is_public : true,
-        },
-      ])
+      .insert([insertData])
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('createDoc: Supabase insert error:', error);
+      throw error;
+    }
     res.status(201).json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -90,6 +117,12 @@ exports.createDoc = async (req, res) => {
 exports.uploadFile = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+    // author_id 필수 체크
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'Authentication required. User ID is missing.' });
+    }
+    const author_id = req.user.id;
 
     const { parent_path, is_public } = req.body;
     const content = req.file.buffer.toString('utf8');
@@ -119,6 +152,7 @@ exports.uploadFile = async (req, res) => {
           content,
           path: newPath,
           is_public: is_public !== undefined ? is_public : true,
+          author_id, // 필수 필드 추가
         },
       ])
       .select()
@@ -132,11 +166,27 @@ exports.uploadFile = async (req, res) => {
 };
 
 // 문서 수정
-
 exports.updateDoc = async (req, res) => {
   try {
     const { id } = req.params;
     const { content, is_public, name } = req.body;
+
+    // author_id 필수 체크
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'Authentication required. User ID is missing.' });
+    }
+    const author_id = req.user.id;
+
+    // 권한 체크: 자신이 생성한 노드만 수정 가능
+    const { data: existingNode } = await supabase.from('nodes').select('author_id').eq('id', id).single();
+    
+    if (!existingNode) {
+      return res.status(404).json({ error: 'Node not found' });
+    }
+
+    if (existingNode.author_id !== author_id) {
+      return res.status(403).json({ error: 'Permission denied. You can only update your own nodes.' });
+    }
 
     const updates = { updated_at: new Date() };
     if (content !== undefined) updates.content = content;
@@ -153,13 +203,48 @@ exports.updateDoc = async (req, res) => {
   }
 };
 
-// 삭제
+// 삭제 (CASCADE: 하위 노드도 함께 삭제)
 exports.deleteDoc = async (req, res) => {
   try {
     const { id } = req.params;
-    const { error } = await supabase.from('nodes').delete().eq('id', id);
 
-    if (error) throw error;
+    // author_id 필수 체크
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'Authentication required. User ID is missing.' });
+    }
+    const author_id = req.user.id;
+
+    // 권한 체크: 자신이 생성한 노드만 삭제 가능
+    const { data: node } = await supabase.from('nodes').select('author_id, path, type').eq('id', id).single();
+    
+    if (!node) {
+      return res.status(404).json({ error: 'Node not found' });
+    }
+
+    if (node.author_id !== author_id) {
+      return res.status(403).json({ error: 'Permission denied. You can only delete your own nodes.' });
+    }
+
+    // CASCADE 삭제: 하위 노드들도 함께 삭제
+    // 재귀적으로 모든 하위 노드 찾기
+    const deleteRecursive = async (nodeId) => {
+      // 현재 노드의 모든 하위 노드 찾기
+      const { data: children } = await supabase.from('nodes').select('id').eq('parent_id', nodeId);
+      
+      if (children && children.length > 0) {
+        // 각 하위 노드에 대해 재귀적으로 삭제
+        for (const child of children) {
+          await deleteRecursive(child.id);
+        }
+      }
+      
+      // 현재 노드 삭제
+      const { error } = await supabase.from('nodes').delete().eq('id', nodeId);
+      if (error) throw error;
+    };
+
+    await deleteRecursive(id);
+
     res.json({ message: 'Deleted successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });

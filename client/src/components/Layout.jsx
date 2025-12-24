@@ -14,12 +14,14 @@ import {
   IconSearch,
   IconSettings,
   IconUser,
+  IconUserCircle,
 } from '@tabler/icons-preact';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { Popover } from './Popover';
 import { List } from './List';
 import { ListItem } from './ListItem';
+import { DirectoryCreateModal } from './DirectoryCreateModal';
 import { route } from 'preact-router';
 import './Layout.scss';
 
@@ -63,7 +65,7 @@ export function LayoutPresenter({
     setSettingsOpen(false);
   };
 
-  const handleNewDoc = () => {
+  const handleCreateDocument = () => {
     setSettingsOpen(false);
     // 현재 경로를 기반으로 문서 생성 페이지로 이동
     const currentDir = currentPath.startsWith('/category/')
@@ -74,20 +76,21 @@ export function LayoutPresenter({
     onNavigate(`/write?parent=${encodeURIComponent(currentDir)}`);
   };
 
-  const handleNewFile = () => {
+  const [directoryModalOpen, setDirectoryModalOpen] = useState(false);
+
+  const handleCreateFolder = () => {
     setSettingsOpen(false);
-    // 현재 경로를 기반으로 파일 생성 페이지로 이동
-    const currentDir = currentPath.startsWith('/category/')
-      ? currentPath.replace('/category/', '/docs/')
-      : currentPath === '/'
-      ? '/docs'
-      : currentPath;
-    onNavigate(`/write?parent=${encodeURIComponent(currentDir)}&type=file`);
+    setDirectoryModalOpen(true);
   };
 
   const handleLogin = () => {
     setSettingsOpen(false);
     onNavigate('/login');
+  };
+
+  const handleProfile = () => {
+    setSettingsOpen(false);
+    onNavigate('/profile');
   };
 
   return (
@@ -98,9 +101,9 @@ export function LayoutPresenter({
           <Breadcrumb currentRoute={currentPath} onNavigate={onNavigate} />
           <div class="header__actions">
             {user && (
-              <div class="header__profile" title={user.username || user.email}>
+              <button class="header__profile" onClick={handleProfile} title={user.username || user.email}>
                 <IconUser size={20} />
-              </div>
+              </button>
             )}
             <button class="header__search-btn" onClick={onOpenSearch} aria-label="검색 (Ctrl+K)" title="검색 (Ctrl+K)">
               <IconSearch size={20} />
@@ -126,11 +129,14 @@ export function LayoutPresenter({
               <List>
                 {user && (
                   <>
-                    <ListItem icon={<IconFilePlus size={18} />} onClick={handleNewDoc}>
-                      문서 추가
+                    <ListItem icon={<IconFilePlus size={18} />} onClick={handleCreateDocument}>
+                      문서생성
                     </ListItem>
-                    <ListItem icon={<IconFile size={18} />} onClick={handleNewFile}>
-                      파일 생성
+                    <ListItem icon={<IconFile size={18} />} onClick={handleCreateFolder}>
+                      폴더생성
+                    </ListItem>
+                    <ListItem icon={<IconUserCircle size={18} />} onClick={handleProfile}>
+                      프로필
                     </ListItem>
                   </>
                 )}
@@ -171,6 +177,11 @@ export function LayoutPresenter({
           <main class="layout__main">{children}</main>
         </div>
       </div>
+      <DirectoryCreateModal
+        isOpen={directoryModalOpen}
+        onClose={() => setDirectoryModalOpen(false)}
+        currentPath={currentPath}
+      />
     </div>
   );
 }

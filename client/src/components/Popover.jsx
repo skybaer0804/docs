@@ -41,19 +41,24 @@ export function Popover({ isOpen, onClose, children, className = '', anchorRef }
       const anchorRect = anchorRef.current.getBoundingClientRect();
       const popoverRect = popoverRef.current.getBoundingClientRect();
       
-      // 기본적으로 anchor 아래에 배치 (오른쪽 정렬)
-      let top = anchorRect.bottom + 8;
-      let left = anchorRect.right - popoverRect.width;
+      // anchor의 시작점(left-top) 기준 우하단에 배치
+      let top = anchorRect.top + 8; // anchor 시작점 아래
+      let left = anchorRect.left + 8; // anchor 시작점 오른쪽
 
       // 화면 밖으로 나가면 위치 조정
       if (top + popoverRect.height > window.innerHeight) {
-        top = anchorRect.top - popoverRect.height - 8;
+        // 아래 공간이 부족하면 위쪽에 배치
+        top = anchorRect.bottom - popoverRect.height - 8;
       }
       if (left + popoverRect.width > window.innerWidth) {
+        // 오른쪽 공간이 부족하면 왼쪽으로 이동
         left = window.innerWidth - popoverRect.width - 16;
       }
       if (left < 0) {
-        left = anchorRect.left;
+        left = 8; // 최소 여백 유지
+      }
+      if (top < 0) {
+        top = 8; // 최소 여백 유지
       }
 
       popoverRef.current.style.top = `${top}px`;

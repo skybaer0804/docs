@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useCallback } from 'preact/hooks';
 import { fetchAllDocs } from '../utils/api';
 import { buildDirectoryTree } from '../utils/treeUtils';
 import { devError } from '../utils/logger';
@@ -51,49 +51,99 @@ export function useDirectoryTree(currentPath, onNavigate) {
     const [categorized, setCategorized] = useState({});
     const [loading, setLoading] = useState(true);
 
+    // 트리 데이터 로드 함수
+    const loadTreeData = useCallback(async () => {
+        try {
+            setLoading(true);
+            const nodes = await fetchAllDocs();
+            console.log('loadTreeData: Fetched nodes count:', nodes?.length);
+            console.log('loadTreeData: Sample nodes:', nodes?.slice(0, 5));
+            const tree = buildDirectoryTree(nodes);
+            console.log('loadTreeData: Built tree structure:', Object.keys(tree));
+            setCategorized(tree);
+        } catch (error) {
+            devError('Error loading docs tree:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
     // 초기 데이터 로드 (API)
     useEffect(() => {
-        async function loadData() {
-            try {
-                setLoading(true);
-                const nodes = await fetchAllDocs();
-                const tree = buildDirectoryTree(nodes);
-                setCategorized(tree);
-            } catch (error) {
-                devError('Error loading docs tree:', error);
-            } finally {
-                setLoading(false);
+        loadTreeData();
+    }, [loadTreeData]);
+
+    // 문서 변경 이벤트 감지하여 트리 업데이트 (디바운싱 및 중복 로드 방지)
+    useEffect(() => {
+        let debounceTimer = null;
+        let isReloading = false;
+
+        const handleDocumentChange = ({ action, type, path }) => {
+            // 파일/폴더 생성, 수정, 삭제 시 트리 다시 로드
+            console.log('handleDocumentChange:', { action, type, path });
+            if ((type === 'file' || type === 'directory') && (action === 'create' || action === 'update' || action === 'delete')) {
+                // 이미 로딩 중이면 무시
+                if (isReloading) {
+                    console.log('handleDocumentChange: Already reloading, skipping');
+                    return;
+                }
+
+                console.log('handleDocumentChange: Scheduling tree reload');
+                // 디바운싱: 300ms 내 여러 이벤트가 오면 마지막 것만 실행
+                if (debounceTimer) {
+                    clearTimeout(debounceTimer);
+                }
+                debounceTimer = setTimeout(async () => {
+                    isReloading = true;
+                    try {
+                        console.log('handleDocumentChange: Reloading tree data');
+                        await loadTreeData();
+                    } finally {
+                        isReloading = false;
+                        debounceTimer = null;
+                    }
+                }, 300);
             }
-        }
-        loadData();
-    }, []);
+        };
+
+        const unsubscribe = navigationObserver.subscribe(handleDocumentChange);
+        return () => {
+            unsubscribe();
+            if (debounceTimer) {
+                clearTimeout(debounceTimer);
+            }
+        };
+    }, [loadTreeData]);
 
     // currentPath 변경 시 자동으로 부모 경로들을 펼치기
     useEffect(() => {
         if (!currentPath || Object.keys(categorized).length === 0) return;
 
-        // API 기반 트리에서는 경로 파싱 방식이 달라질 수 있음.
-        // 단순히 URL path를 쪼개서 누적 경로를 모두 expand 처리하면 됨.
-        // 예: /docs/Platform/Web/API/guide
-        // -> Expand: Platform, Platform/Web, Platform/Web/API
+        let parts = [];
         
-        const parts = currentPath.split('/').filter(Boolean); // ['docs', 'Platform', ...]
-        
-        // 'docs' 접두사가 DB path에 포함되어 있다면 제외할지 여부 결정 필요.
-        // 현재 DB path: /docs/...
-        // 화면 표시 트리 키: Platform (docs 하위)
-        
-        // parts 중에서 실제 트리 키로 쓰이는 부분 찾기
-        // 보통 0번 인덱스가 'docs'라면 1번부터가 실제 트리 키
-        let startIndex = 0;
-        if (parts[0] === 'docs') startIndex = 1;
-        
-        const relevantParts = parts.slice(startIndex, parts.length - 1); // 마지막은 파일명
+        // /category/ 경로인 경우 처리
+        if (currentPath.startsWith('/category/')) {
+            parts = currentPath.replace('/category/', '').split('/').filter(Boolean);
+        } else {
+            // /docs/... 경로인 경우
+            parts = currentPath.split('/').filter(Boolean);
+            // 'docs' 접두사 제외
+            if (parts[0] === 'docs') {
+                parts = parts.slice(1);
+            }
+            // 마지막이 파일명인 경우 제외 (확장자가 있는 경우)
+            if (parts.length > 0) {
+                const lastPart = parts[parts.length - 1];
+                if (lastPart.includes('.') && !lastPart.startsWith('.')) {
+                    parts = parts.slice(0, -1);
+                }
+            }
+        }
         
         const newExpanded = {};
         let accumulated = '';
         
-        relevantParts.forEach((part, index) => {
+        parts.forEach((part, index) => {
             const key = index === 0 ? part : `${accumulated}/${part}`;
             accumulated = key;
             newExpanded[key] = true;

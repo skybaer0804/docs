@@ -6,6 +6,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { fetchAllDocs, createDoc, updateDoc, deleteDoc } from '../../utils/api';
 import { buildDirectoryTree } from '../../utils/treeUtils';
 import { buildUserGroupedTree } from '../../utils/userTreeUtils';
+import { navigationObserver } from '../../observers/NavigationObserver';
 import './FileEditor.scss';
 
 /**
@@ -74,7 +75,7 @@ export function FileEditor({ isOpen, onClose, userId, username }) {
   const handleCreateFile = async (parentPath, name, content) => {
     try {
       setLoading(true);
-      await createDoc({
+      const result = await createDoc({
         type: 'FILE',
         parent_path: parentPath,
         name,
@@ -82,6 +83,9 @@ export function FileEditor({ isOpen, onClose, userId, username }) {
         is_public: false,
       });
       showSuccess('파일이 생성되었습니다');
+      
+      // FileEditor는 자체 트리를 관리하므로 navigationObserver 이벤트는 발생시키지 않음
+      // (useDirectoryTree에서 중복 로드 방지)
       await loadFileTree();
     } catch (error) {
       showError(error.message || '파일 생성에 실패했습니다');
@@ -94,8 +98,11 @@ export function FileEditor({ isOpen, onClose, userId, username }) {
   const handleUpdateFile = async (fileId, updates) => {
     try {
       setLoading(true);
-      await updateDoc(fileId, updates);
+      const result = await updateDoc(fileId, updates);
       showSuccess('파일이 수정되었습니다');
+      
+      // FileEditor는 자체 트리를 관리하므로 navigationObserver 이벤트는 발생시키지 않음
+      // (useDirectoryTree에서 중복 로드 방지)
       await loadFileTree();
       // 수정된 파일 정보 업데이트
       if (selectedFile && selectedFile.id === fileId) {
@@ -118,6 +125,9 @@ export function FileEditor({ isOpen, onClose, userId, username }) {
       setLoading(true);
       await deleteDoc(fileId);
       showSuccess('파일이 삭제되었습니다');
+      
+      // FileEditor는 자체 트리를 관리하므로 navigationObserver 이벤트는 발생시키지 않음
+      // (useDirectoryTree에서 중복 로드 방지)
       setSelectedFile(null);
       await loadFileTree();
     } catch (error) {
