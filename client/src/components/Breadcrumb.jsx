@@ -6,7 +6,7 @@ import {
   getBreadcrumbLinkRoute,
   filterBreadcrumbItemsForMobile,
 } from '../utils/breadcrumbUtils';
-import { IconChevronsRight, IconExternalLink, IconSun, IconMoon, IconSearch } from '@tabler/icons-preact';
+import { IconChevronsRight, IconExternalLink } from '@tabler/icons-preact';
 import './Breadcrumb.scss';
 
 /**
@@ -85,7 +85,7 @@ function BreadcrumbNavPresenter({ items, onNavigate, sidebarCollapsed, onToggleC
  * 순수 UI 렌더링만 담당 (Props 기반)
  * TDD 친화적: Props만으로 렌더링하므로 테스트 용이
  */
-export function BreadcrumbPresenter({ items, displayType, currentRoute, onNavigate, onOpenSearch }) {
+export function BreadcrumbPresenter({ items, displayType, currentRoute, onNavigate }) {
   const sidebar = useSidebar();
   const theme = useTheme();
   const onToggleSidebar = sidebar?.toggleSidebar;
@@ -121,11 +121,6 @@ export function BreadcrumbPresenter({ items, displayType, currentRoute, onNaviga
             <IconExternalLink size={16} />
           </a>
         </h1>
-        <div class="header__search-wrapper">
-          <button class="header__search-btn" onClick={onOpenSearch} aria-label="검색 (Ctrl+K)" title="검색 (Ctrl+K)">
-            <IconSearch size={18} />
-          </button>
-        </div>
       </div>
       <BreadcrumbNavPresenter
         items={items}

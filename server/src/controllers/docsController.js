@@ -5,7 +5,7 @@ exports.getAllDocs = async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('nodes')
-      .select('id, parent_id, name, type, path, is_public')
+      .select('id, parent_id, name, type, path, is_public, author_id')
       .order('type', { ascending: false }) // 폴더 먼저, 그 다음 파일
       .order('name', { ascending: true });
 

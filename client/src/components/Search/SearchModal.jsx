@@ -103,7 +103,15 @@ export function SearchModal({ isOpen, onClose, query, onQueryChange, results, on
             value={query}
             onInput={(e) => onQueryChange(e.target.value)}
           />
-          <button class="search-modal__close-btn" onClick={onClose} aria-label="닫기">
+          <button 
+            class="search-modal__close-btn" 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClose();
+            }} 
+            aria-label="닫기"
+          >
             <IconX size={20} />
           </button>
         </div>

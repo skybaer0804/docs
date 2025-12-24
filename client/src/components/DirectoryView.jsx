@@ -10,7 +10,7 @@ export function DirectoryViewPresenter({ categorized, displayType, displayData, 
     // 루트 레벨: 모든 카테고리 표시
     if (displayType === 'root') {
         // 정렬 제거: 원본 순서 유지 (대소문자, 한글 그대로 표시)
-        const categoryKeys = Object.keys(categorized);
+        const categoryKeys = Object.keys(categorized).filter((key) => key !== '_files');
         if (categoryKeys.length === 0) {
             return (
                 <div class="directory-view">

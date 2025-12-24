@@ -65,8 +65,8 @@ export function LoginPage({ onNavigate }) {
               required
             />
           </div>
-          <Button type="submit" variant="primary" disabled={loading} className="login-button">
-            {loading ? '로그인 중...' : '로그인'}
+          <Button type="submit" variant="primary" loading={loading} className="login-button">
+            로그인
           </Button>
         </form>
         <div className="login-footer">

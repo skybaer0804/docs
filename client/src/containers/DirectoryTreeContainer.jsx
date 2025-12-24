@@ -7,7 +7,7 @@ import { DirectoryTreePresenter } from '../components/DirectoryTree';
  * TDD 친화적: 로직을 분리하여 테스트 시 Mock으로 대체 가능
  */
 export function DirectoryTreeContainer({ currentPath, onNavigate }) {
-    const { categorized, expandedPaths, handleFolderClick, handleClick } = useDirectoryTree(currentPath, onNavigate);
+    const { categorized, expandedPaths, handleFolderClick, handleClick, loading } = useDirectoryTree(currentPath, onNavigate);
 
     return (
         <DirectoryTreePresenter
@@ -16,6 +16,7 @@ export function DirectoryTreeContainer({ currentPath, onNavigate }) {
             expandedPaths={expandedPaths}
             onFolderClick={handleFolderClick}
             onFileClick={handleClick}
+            loading={loading}
         />
     );
 }

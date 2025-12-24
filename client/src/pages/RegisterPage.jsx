@@ -119,8 +119,8 @@ export function RegisterPage({ onNavigate }) {
               minLength={6}
             />
           </div>
-          <Button type="submit" variant="primary" disabled={loading} className="register-button">
-            {loading ? '가입 중...' : '회원가입'}
+          <Button type="submit" variant="primary" loading={loading} className="register-button">
+            회원가입
           </Button>
         </form>
         <div className="register-footer">

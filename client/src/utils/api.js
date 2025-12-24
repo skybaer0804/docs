@@ -200,23 +200,47 @@ export async function createDoc(data, token = null) {
  * 문서를 수정합니다. (관리자 전용)
  */
 export async function updateDoc(id, data, token = null) {
-  const authToken = token || getToken();
-  if (!authToken) {
-    throw new Error('Authentication required');
-  }
+    const authToken = token || getToken();
+    if (!authToken) {
+        throw new Error('Authentication required');
+    }
 
-  const response = await fetch(`${API_BASE}/${id}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${authToken}`,
-    },
-    body: JSON.stringify(data),
-  });
+    const response = await fetch(`${API_BASE}/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(data),
+    });
 
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.error || 'Failed to update document');
-  }
-  return response.json();
+    if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to update document');
+    }
+    return response.json();
+}
+
+/**
+ * 문서를 삭제합니다. (관리자 전용)
+ */
+export async function deleteDoc(id, token = null) {
+    const authToken = token || getToken();
+    if (!authToken) {
+        throw new Error('Authentication required');
+    }
+
+    const response = await fetch(`${API_BASE}/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${authToken}`,
+        },
+    });
+
+    if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to delete document');
+    }
+    return response.json();
 }

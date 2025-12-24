@@ -131,22 +131,22 @@ exports.register = async (req, res) => {
       hint: err.hint,
       stack: err.stack,
     });
-    
+
     // Supabase 에러인 경우 더 자세한 정보 제공
     if (err.code) {
       if (err.code === '42P01') {
-        return res.status(500).json({ 
+        return res.status(500).json({
           error: 'Users table does not exist. Please create the users table in Supabase.',
-          details: 'Run the SQL migration in server/src/migrations/create_users_table.sql'
+          details: 'Run the SQL migration in server/src/migrations/create_users_table.sql',
         });
       }
-      return res.status(500).json({ 
+      return res.status(500).json({
         error: 'Database error',
         code: err.code,
-        message: err.message 
+        message: err.message,
       });
     }
-    
+
     res.status(500).json({ error: 'Internal server error', message: err.message });
   }
 };

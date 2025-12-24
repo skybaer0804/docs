@@ -17,6 +17,13 @@
     backface-visibility: hidden;
     transform: translateZ(0);
 
+    // PC에서 parent 페이지 숨기기
+    @media (min-width: 769px) {
+        &--parent {
+            display: none !important;
+        }
+    }
+
     // 모바일에서만 애니메이션 적용
     @media (max-width: 768px) {
         // 기본 transition은 애니메이션이 명시적으로 설정된 경우에만 적용
@@ -102,10 +109,6 @@
         &--slide-right,
         &--slide-from-left {
             animation: none;
-        }
-
-        &--parent {
-            display: none;
         }
     }
 }
