@@ -3,6 +3,7 @@ import { useState, useRef } from 'preact/hooks';
 import { IconPlus } from '@tabler/icons-preact';
 import { Popover } from './Popover';
 import { FileManageList } from './FileManageList';
+import { useDnd } from '../contexts/DndContext';
 import './DirectoryTree.scss';
 
 /**
@@ -20,6 +21,55 @@ export function DirectoryTreePresenter({
   onCreateFolder,
   loading = false,
 }) {
+  const dnd = useDnd();
+
+  const bindDragSource = (item) => ({
+    draggable: true,
+    onDragStart: (e) => {
+      e.stopPropagation();
+      e.dataTransfer.effectAllowed = 'move';
+      try {
+        e.dataTransfer.setData('text/plain', item.path || '');
+      } catch {
+        // noop
+      }
+      dnd.beginDrag(item, e.currentTarget);
+    },
+    onDragEnd: () => dnd.endDrag(),
+  });
+
+  const bindDropTarget = (targetFolderDocsPath) => {
+    const canDrop = dnd.canDropTo(targetFolderDocsPath);
+    const isOver = dnd.dragOverPath === targetFolderDocsPath;
+    const isSuccess = dnd.dropSuccessPath === targetFolderDocsPath;
+
+    return {
+      onDragEnter: (e) => {
+        if (!canDrop) return;
+        e.preventDefault();
+        dnd.markDragOver(targetFolderDocsPath);
+      },
+      onDragOver: (e) => {
+        if (!canDrop) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        dnd.markDragOver(targetFolderDocsPath);
+      },
+      onDragLeave: () => {
+        if (isOver) dnd.clearDragOver();
+      },
+      onDrop: (e) => {
+        if (!canDrop) return;
+        e.preventDefault();
+        e.stopPropagation();
+        dnd.dropTo(targetFolderDocsPath, e.currentTarget);
+      },
+      dndHeaderClassName: `${isOver ? 'folder-item__header--drag-over' : ''} ${
+        isSuccess ? 'folder-item__header--drop-success' : ''
+      }`.trim(),
+    };
+  };
+
   // 재귀적으로 트리 렌더링 (순환 참조 방지)
   function renderTree(node, path = '', level = 0, visited = new Set()) {
     // 순환 참조 방지: 이미 방문한 노드는 건너뛰기
@@ -32,7 +82,7 @@ export function DirectoryTreePresenter({
 
     try {
       // 정렬 제거: 원본 순서 유지 (대소문자, 한글 그대로 표시)
-      const keys = Object.keys(node).filter((key) => key !== '_files');
+      const keys = Object.keys(node).filter((key) => key !== '_files' && key !== '_meta');
       const files = node._files || [];
 
       if (keys.length === 0 && files.length === 0) {
@@ -46,9 +96,18 @@ export function DirectoryTreePresenter({
           {files.map((file) => (
             <li
               key={file.path}
-              class={`file-item ${currentPath === file.route ? 'active' : ''}`}
+              class={`file-item ${currentPath === file.route ? 'active' : ''} ${
+                dnd.dragItem?.path === file.path ? 'file-item--dragging' : ''
+              }`}
               onClick={() => onFileClick(file)}
               title={file.path}
+              {...bindDragSource({
+                id: file.id,
+                type: 'FILE',
+                path: file.path,
+                name: file.name || file.title,
+                author_id: file.author_id,
+              })}
             >
               <span class="file-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
               <span class="file-name">{file.title}</span>
@@ -66,7 +125,7 @@ export function DirectoryTreePresenter({
             }
 
             const hasContent =
-              subNode._files?.length > 0 || Object.keys(subNode).filter((k) => k !== '_files').length > 0;
+              subNode._files?.length > 0 || Object.keys(subNode).filter((k) => k !== '_files' && k !== '_meta').length > 0;
 
             if (!hasContent) return null;
 
@@ -89,6 +148,8 @@ export function DirectoryTreePresenter({
                 subNode={subNode}
                 renderTree={renderTree}
                 visited={visited}
+                bindDragSource={bindDragSource}
+                bindDropTarget={bindDropTarget}
               />
             );
           })}
@@ -147,6 +208,8 @@ export function DirectoryTreePresenter({
                 renderTree={renderTree}
                 visited={new Set()}
                 isCategory={true}
+                bindDragSource={bindDragSource}
+                bindDropTarget={bindDropTarget}
               />
             </div>
           );
@@ -172,10 +235,17 @@ function FolderItem({
   renderTree,
   visited,
   isCategory = false,
+  bindDragSource,
+  bindDropTarget,
 }) {
   const [hovered, setHovered] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
   const buttonRef = useRef(null);
+
+  const meta = subNode?._meta;
+  const folderDocsPath = meta?.path || `/docs/${subPath}`;
+  const drop = bindDropTarget ? bindDropTarget(folderDocsPath) : { dndHeaderClassName: '' };
+  const { dndHeaderClassName = '', ...dropHandlers } = drop || {};
 
   const handleFolderClick = (e) => {
     // + 아이콘 클릭이 아닌 경우에만 폴더 클릭 처리
@@ -214,11 +284,21 @@ function FolderItem({
         data-expanded={isSubExpanded}
       >
         <div
-          class={headerClass}
+          class={`${headerClass} ${dndHeaderClassName}`}
           onClick={handleFolderClick}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
           title={subPath}
+          {...dropHandlers}
+          {...(meta && bindDragSource
+            ? bindDragSource({
+                id: meta.id,
+                type: 'DIRECTORY',
+                path: folderDocsPath,
+                name: meta.name || keyName,
+                author_id: meta.author_id,
+              })
+            : {})}
         >
           <span class="folder-icon">📁</span>
           <span class={isCategory ? 'category-title' : 'subcategory-title'}>{keyName}</span>

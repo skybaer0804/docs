@@ -41,6 +41,38 @@
     }
   }
 
+  &__drop-zone {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    margin-right: 8px;
+    border-radius: 8px;
+    border: 1px dashed #c7c7c7;
+    background: transparent;
+    color: #999;
+    cursor: default;
+    flex-shrink: 0;
+    transition: all 0.18s ease;
+    user-select: none;
+
+    &--enabled {
+      border-color: rgba(25, 118, 210, 0.6);
+      color: #1976d2;
+    }
+
+    &--drag-over {
+      background: rgba(25, 118, 210, 0.12);
+      border-color: rgba(25, 118, 210, 0.9);
+      transform: scale(1.03);
+    }
+
+    &--drop-success {
+      animation: breadcrumbDropPulse 520ms ease;
+    }
+  }
+
   &__item {
     display: inline-flex;
     align-items: center;
@@ -94,6 +126,21 @@
   }
 }
 
+@keyframes breadcrumbDropPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(25, 118, 210, 0);
+  }
+  40% {
+    transform: scale(1.06);
+    box-shadow: 0 0 0 6px rgba(25, 118, 210, 0.18);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(25, 118, 210, 0);
+  }
+}
+
 // 다크모드
 body[data-theme='dark'] {
   .breadcrumb {
@@ -125,6 +172,21 @@ body[data-theme='dark'] {
       &:hover {
         background-color: #333;
         color: #e0e0e0;
+      }
+    }
+
+    &__drop-zone {
+      border-color: #444;
+      color: #888;
+
+      &--enabled {
+        border-color: rgba(100, 181, 246, 0.55);
+        color: #64b5f6;
+      }
+
+      &--drag-over {
+        background: rgba(100, 181, 246, 0.14);
+        border-color: rgba(100, 181, 246, 0.85);
       }
     }
   }

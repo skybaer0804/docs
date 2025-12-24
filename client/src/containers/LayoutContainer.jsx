@@ -3,6 +3,7 @@ import { useLayout } from '../hooks/useLayout';
 import { LayoutPresenter } from '../components/Layout';
 import { SidebarContext } from '../contexts/SidebarContext';
 import { SearchContainer } from './SearchContainer';
+import { DndProvider } from '../contexts/DndContext';
 
 /**
  * Layout Container 컴포넌트
@@ -43,22 +44,24 @@ export function LayoutContainer({ children, currentPath, onNavigate }) {
 
     return (
         <SidebarContext.Provider value={{ toggleSidebar, closeSidebar, toggleSidebarCollapse, sidebarCollapsed }}>
-            <LayoutPresenter
-                sidebarOpen={sidebarOpen}
-                sidebarCollapsed={sidebarCollapsed}
-                sidebarWidth={sidebarWidth}
-                isDesktop={isDesktop}
-                currentPath={currentPath}
-                onSidebarResize={handleSidebarResize}
-                onToggleSidebar={toggleSidebar}
-                onCloseSidebar={closeSidebar}
-                onToggleSidebarCollapse={toggleSidebarCollapse}
-                onNavigate={handleNavigate}
-                onOpenSearch={openSearch}
-            >
-                {children}
-                <SearchContainer isOpen={searchOpen} onClose={closeSearch} onNavigate={handleNavigate} />
-            </LayoutPresenter>
+            <DndProvider currentRoute={currentPath} onNavigate={handleNavigate}>
+                <LayoutPresenter
+                    sidebarOpen={sidebarOpen}
+                    sidebarCollapsed={sidebarCollapsed}
+                    sidebarWidth={sidebarWidth}
+                    isDesktop={isDesktop}
+                    currentPath={currentPath}
+                    onSidebarResize={handleSidebarResize}
+                    onToggleSidebar={toggleSidebar}
+                    onCloseSidebar={closeSidebar}
+                    onToggleSidebarCollapse={toggleSidebarCollapse}
+                    onNavigate={handleNavigate}
+                    onOpenSearch={openSearch}
+                >
+                    {children}
+                    <SearchContainer isOpen={searchOpen} onClose={closeSearch} onNavigate={handleNavigate} />
+                </LayoutPresenter>
+            </DndProvider>
         </SidebarContext.Provider>
     );
 }

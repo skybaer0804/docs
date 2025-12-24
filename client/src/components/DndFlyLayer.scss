@@ -1,0 +1,55 @@
+.dnd-fly-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+
+  &__ghost {
+    position: fixed;
+    border-radius: 10px;
+    background: rgba(102, 126, 234, 0.18);
+    border: 1px solid rgba(102, 126, 234, 0.35);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+    opacity: 0.92;
+    will-change: transform, opacity;
+    transition:
+      transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 240ms ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  &__ghost--animate {
+    opacity: 0.2;
+  }
+
+  &__content {
+    font-size: 12px;
+    color: #1f2a5a;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 8px;
+    max-width: 90%;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+}
+
+body[data-theme='dark'] {
+  .dnd-fly-layer {
+    &__ghost {
+      background: rgba(100, 181, 246, 0.16);
+      border-color: rgba(100, 181, 246, 0.32);
+    }
+
+    &__content {
+      color: #e0e0e0;
+      background: rgba(0, 0, 0, 0.35);
+    }
+  }
+}
+
+

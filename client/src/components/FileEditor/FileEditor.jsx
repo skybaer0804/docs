@@ -80,15 +80,15 @@ export function FileEditor({ isOpen, onClose, userId, username }) {
   };
 
   // 파일 수정 핸들러
-  const handleUpdateFile = async (fileId, updates) => {
+  const handleUpdateFile = async (file, updates) => {
     try {
-      const result = await updateDocMutation.mutateAsync({ id: fileId, data: updates });
+      const result = await updateDocMutation.mutateAsync({ id: file.id, path: file.path, data: updates });
       showSuccess('파일이 수정되었습니다');
 
       // FileEditor는 자체 트리를 관리하므로 navigationObserver 이벤트는 발생시키지 않음
       // (useDirectoryTree에서 중복 로드 방지)
       // 수정된 파일 정보 업데이트
-      if (selectedFile && selectedFile.id === fileId) {
+      if (selectedFile && selectedFile.id === file.id) {
         setSelectedFile({ ...selectedFile, ...updates });
       }
     } catch (error) {
@@ -97,13 +97,14 @@ export function FileEditor({ isOpen, onClose, userId, username }) {
   };
 
   // 파일 삭제 핸들러
-  const handleDeleteFile = async (fileId) => {
+  const handleDeleteFile = async (file) => {
+    const fileId = typeof file === 'object' && file !== null ? file.id : file;
     if (!confirm('정말 이 파일을 삭제하시겠습니까?')) {
       return;
     }
 
     try {
-      await deleteDocMutation.mutateAsync({ id: fileId });
+      await deleteDocMutation.mutateAsync({ id: fileId, path: file?.path || selectedFile?.path });
       showSuccess('파일이 삭제되었습니다');
 
       // FileEditor는 자체 트리를 관리하므로 navigationObserver 이벤트는 발생시키지 않음
@@ -131,7 +132,7 @@ export function FileEditor({ isOpen, onClose, userId, username }) {
 
       // 폴더 검색
       Object.keys(node).forEach((key) => {
-        if (key === '_files') return;
+        if (key === '_files' || key === '_meta') return;
         const subNode = node[key];
         const subPath = path ? `${path}/${key}` : key;
         const filteredSubNode = searchInNode(subNode, subPath);
@@ -139,7 +140,7 @@ export function FileEditor({ isOpen, onClose, userId, username }) {
         // 하위에 파일이 있거나 폴더가 있으면 포함
         if (
           filteredSubNode._files.length > 0 ||
-          Object.keys(filteredSubNode).filter((k) => k !== '_files').length > 0
+          Object.keys(filteredSubNode).filter((k) => k !== '_files' && k !== '_meta').length > 0
         ) {
           result[key] = filteredSubNode;
         }
@@ -150,7 +151,10 @@ export function FileEditor({ isOpen, onClose, userId, username }) {
 
     Object.keys(tree).forEach((key) => {
       const filteredNode = searchInNode(tree[key], key);
-      if (filteredNode._files.length > 0 || Object.keys(filteredNode).filter((k) => k !== '_files').length > 0) {
+      if (
+        filteredNode._files.length > 0 ||
+        Object.keys(filteredNode).filter((k) => k !== '_files' && k !== '_meta').length > 0
+      ) {
         filtered[key] = filteredNode;
       }
     });

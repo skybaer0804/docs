@@ -14,6 +14,8 @@ export function DirectoryViewContainer({ currentRoute, onNavigate }) {
             categorized={categorized}
             displayType={displayType}
             displayData={displayData}
+            currentRoute={currentRoute}
+            onNavigate={onNavigate}
             onFolderClick={handleFolderClick}
             onFileClick={handleFileClick}
         />

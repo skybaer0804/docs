@@ -21,7 +21,7 @@ export function FileTree({
   const [creatingPath, setCreatingPath] = useState(null);
 
   const renderTree = (node, path = '', level = 0) => {
-    const keys = Object.keys(node).filter((key) => key !== '_files');
+    const keys = Object.keys(node).filter((key) => key !== '_files' && key !== '_meta');
     const files = node._files || [];
 
     if (keys.length === 0 && files.length === 0 && level > 0) {
@@ -47,7 +47,7 @@ export function FileTree({
                 className="file-tree__item-action"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onDeleteFile(file.id);
+                  onDeleteFile(file);
                 }}
                 title="삭제"
               >
@@ -63,7 +63,7 @@ export function FileTree({
           const subNode = node[key];
           const isExpanded = expandedPaths[subPath] === true;
           const hasContent =
-            subNode._files?.length > 0 || Object.keys(subNode).filter((k) => k !== '_files').length > 0;
+            subNode._files?.length > 0 || Object.keys(subNode).filter((k) => k !== '_files' && k !== '_meta').length > 0;
 
           if (!hasContent && level > 0) return null;
 
@@ -150,8 +150,8 @@ export function FileTree({
   // username이 최상단에 있는지 확인 (author_id별 그룹화된 경우)
   const isUserGrouped = categoryKeys.some((key) => {
     const categoryData = tree[key];
-    // username이 키이고, 그 아래에 실제 디렉토리 구조가 있는 경우
-    return typeof categoryData === 'object' && !categoryData._files;
+    // user-grouped 형태: 최상단 키가 username이고, 그 값은 "root tree"로 _meta가 없음
+    return typeof categoryData === 'object' && categoryData !== null && categoryData._meta === undefined;
   });
 
   return (

@@ -107,7 +107,9 @@ function transformFileNode(node) {
         title: node.name.replace(/\.md$/, ''), // 확장자 제거된 제목
         name: node.name,
         ext: node.name.split('.').pop() || '',
-        id: node.id
+        id: node.id,
+        type: node.type,
+        author_id: node.author_id
     };
 }
 
@@ -127,6 +129,18 @@ function cleanTreeStructure(dirtyTree) {
         
         // 재귀 처리
         const cleanChildren = cleanTreeStructure(node.children || {});
+
+        // 폴더 메타 보존 (삭제/이동/DnD를 위해 id/path가 필요)
+        // NOTE: 기존 렌더러들이 폴더 키로 인식하지 않도록 `_meta`는 예약 키로 사용
+        if (node && node.type === 'DIRECTORY') {
+            cleanChildren._meta = {
+                id: node.id,
+                path: node.path,
+                name: node.name,
+                type: node.type,
+                author_id: node.author_id
+            };
+        }
         
         // 현재 폴더의 파일들
         if (node.files && node.files.length > 0) {

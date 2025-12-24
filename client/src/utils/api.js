@@ -200,49 +200,75 @@ export async function createDoc(data, token = null) {
  * 문서를 수정합니다. (관리자 전용)
  */
 export async function updateDoc(id, data, token = null) {
-    const authToken = token || getToken();
-    if (!authToken) {
-        throw new Error('Authentication required');
-    }
+  const authToken = token || getToken();
+  if (!authToken) {
+    throw new Error('Authentication required');
+  }
 
-    const response = await fetch(`${API_BASE}/${id}`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${authToken}`,
-        },
-        body: JSON.stringify(data),
-    });
+  const response = await fetch(`${API_BASE}/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${authToken}`,
+    },
+    body: JSON.stringify(data),
+  });
 
-    if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Failed to update document');
-    }
-    return response.json();
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error || 'Failed to update document');
+  }
+  return response.json();
 }
 
 /**
  * 문서를 삭제합니다. (관리자 전용)
  */
 export async function deleteDoc(id, token = null) {
-    const authToken = token || getToken();
-    if (!authToken) {
-        throw new Error('Authentication required');
-    }
+  const authToken = token || getToken();
+  if (!authToken) {
+    throw new Error('Authentication required');
+  }
 
-    const response = await fetch(`${API_BASE}/${id}`, {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${authToken}`,
-        },
-    });
+  const response = await fetch(`${API_BASE}/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${authToken}`,
+    },
+  });
 
-    if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Failed to delete document');
-    }
-    return response.json();
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error || 'Failed to delete document');
+  }
+  return response.json();
+}
+
+/**
+ * 문서/폴더를 다른 폴더로 이동합니다. (본인(author_id)만 가능)
+ * @param {Object} data - { id, target_parent_path }
+ */
+export async function moveDoc(data, token = null) {
+  const authToken = token || getToken();
+  if (!authToken) {
+    throw new Error('Authentication required');
+  }
+
+  const response = await fetch(`${API_BASE}/move`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${authToken}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error || 'Failed to move document');
+  }
+  return response.json();
 }
 
 /**
@@ -251,24 +277,24 @@ export async function deleteDoc(id, token = null) {
  * @returns {Promise<Object>} { user }
  */
 export async function updateProfile(data) {
-    const token = getToken();
-    if (!token) {
-        throw new Error('Authentication required');
-    }
+  const token = getToken();
+  if (!token) {
+    throw new Error('Authentication required');
+  }
 
-    const response = await fetch(`${AUTH_API_BASE}/profile`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-    });
+  const response = await fetch(`${AUTH_API_BASE}/profile`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
 
-    if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Failed to update profile');
-    }
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error || 'Failed to update profile');
+  }
 
-    return response.json();
+  return response.json();
 }

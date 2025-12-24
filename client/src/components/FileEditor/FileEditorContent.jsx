@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'preact/hooks';
 import { IconTrash } from '@tabler/icons-preact';
 import { Button } from '../Button';
-import { fetchDocContent } from '../../utils/api';
+import { useDocContentQuery } from '../../hooks/useDocContentQuery';
 
 /**
  * FileEditorContent 컴포넌트
@@ -11,45 +11,33 @@ export function FileEditorContent({ file, onUpdate, onDelete, loading }) {
   const [content, setContent] = useState('');
   const [name, setName] = useState('');
   const [isPublic, setIsPublic] = useState(false);
-  const [contentLoading, setContentLoading] = useState(false);
+
+  const { data: doc, isLoading: contentLoading } = useDocContentQuery(file?.path || '', {
+    enabled: !!file?.path,
+  });
 
   // 파일 내용 로드
   useEffect(() => {
     if (file) {
       setName(file.name || file.title || '');
       setIsPublic(file.is_public || false);
-      loadFileContent();
     }
   }, [file]);
 
-  const loadFileContent = async () => {
-    if (!file.path) return;
-
-    try {
-      setContentLoading(true);
-      const doc = await fetchDocContent(file.path);
-      setContent(doc?.content || '');
-    } catch (error) {
-      console.error('Error loading file content:', error);
-      setContent('');
-    } finally {
-      setContentLoading(false);
-    }
-  };
+  useEffect(() => {
+    if (!file) return;
+    setContent(doc?.content || '');
+  }, [file?.path, doc?.content]);
 
   const handleSave = async () => {
     if (!file.id) return;
 
-    await onUpdate(file.id, {
-      name,
-      content,
-      is_public: isPublic,
-    });
+    await onUpdate(file, { name, content, is_public: isPublic });
   };
 
   const handleDelete = () => {
     if (!file.id) return;
-    onDelete(file.id);
+    onDelete(file);
   };
 
   if (contentLoading) {

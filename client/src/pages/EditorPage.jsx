@@ -152,6 +152,7 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
       } else {
         const result = await updateDocMutation.mutateAsync({
           id: docId,
+          path,
           data: {
             content,
             is_public: isPublic,
@@ -203,7 +204,7 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
     setError('');
 
     try {
-      await deleteDocMutation.mutateAsync({ id: docId });
+      await deleteDocMutation.mutateAsync({ id: docId, path });
       showSuccess('문서가 삭제되었습니다.');
 
       // 트리 업데이트를 위한 이벤트 발생

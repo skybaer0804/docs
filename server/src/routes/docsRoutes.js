@@ -19,6 +19,9 @@ router.put('/:id', authMiddleware, docsController.updateDoc);
 // 문서 삭제 (🔐 인증 필요)
 router.delete('/:id', authMiddleware, docsController.deleteDoc);
 
+// 문서/폴더 이동 (🔐 인증 필요)
+router.post('/move', authMiddleware, docsController.moveDoc);
+
 // 특정 문서 조회 (공개/비공개 로직은 컨트롤러 내부에서 처리)
 router.get('/*', docsController.getDocByPath);
 

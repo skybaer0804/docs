@@ -1,4 +1,13 @@
 import { DirectoryViewContainer } from '../containers/DirectoryViewContainer';
+import { useRef, useState } from 'preact/hooks';
+import { IconDotsVertical, IconTrash } from '@tabler/icons-preact';
+import { Popover } from './Popover';
+import { List } from './List';
+import { ListItem } from './ListItem';
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
+import { useDeleteDocMutation } from '../hooks/useDocMutations';
+import { useDnd } from '../contexts/DndContext';
 import './DirectoryView.scss';
 
 /**
@@ -6,60 +15,288 @@ import './DirectoryView.scss';
  * 순수 UI 렌더링만 담당 (Props 기반)
  * TDD 친화적: Props만으로 렌더링하므로 테스트 용이
  */
-export function DirectoryViewPresenter({ categorized, displayType, displayData, onFolderClick, onFileClick }) {
+export function DirectoryViewPresenter({
+    categorized,
+    displayType,
+    displayData,
+    currentRoute,
+    onNavigate,
+    onFolderClick,
+    onFileClick,
+}) {
+    const { user } = useAuth();
+    const { showSuccess, showError } = useToast();
+    const deleteDocMutation = useDeleteDocMutation();
+    const dnd = useDnd();
+
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [menuTarget, setMenuTarget] = useState(null); // { type: 'folder'|'file', id, path, author_id, label }
+    const menuButtonRef = useRef(null);
+
+    const canManage = (authorId) => {
+        if (!user?.id) return false;
+        if (!authorId) return false;
+        return user.id === authorId;
+    };
+
+    const bindDragSource = (item) => ({
+        draggable: true,
+        onDragStart: (e) => {
+            e.stopPropagation();
+            e.dataTransfer.effectAllowed = 'move';
+            // Firefox 호환을 위해 setData 필요
+            try {
+                e.dataTransfer.setData('text/plain', item.path || '');
+            } catch {
+                // noop
+            }
+            dnd.beginDrag(item, e.currentTarget);
+        },
+        onDragEnd: () => dnd.endDrag(),
+    });
+
+    const bindDropTarget = (targetFolderDocsPath) => {
+        const canDrop = dnd.canDropTo(targetFolderDocsPath);
+        const isOver = dnd.dragOverPath === targetFolderDocsPath;
+        const isSuccess = dnd.dropSuccessPath === targetFolderDocsPath;
+
+        return {
+            onDragEnter: (e) => {
+                if (!canDrop) return;
+                e.preventDefault();
+                dnd.markDragOver(targetFolderDocsPath);
+            },
+            onDragOver: (e) => {
+                if (!canDrop) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                dnd.markDragOver(targetFolderDocsPath);
+            },
+            onDragLeave: () => {
+                if (isOver) dnd.clearDragOver();
+            },
+            onDrop: (e) => {
+                if (!canDrop) return;
+                e.preventDefault();
+                e.stopPropagation();
+                dnd.dropTo(targetFolderDocsPath, e.currentTarget);
+            },
+            dndClassName: `${isOver ? 'directory-item--drag-over' : ''} ${isSuccess ? 'directory-item--drop-success' : ''}`.trim(),
+        };
+    };
+
+    const openMenu = (e, target) => {
+        e.preventDefault();
+        e.stopPropagation();
+        menuButtonRef.current = e.currentTarget;
+        setMenuTarget(target);
+        setMenuOpen(true);
+    };
+
+    const closeMenu = () => {
+        setMenuOpen(false);
+        setMenuTarget(null);
+    };
+
+    const getParentRouteFromDocsPath = (docsPath) => {
+        if (!docsPath || typeof docsPath !== 'string') return '/';
+        const parts = docsPath.split('/').filter(Boolean); // ['docs', ...]
+        if (parts[0] !== 'docs') return '/';
+        parts.pop();
+        if (parts.length <= 1) return '/';
+        return `/category/${parts.slice(1).join('/')}`;
+    };
+
+    const toDocsPath = (route) => {
+        if (!route || typeof route !== 'string') return '';
+        if (route.startsWith('/docs/')) return route;
+        if (route.startsWith('/category/')) return route.replace('/category/', '/docs/');
+        return '';
+    };
+
+    const navigateToParentOfDocsPath = (docsPath) => {
+        const parentRoute = getParentRouteFromDocsPath(docsPath);
+        if (onNavigate) {
+            onNavigate(parentRoute);
+            return;
+        }
+        if (!onFolderClick) return;
+        if (parentRoute === '/') return;
+        onFolderClick(parentRoute.replace('/category/', ''));
+    };
+
+    const handleDelete = async () => {
+        if (!menuTarget?.id) return;
+        if (!canManage(menuTarget.author_id)) return;
+
+        const confirmMessage =
+            menuTarget.type === 'folder'
+                ? '정말 이 폴더를 삭제하시겠습니까? (하위 항목도 함께 삭제됩니다)'
+                : '정말 이 파일을 삭제하시겠습니까?';
+
+        if (!confirm(confirmMessage)) return;
+
+        try {
+            await deleteDocMutation.mutateAsync({ id: menuTarget.id, path: menuTarget.path });
+            showSuccess('삭제되었습니다.');
+
+            // 현재 경로가 삭제 대상에 포함되면 상위로 이동
+            const currentDocsPath = toDocsPath(currentRoute || '');
+            if (!currentDocsPath) return;
+
+            if (menuTarget.type === 'folder' && currentDocsPath.startsWith(menuTarget.path)) {
+                navigateToParentOfDocsPath(menuTarget.path);
+            }
+
+            if (menuTarget.type === 'file' && currentDocsPath === menuTarget.path) {
+                navigateToParentOfDocsPath(menuTarget.path);
+            }
+        } catch (e) {
+            showError(e?.message || '삭제에 실패했습니다.');
+        } finally {
+            closeMenu();
+        }
+    };
+
+    let content = null;
+
     // 루트 레벨: 모든 카테고리 표시
     if (displayType === 'root') {
-        // 정렬 제거: 원본 순서 유지 (대소문자, 한글 그대로 표시)
-        const categoryKeys = Object.keys(categorized).filter((key) => key !== '_files');
+        const categoryKeys = Object.keys(categorized).filter((key) => key !== '_files' && key !== '_meta');
         if (categoryKeys.length === 0) {
-            return (
+            content = (
                 <div class="directory-view">
                     <div style="text-align: center; padding: 40px;">
                         <p style="color: #666;">문서가 없습니다.</p>
                     </div>
                 </div>
             );
-        }
-
-        return (
-            <div class="directory-view">
-                <div class="directory-grid">
-                    {categoryKeys.map((category) => {
-                        return (
-                            <div key={category} class="directory-item folder-item" onClick={() => onFolderClick(category)} title={category}>
-                                <span class="item-icon">📁</span>
-                                <span class="item-name">{category}</span>
-                            </div>
-                        );
-                    })}
+        } else {
+            content = (
+                <div class="directory-view">
+                    <div class="directory-grid">
+                        {categoryKeys.map((category) => {
+                            const meta = categorized?.[category]?._meta;
+                            const folderPath = meta?.path || `/docs/${category}`;
+                            const showMenu = meta && canManage(meta.author_id);
+                            const drop = bindDropTarget(folderPath);
+                            const { dndClassName = '', ...dropHandlers } = drop || {};
+                            return (
+                                <div
+                                    key={category}
+                                    class={`directory-item folder-item ${dndClassName}`}
+                                    onClick={() => onFolderClick(category)}
+                                    title={category}
+                                    {...dropHandlers}
+                                    {...(meta
+                                        ? bindDragSource({
+                                              id: meta.id,
+                                              type: 'DIRECTORY',
+                                              path: folderPath,
+                                              name: meta.name || category,
+                                              author_id: meta.author_id,
+                                          })
+                                        : {})}
+                                >
+                                    <span class="item-icon">📁</span>
+                                    <span class="item-name">{category}</span>
+                                    {showMenu && (
+                                        <button
+                                            class="directory-item__menu-btn"
+                                            onClick={(e) =>
+                                                openMenu(e, {
+                                                    type: 'folder',
+                                                    id: meta.id,
+                                                    path: folderPath,
+                                                    author_id: meta.author_id,
+                                                    label: category,
+                                                })
+                                            }
+                                            aria-label="폴더 메뉴"
+                                            title="폴더 메뉴"
+                                        >
+                                            <IconDotsVertical size={18} />
+                                        </button>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
-            </div>
-        );
+            );
+        }
     }
 
     // 디렉토리 레벨: 해당 디렉토리의 하위 항목 표시
     if (displayType === 'directory' && displayData) {
-        const { path, pathParts, node } = displayData;
-        // 정렬 제거: 원본 순서 유지 (대소문자, 한글 그대로 표시)
-        const subdirectories = Object.keys(node).filter((key) => key !== '_files');
+        const { path, node } = displayData;
+        const subdirectories = Object.keys(node).filter((key) => key !== '_files' && key !== '_meta');
         const directFiles = node._files || [];
 
-        return (
+        content = (
             <div class="directory-view">
                 <div class="directory-grid">
-                    {/* 하위 디렉토리들 */}
                     {subdirectories.map((subdir) => {
                         const subPath = path ? `${path}/${subdir}` : subdir;
+                        const meta = node?.[subdir]?._meta;
+                        const folderPath = meta?.path || `/docs/${subPath}`;
+                        const showMenu = meta && canManage(meta.author_id);
+                        const drop = bindDropTarget(folderPath);
+                        const { dndClassName = '', ...dropHandlers } = drop || {};
                         return (
-                            <div key={subdir} class="directory-item folder-item" onClick={() => onFolderClick(subPath)} title={subPath}>
+                            <div
+                                key={subdir}
+                                class={`directory-item folder-item ${dndClassName}`}
+                                onClick={() => onFolderClick(subPath)}
+                                title={subPath}
+                                {...dropHandlers}
+                                {...(meta
+                                    ? bindDragSource({
+                                          id: meta.id,
+                                          type: 'DIRECTORY',
+                                          path: folderPath,
+                                          name: meta.name || subdir,
+                                          author_id: meta.author_id,
+                                      })
+                                    : {})}
+                            >
                                 <span class="item-icon">📁</span>
                                 <span class="item-name">{subdir}</span>
+                                {showMenu && (
+                                    <button
+                                        class="directory-item__menu-btn"
+                                        onClick={(e) =>
+                                            openMenu(e, {
+                                                type: 'folder',
+                                                id: meta.id,
+                                                path: folderPath,
+                                                author_id: meta.author_id,
+                                                label: subdir,
+                                            })
+                                        }
+                                        aria-label="폴더 메뉴"
+                                        title="폴더 메뉴"
+                                    >
+                                        <IconDotsVertical size={18} />
+                                    </button>
+                                )}
                             </div>
                         );
                     })}
-                    {/* 직접 파일들 */}
                     {directFiles.map((file) => (
-                        <div key={file.path} class="directory-item file-item" onClick={() => onFileClick(file)} title={file.path}>
+                        <div
+                            key={file.path}
+                            class={`directory-item file-item ${dnd.dragItem?.path === file.path ? 'directory-item--dragging' : ''}`}
+                            onClick={() => onFileClick(file)}
+                            title={file.path}
+                            {...bindDragSource({
+                                id: file.id,
+                                type: 'FILE',
+                                path: file.path,
+                                name: file.name || file.title,
+                                author_id: file.author_id,
+                            })}
+                        >
                             <span class="item-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
                             <span class="item-name">{file.title}</span>
                         </div>
@@ -69,7 +306,18 @@ export function DirectoryViewPresenter({ categorized, displayType, displayData, 
         );
     }
 
-    return null;
+    return (
+        <>
+            {content}
+            <Popover isOpen={menuOpen} onClose={closeMenu} anchorRef={menuButtonRef}>
+                <List>
+                    <ListItem icon={<IconTrash size={18} />} onClick={handleDelete}>
+                        삭제
+                    </ListItem>
+                </List>
+            </Popover>
+        </>
+    );
 }
 
 // 기존 API 호환성을 위한 기본 export (Container 사용)

@@ -82,7 +82,7 @@ export function FileLocationModal({ isOpen, onClose, onSelect, currentPath = '/d
       const result = {};
 
       Object.keys(node).forEach((key) => {
-        if (key === '_files') return;
+        if (key === '_files' || key === '_meta') return;
         const subNode = node[key];
         const subPath = path ? `${path}/${key}` : key;
 

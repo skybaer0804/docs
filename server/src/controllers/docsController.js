@@ -1,5 +1,47 @@
 const supabase = require('../config/supabase');
 
+function isDocsPath(path) {
+  return typeof path === 'string' && path.startsWith('/docs');
+}
+
+function normalizePath(path) {
+  if (typeof path !== 'string') return '';
+  // 중복 슬래시 제거 (단, 프로토콜 같은 건 없으니 단순 처리)
+  return path.replace(/\/{2,}/g, '/');
+}
+
+function splitNameForAutoRename(name) {
+  if (typeof name !== 'string') return { base: '', ext: '' };
+  const lastDot = name.lastIndexOf('.');
+  if (lastDot <= 0) return { base: name, ext: '' };
+  return { base: name.slice(0, lastDot), ext: name.slice(lastDot) };
+}
+
+async function getUniqueNameInParent({ parentId, desiredName, excludeId }) {
+  const { base, ext } = splitNameForAutoRename(desiredName);
+  let candidate = desiredName;
+
+  // 충돌 시 " (1)"..." (n)" 부여
+  for (let i = 0; i < 100; i++) {
+    const { data, error } = await supabase
+      .from('nodes')
+      .select('id')
+      .eq('parent_id', parentId)
+      .eq('name', candidate)
+      .limit(1);
+
+    if (error) throw error;
+    const hit = Array.isArray(data) ? data[0] : null;
+
+    if (!hit) return candidate;
+    if (excludeId && hit.id === excludeId) return candidate;
+
+    candidate = `${base} (${i + 1})${ext}`;
+  }
+
+  throw new Error('Failed to generate unique name');
+}
+
 // 전체 문서 구조 조회
 exports.getAllDocs = async (req, res) => {
   try {
@@ -56,7 +98,7 @@ exports.createDoc = async (req, res) => {
       return res.status(401).json({ error: 'Authentication required. User ID is missing.' });
     }
     const author_id = req.user.id;
-    
+
     // author_id가 유효한지 확인
     if (!author_id || author_id === null || author_id === undefined) {
       console.error('createDoc: author_id is invalid', { author_id, user: req.user });
@@ -97,11 +139,7 @@ exports.createDoc = async (req, res) => {
       path: newPath,
     });
 
-    const { data, error } = await supabase
-      .from('nodes')
-      .insert([insertData])
-      .select()
-      .single();
+    const { data, error } = await supabase.from('nodes').insert([insertData]).select().single();
 
     if (error) {
       console.error('createDoc: Supabase insert error:', error);
@@ -179,7 +217,7 @@ exports.updateDoc = async (req, res) => {
 
     // 권한 체크: 자신이 생성한 노드만 수정 가능
     const { data: existingNode } = await supabase.from('nodes').select('author_id').eq('id', id).single();
-    
+
     if (!existingNode) {
       return res.status(404).json({ error: 'Node not found' });
     }
@@ -216,7 +254,7 @@ exports.deleteDoc = async (req, res) => {
 
     // 권한 체크: 자신이 생성한 노드만 삭제 가능
     const { data: node } = await supabase.from('nodes').select('author_id, path, type').eq('id', id).single();
-    
+
     if (!node) {
       return res.status(404).json({ error: 'Node not found' });
     }
@@ -230,14 +268,14 @@ exports.deleteDoc = async (req, res) => {
     const deleteRecursive = async (nodeId) => {
       // 현재 노드의 모든 하위 노드 찾기
       const { data: children } = await supabase.from('nodes').select('id').eq('parent_id', nodeId);
-      
+
       if (children && children.length > 0) {
         // 각 하위 노드에 대해 재귀적으로 삭제
         for (const child of children) {
           await deleteRecursive(child.id);
         }
       }
-      
+
       // 현재 노드 삭제
       const { error } = await supabase.from('nodes').delete().eq('id', nodeId);
       if (error) throw error;
@@ -246,6 +284,154 @@ exports.deleteDoc = async (req, res) => {
     await deleteRecursive(id);
 
     res.json({ message: 'Deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// 문서/폴더 이동
+// body: { id: UUID, target_parent_path: "/docs/Some/Dir" }
+exports.moveDoc = async (req, res) => {
+  try {
+    const { id, target_parent_path } = req.body || {};
+
+    // auth
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'Authentication required. User ID is missing.' });
+    }
+    const author_id = req.user.id;
+
+    if (!id) {
+      return res.status(400).json({ error: 'Missing required field: id' });
+    }
+    if (!target_parent_path || typeof target_parent_path !== 'string') {
+      return res.status(400).json({ error: 'Missing required field: target_parent_path' });
+    }
+
+    const targetParentPath = normalizePath(target_parent_path);
+    if (!isDocsPath(targetParentPath)) {
+      return res.status(400).json({ error: 'Invalid target parent path. Must be under /docs.' });
+    }
+
+    // source node
+    const { data: source, error: sourceErr } = await supabase
+      .from('nodes')
+      .select('id, parent_id, name, type, path, author_id')
+      .eq('id', id)
+      .single();
+
+    if (sourceErr) {
+      if (sourceErr.code === 'PGRST116') return res.status(404).json({ error: 'Node not found' });
+      throw sourceErr;
+    }
+
+    if (source.author_id !== author_id) {
+      return res.status(403).json({ error: 'Permission denied. You can only move your own nodes.' });
+    }
+
+    if (!isDocsPath(source.path)) {
+      return res.status(400).json({ error: 'Only nodes under /docs can be moved.' });
+    }
+    if (source.path === '/docs') {
+      return res.status(400).json({ error: 'The /docs root cannot be moved.' });
+    }
+
+    // target parent node
+    const { data: targetParent, error: targetErr } = await supabase
+      .from('nodes')
+      .select('id, type, path')
+      .eq('path', targetParentPath)
+      .single();
+
+    if (targetErr) {
+      if (targetErr.code === 'PGRST116') return res.status(404).json({ error: 'Target parent directory not found' });
+      throw targetErr;
+    }
+    if (targetParent.type !== 'DIRECTORY') {
+      return res.status(400).json({ error: 'Drop target must be a directory.' });
+    }
+
+    // prevent cycles (dir -> its descendant)
+    if (source.type === 'DIRECTORY') {
+      const oldPrefix = normalizePath(source.path);
+      const targetPrefix = normalizePath(targetParent.path);
+      if (targetPrefix === oldPrefix || targetPrefix.startsWith(`${oldPrefix}/`)) {
+        return res.status(400).json({ error: 'Cannot move a directory into itself or its descendants.' });
+      }
+    }
+
+    // no-op: same parent + same name
+    if (source.parent_id === targetParent.id) {
+      const sameParentPath = normalizePath(targetParent.path);
+      const expectedPath = normalizePath(`${sameParentPath}/${source.name}`);
+      if (expectedPath === normalizePath(source.path)) {
+        return res.json({
+          id: source.id,
+          oldPath: source.path,
+          newPath: source.path,
+          name: source.name,
+          renamed: false,
+          noop: true,
+        });
+      }
+    }
+
+    const uniqueName = await getUniqueNameInParent({
+      parentId: targetParent.id,
+      desiredName: source.name,
+      excludeId: source.id,
+    });
+
+    const oldPath = normalizePath(source.path);
+    const newPath = normalizePath(`${targetParent.path}/${uniqueName}`);
+
+    // descendants snapshot (before updating source path)
+    let descendants = [];
+    if (source.type === 'DIRECTORY') {
+      const { data: children, error: childrenErr } = await supabase
+        .from('nodes')
+        .select('id, path')
+        .like('path', `${oldPath}/%`);
+      if (childrenErr) throw childrenErr;
+      descendants = Array.isArray(children) ? children : [];
+    }
+
+    // update source
+    const { data: updated, error: updateErr } = await supabase
+      .from('nodes')
+      .update({
+        parent_id: targetParent.id,
+        name: uniqueName,
+        path: newPath,
+      })
+      .eq('id', source.id)
+      .select('id, parent_id, name, type, path, author_id')
+      .single();
+
+    if (updateErr) throw updateErr;
+
+    // update descendants paths (keep parent_id chain intact, only rewrite prefix)
+    if (descendants.length > 0) {
+      for (const child of descendants) {
+        const childPath = normalizePath(child.path);
+        if (!childPath.startsWith(`${oldPath}/`)) continue;
+        const suffix = childPath.slice(oldPath.length);
+        const rewritten = normalizePath(`${newPath}${suffix}`);
+
+        const { error: childUpdateErr } = await supabase.from('nodes').update({ path: rewritten }).eq('id', child.id);
+        if (childUpdateErr) throw childUpdateErr;
+      }
+    }
+
+    res.json({
+      id: updated.id,
+      oldPath,
+      newPath: updated.path,
+      name: updated.name,
+      renamed: updated.name !== source.name,
+      movedType: updated.type,
+      descendantCount: descendants.length,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
