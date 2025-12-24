@@ -6,10 +6,10 @@
 
 ### 주요 목표
 
--   **DB 기반 관리**: 파일 시스템 의존성을 제거하고 DB를 통해 문서와 폴더 구조를 관리합니다.
--   **사용자 인증**: JWT 기반 로그인을 도입하여 문서 작성 권한을 관리합니다. (비로그인: 조회만 가능)
--   **SPA 라우팅 해결**: Express 서버를 통해 SPA 새로고침 시 발생하는 404/CSS 깨짐 문제를 해결합니다.
--   **무료 배포 최적화**: Koyeb 및 Supabase 무료 티어를 활용한 지속 가능한 아키텍처를 구축합니다.
+- **DB 기반 관리**: 파일 시스템 의존성을 제거하고 DB를 통해 문서와 폴더 구조를 관리합니다.
+- **사용자 인증**: JWT 기반 로그인을 도입하여 문서 작성 권한을 관리합니다. (비로그인: 조회만 가능)
+- **SPA 라우팅 해결**: Express 서버를 통해 SPA 새로고침 시 발생하는 404/CSS 깨짐 문제를 해결합니다.
+- **무료 배포 최적화**: Koyeb 및 Supabase 무료 티어를 활용한 지속 가능한 아키텍처를 구축합니다.
 
 ---
 
@@ -28,10 +28,10 @@ graph TD
 
 ### 2.2 기술 스택
 
--   **Frontend**: React/Preact (기존 유지), Vite
--   **Backend**: Node.js, Express.js
--   **Database**: PostgreSQL (Supabase Hosting)
--   **Deployment**: Koyeb (PaaS)
+- **Frontend**: React/Preact (기존 유지), Vite
+- **Backend**: Node.js, Express.js
+- **Database**: PostgreSQL (Supabase Hosting)
+- **Deployment**: Koyeb (PaaS)
 
 ---
 
@@ -121,9 +121,9 @@ CREATE INDEX idx_nodes_path ON nodes(path);
 ## 5. 비즈니스 로직 (Business Logic)
 
 ### 5.1 인증 (Authentication)
--   **로그인**: Supabase Auth 기능을 사용하거나, 직접 구현 시 Supabase가 발급한 JWT Secret을 사용하여 토큰을 검증합니다.
--   **미들웨어**: API 요청 헤더(`Authorization: Bearer <token>`)에 포함된 토큰을 Supabase의 JWT Secret으로 검증하여 사용자 신원을 확인합니다.
 
+- **로그인**: Supabase Auth 기능을 사용하거나, 직접 구현 시 Supabase가 발급한 JWT Secret을 사용하여 토큰을 검증합니다.
+- **미들웨어**: API 요청 헤더(`Authorization: Bearer <token>`)에 포함된 토큰을 Supabase의 JWT Secret으로 검증하여 사용자 신원을 확인합니다.
 
 ### 5.2 라우팅 및 SPA Fallback (새로고침 문제 해결)
 
@@ -140,7 +140,7 @@ app.use(express.static(path.join(__dirname, '../../client/dist')));
 
 // 3. 그 외 모든 요청은 index.html 반환 (SPA 라우팅 지원)
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../../client/dist/index.html'));
+  res.sendFile(path.join(__dirname, '../../client/dist/index.html'));
 });
 ```
 
@@ -152,47 +152,50 @@ app.get('*', (req, res) => {
 | :--------: | :------------------- | :------------------------------ | :-------: | :------------------------------------------------ |
 |  **GET**   | `/api/docs`          | 전체 문서/폴더 구조 조회 (트리) |   전체    | -                                                 |
 |  **GET**   | `/api/docs/:path(*)` | 특정 문서 내용 조회             |   전체    | -                                                 |
-|  **POST**  | `/api/docs`          | 새 문서 또는 폴더 생성          | 🔐 관리자 | `{ type, parent_path, name, content, is_public }` |
-|  **PUT**   | `/api/docs/:id`      | 문서 수정 (내용, 공개여부 등)   | 🔐 관리자 | `{ content, is_public, name }`                    |
-| **DELETE** | `/api/docs/:id`      | 문서 또는 폴더 삭제             | 🔐 관리자 | -                                                 |
-|  **POST**  | `/api/docs/upload`   | .md 파일 직접 업로드            | 🔐 관리자 | `multipart/form-data` (file)                      |
+|  **POST**  | `/api/docs`          | 새 문서 또는 폴더 생성          | 🔐 로그인 | `{ type, parent_path, name, content, is_public }` |
+|  **PUT**   | `/api/docs/:id`      | 문서 수정 (내용, 공개여부 등)   | 🔐 로그인 | `{ content, is_public, name }`                    |
+| **DELETE** | `/api/docs/:id`      | 문서 또는 폴더 삭제             | 🔐 로그인 | -                                                 |
+|  **POST**  | `/api/docs/upload`   | .md 파일 직접 업로드            | 🔐 로그인 | `multipart/form-data` (file)                      |
+
+> **권한 정책 (2차 반영)**  
+> 로그인 사용자는 “모든 문서”가 아니라 **본인이 생성(author_id)한 노드만** 생성/수정/삭제/이동할 수 있습니다. (조회는 공개 정책에 따라 별도)
 
 #### 상세 로직
 
 1.  **문서 조회 (`GET /api/docs/:path(*)`)**
-    -   URL 경로(예: `/docs/api/guide`)를 파라미터로 받아 DB의 `path` 컬럼과 매칭합니다.
-    -   **권한 체크**:
-        -   로그인 사용자(관리자): 모든 문서 조회 가능.
-        -   비로그인 사용자: `is_public = true`인 문서만 조회 가능. `false`인 경우 403 Forbidden 또는 404 Not Found 반환.
+    - URL 경로(예: `/docs/api/guide`)를 파라미터로 받아 DB의 `path` 컬럼과 매칭합니다.
+    - **권한 체크**:
+      - 로그인 사용자: 모든 문서 조회 가능. (공개/비공개 정책은 서비스 정책에 따라 조정)
+      - 비로그인 사용자: `is_public = true`인 문서만 조회 가능. `false`인 경우 403 Forbidden 또는 404 Not Found 반환.
 2.  **문서 생성 (`POST /api/docs`)**
 
-    -   **Input**:
-        -   `type`: 'FILE' | 'DIRECTORY'
-        -   `parent_path`: 상위 폴더 경로 (예: `/docs/api`)
-        -   `name`: 파일명 (예: `intro`)
-        -   `content`: 마크다운 본문 (FILE일 경우)
-        -   `is_public`: 공개 여부 (기본값 true)
-    -   **Logic**:
-        -   `parent_path`로 부모 노드의 ID를 찾습니다.
-        -   부모 아래에 중복된 `name`이 있는지 확인합니다.
-        -   전체 `path`를 생성하고 DB에 저장합니다.
+    - **Input**:
+      - `type`: 'FILE' | 'DIRECTORY'
+      - `parent_path`: 상위 폴더 경로 (예: `/docs/api`)
+      - `name`: 파일명 (예: `intro`)
+      - `content`: 마크다운 본문 (FILE일 경우)
+      - `is_public`: 공개 여부 (기본값 true)
+    - **Logic**:
+      - `parent_path`로 부모 노드의 ID를 찾습니다.
+      - 부모 아래에 중복된 `name`이 있는지 확인합니다.
+      - 전체 `path`를 생성하고 DB에 저장합니다.
 
 3.  **문서 수정 (`PUT /api/docs/:id`)**
 
-    -   **Input**: `content` (수정된 본문), `is_public` (공개 설정 변경), `name` (이름 변경 시)
-    -   **Logic**:
-        -   ID로 문서를 찾습니다.
-        -   `is_public` 변경 요청이 있으면 업데이트합니다 (비공개 ↔ 전체공개 전환).
-        -   이름 변경 시 같은 폴더 내 중복 체크 및 `path` 업데이트가 필요합니다.
-        -   `updated_at` 타임스탬프를 갱신합니다.
+    - **Input**: `content` (수정된 본문), `is_public` (공개 설정 변경), `name` (이름 변경 시)
+    - **Logic**:
+      - ID로 문서를 찾습니다.
+      - `is_public` 변경 요청이 있으면 업데이트합니다 (비공개 ↔ 전체공개 전환).
+      - 이름 변경 시 같은 폴더 내 중복 체크 및 `path` 업데이트가 필요합니다.
+      - `updated_at` 타임스탬프를 갱신합니다.
 
 4.  **파일 업로드 (`POST /api/docs/upload`)**
-    -   **기능**: 기존에 작성된 `.md` 파일을 드래그 앤 드롭으로 업로드하여 문서를 생성합니다.
-    -   **Logic**:
-        -   `multer` 미들웨어를 사용하여 파일 버퍼를 읽습니다.
-        -   파일 내용을 텍스트(`utf-8`)로 변환합니다.
-        -   파일명(`filename.md`)에서 확장자를 제거하여 `name`으로 사용합니다.
-        -   이후 로직은 **문서 생성**과 동일하게 DB에 저장합니다 (`type='FILE'`, `content=파일내용`).
+    - **기능**: 기존에 작성된 `.md` 파일을 드래그 앤 드롭으로 업로드하여 문서를 생성합니다.
+    - **Logic**:
+      - `multer` 미들웨어를 사용하여 파일 버퍼를 읽습니다.
+      - 파일 내용을 텍스트(`utf-8`)로 변환합니다.
+      - 파일명(`filename.md`)에서 확장자를 제거하여 `name`으로 사용합니다.
+      - 이후 로직은 **문서 생성**과 동일하게 DB에 저장합니다 (`type='FILE'`, `content=파일내용`).
 
 ---
 
@@ -204,11 +207,11 @@ app.get('*', (req, res) => {
 
 ```json
 {
-    "scripts": {
-        "postinstall": "cd client && npm install && cd ../server && npm install",
-        "build": "cd client && npm run build",
-        "start": "cd server && node src/app.js"
-    }
+  "scripts": {
+    "postinstall": "cd client && npm install && cd ../server && npm install",
+    "build": "cd client && npm run build",
+    "start": "cd server && node src/app.js"
+  }
 }
 ```
 
@@ -225,16 +228,178 @@ app.get('*', (req, res) => {
 ## 7. 마이그레이션 단계 (Migration Steps)
 
 1. **Step 1: 구조 변경**
-    - `client` 폴더 생성 및 기존 소스 이동.
-    - `server` 폴더 생성 및 Express 초기화.
+   - `client` 폴더 생성 및 기존 소스 이동.
+   - `server` 폴더 생성 및 Express 초기화.
 2. **Step 2: DB 구축**
-    - Supabase 프로젝트 생성.
-    - SQL Editor를 통해 테이블 스키마 적용.
+   - Supabase 프로젝트 생성.
+   - SQL Editor를 통해 테이블 스키마 적용.
 3. **Step 3: 백엔드 개발**
-    - DB 연결 설정.
-    - 인증 및 CRUD API 구현.
+   - DB 연결 설정.
+   - 인증 및 CRUD API 구현.
 4. **Step 4: 프론트엔드 연동**
-    - API 호출 로직 구현.
-    - 빌드 설정 수정.
+   - API 호출 로직 구현.
+   - 빌드 설정 수정.
 5. **Step 5: 배포**
-    - Koyeb 연결 및 배포 테스트.
+   - Koyeb 연결 및 배포 테스트.
+
+---
+
+## 8. 마이그레이션 2차 (Phase 2) — UX 재구성 + 캐싱 + DnD(애니메이션 포함)
+
+> **목표**: “문서 탐색/정리” 경험을 1단계 업그레이드합니다.  
+> **핵심 범위**: Breadcrumb 분리/스티키, Layout 높이/스크롤 정리, TanStack Query 전환(캐싱), 콘텐츠 폴더 ⋯ 메뉴(삭제), 드래그앤드롭 이동(콘텐츠+사이드바) + 백엔드 move API + 애니메이션.
+
+### 8.1 2차 결정사항(불변 조건)
+
+- **권한 정책**: 생성/수정/삭제/이동은 **본인(author_id)만 가능**
+- **자동 rename 정책**: 동일 parent 내 이름 충돌 시, 이름 뒤에 **` (1)`, ` (2)`…**를 붙여 유니크 보장
+- **이동 가능 범위**: 항상 **`/docs` 내부**에서만 이동 가능 (`/` 또는 `/category` 같은 가상 경로는 UI용이며 DB 경로는 `/docs/...`)
+- **DnD 범위**: 드래그앤드롭은 **애니메이션 완성까지 포함** (단순 하이라이트가 아니라 “넣는 애니메이션”까지)
+
+### 8.2 현 상태(AS-IS) 관찰 요약
+
+- Breadcrumb가 현재 **타이틀(h1) + breadcrumb nav**를 함께 렌더링하고, `Layout`의 `.header`가 이미 sticky입니다. → 역할 분리 필요
+- `fetchAllDocs()`가 여러 훅/컨테이너에서 중복 호출됩니다. → 캐싱/단일 데이터 소스 필요
+- 트리 빌더가 폴더 노드의 `id/path` 메타를 트리 결과에서 제거합니다. → 폴더 삭제/이동/DnD 타겟 판별이 어려움
+- 백엔드에 CRUD는 있으나 **이동(move) API가 없습니다.**
+
+### 8.3 변경 후(TO-BE) UX 구성
+
+#### 8.3.1 Breadcrumb 역할 분리
+
+- **Title 영역**: `Layout` header에 위치 (문서 타이틀/외부링크 등)
+- **Breadcrumb Nav 영역**: 콘텐츠 영역 상단에 위치, **sticky로 항상 노출**
+  - 스크롤 기준은 `main` 스크롤 컨테이너(현재 `.layout__main`)를 기준으로 함
+
+#### 8.3.2 Layout 높이/스크롤 정책
+
+- 기존처럼 header 높이를 `--header-height`로 계산하는 구조는 유지하되,
+  - header에서 Breadcrumb Nav가 빠지므로 header 높이 감소
+  - main 상단에 breadcrumb bar가 추가되므로 main 내부 레이아웃(패딩/높이/스티키 기준)을 재조정
+
+### 8.4 TanStack Query 적용(캐싱 전략 + 로직 캡슐화)
+
+#### 8.4.1 목표
+
+- 모든 API 호출을 Query/Mutation으로 통합하여
+  - 중복 요청 제거
+  - invalidate 전략으로 UI 동기화
+  - 비즈니스 로직을 훅으로 캡슐화
+
+#### 8.4.2 권장 Query Key 설계
+
+- `docs.tree` : 전체 노드(트리 빌드의 원천)
+- `docs.content.{path}` : 문서 본문(path 기준)
+- `auth.me` : 현재 사용자
+
+#### 8.4.3 캐싱/무효화(Invalidate) 기본 정책
+
+- **트리(`docs.tree`)**: `staleTime` 길게(예: 30~120s) + mutation 성공 시 invalidate
+- **본문(`docs.content.{path}`)**: path별 캐시 + 이동/삭제 시 관련 key를 invalidate/remove
+- **mutation 후 동기화**:
+  - create/update/delete/move 성공 → `docs.tree` invalidate
+  - 현재 보고 있는 경로가 이동/삭제된 경우 → 새 경로로 navigate 또는 상위로 fallback
+
+> Preact 환경에서 TanStack Query를 적용할 때는 `@tanstack/react-query` 사용을 위해 `preact/compat` alias 설정이 필요할 수 있습니다. (Phase 2에서 “도입 방식”을 먼저 결정)
+
+### 8.5 콘텐츠 FolderItem ⋯ 메뉴 + 삭제
+
+#### 8.5.1 요구사항
+
+- 콘텐츠 그리드의 폴더/파일 카드 우상단에 **⋯ 메뉴**
+- 메뉴 항목: 최소 **“삭제”**
+
+#### 8.5.2 데이터 요건(폴더 식별자)
+
+현재 파일은 `_files[]`에 `id`가 존재하지만 폴더는 트리에 `id`가 없어, 아래 중 1개는 필수입니다.
+
+- **안 A(권장)**: 트리 노드에 `_meta` 유지
+  - 예: 각 폴더 객체에 `_meta: { id, path, name, type: 'DIRECTORY' }`
+- **안 B**: `path -> id` 맵을 별도 생성하여 UI에 주입
+
+삭제 시 서버 권한 정책(본인만) 위반이면 403을 반환하고, UI는 토스트/알림으로 처리합니다.
+
+### 8.6 드래그앤드롭 (콘텐츠 + 사이드바) — 애니메이션 포함
+
+#### 8.6.1 공통 규칙
+
+- **드래그 소스**: 폴더/파일
+- **드롭 타겟**: 폴더만 (파일은 타겟 불가)
+- **이동 범위 제한**: target parent는 반드시 `/docs` 내부의 DIRECTORY
+
+#### 8.6.2 콘텐츠 영역 DnD
+
+- 폴더/파일을 다른 폴더로 드롭하면 해당 폴더로 이동
+- “상위로 빼기”는 breadcrumb bar의 **전용 드롭 아이콘(Up/Back)** 위에 드롭 시 동작
+
+#### 8.6.3 사이드바 DnD
+
+- 트리 노드(폴더/파일)를 다른 폴더로 이동하는 UX/로직은 콘텐츠와 동일
+- “바깥으로 빼기”는 breadcrumb 전용 드롭 존과 동일한 개념을 사이드바에서도 제공(혹은 공용 드롭 존 사용)
+
+#### 8.6.4 애니메이션 요구사항(완성 기준)
+
+- **Drag over**: 드롭 가능 타겟 하이라이트 + 폴더 아이콘/배경 변화
+- **Drop(넣기) 애니메이션**: 드래그 아이템이 타겟 폴더로 “흡수”되는 모션
+  - 구현 후보: FLIP(First-Last-Invert-Play) 또는 Web Animations API 기반
+- **낙관적 UI(권장)**:
+  - 드롭 즉시 UI 트리/그리드에서 이동 반영 + 애니메이션 실행
+  - API 실패 시 원복(롤백) + 실패 토스트
+
+### 8.7 백엔드: Move API 설계(Phase 2 핵심)
+
+#### 8.7.1 Endpoint(제안)
+
+- `PATCH /api/docs/:id/move`
+  - Body: `{ "target_parent_path": "/docs/Some/Folder" }`
+
+#### 8.7.2 서버 검증/제약
+
+- **인증 필수** + **본인(author_id)만 이동 가능**
+- **target parent 검증**:
+  - 존재해야 함
+  - `type === 'DIRECTORY'` 여야 함
+  - `path`가 반드시 `/docs`로 시작해야 함
+- **cycle 방지(폴더 이동)**:
+  - 폴더를 자신의 하위로 이동 금지
+  - (예) oldPath=`/docs/A`, targetParentPath=`/docs/A/B` → 400/409
+
+#### 8.7.3 path/name 충돌 처리(자동 rename)
+
+- 동일 parent에 같은 name이 있으면:
+  - 폴더: `Folder` → `Folder (1)` → `Folder (2)`…
+  - 파일: 확장자 보존
+    - `guide.md` → `guide (1).md` → `guide (2).md`…
+- 구현 관점:
+  - DB는 `(parent_id, name)` 유니크가 있으므로, 서버에서 “사용 가능한 name”을 계산 후 저장
+
+#### 8.7.4 DIRECTORY 이동 시 하위 노드 path 일괄 갱신
+
+- 폴더 이동은 “자기 자신 + 모든 descendants”의 `path` prefix가 바뀌므로,
+  - `oldPrefix` → `newPrefix`로 문자열 치환 업데이트가 필요
+  - 충돌 가능성이 있으므로 서버에서 안전하게 처리(트랜잭션/순서/검증 전략 포함)
+
+### 8.8 작업 TODO (체크리스트)
+
+- [ ] Breadcrumb: 타이틀/네비 분리, 타이틀은 `Layout`로 이동
+- [ ] Breadcrumb Nav: 콘텐츠 상단 sticky 처리 + “상위 이동 드롭 존” UI 추가
+- [ ] Layout: header 높이 감소 반영 + main 스크롤/패딩 재조정
+- [ ] TanStack Query: QueryClient 도입 + Query Key/캐싱 전략 확정
+- [ ] 기존 중복 fetch 제거: `fetchAllDocs()` 호출 경로 단일화
+- [ ] 트리 데이터: 폴더 id/path 메타 제공 방식 결정(\_meta vs path->id map)
+- [ ] DirectoryView: 폴더/파일 카드 ⋯ 메뉴 + “삭제” 연결
+- [ ] 서버: `PATCH /api/docs/:id/move` 구현(권한/rename/cycle/하위 path 갱신)
+- [ ] DnD(콘텐츠): 폴더/파일 드래그 → 폴더 드롭 이동 + 흡수 애니메이션
+- [ ] DnD(사이드바): 동일 기능 + 동일 애니메이션/롤백 정책
+- [ ] 실패 롤백: optimistic UI 적용 + 실패 시 원복/토스트
+- [ ] 테스트: rename 알고리즘, cycle 방지, move API 주요 케이스, query invalidate 검증
+
+### 8.9 작업 순서(권장)
+
+1. Breadcrumb/레이아웃 분리(스크롤/높이 재정의)
+2. TanStack Query 도입 + 기존 중복 fetch 제거
+3. 트리 데이터 구조에 폴더 메타(id/path) 보강
+4. 콘텐츠 ⋯ 메뉴 + 삭제 연결(권한/토스트/무효화)
+5. Move API(서버) 구현 + 클라이언트 이동 로직 연결
+6. DnD(콘텐츠) → DnD(사이드바) 순서로 확장
+7. 애니메이션 polish + 실패 롤백/에러 핸들링 마감
