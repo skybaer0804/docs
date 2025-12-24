@@ -2,6 +2,42 @@
     position: relative;
     width: 100%;
 
+    &__actions {
+        position: absolute;
+        top: 0;
+        right: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        z-index: 10;
+    }
+
+    &__action-btn {
+        background: transparent;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        padding: 6px;
+        cursor: pointer;
+        color: #666;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        box-sizing: border-box;
+
+        &:hover {
+            background-color: #f5f5f5;
+            color: #1976d2;
+            border-color: #ccc;
+        }
+
+        &:active {
+            transform: scale(0.95);
+        }
+    }
+
     &__download-btn {
         position: absolute;
         top: 0;
@@ -38,6 +74,17 @@
 // 다크모드
 body[data-theme='dark'] {
     .markdown-viewer {
+        &__action-btn {
+            color: #b0b0b0;
+            border-color: #444;
+
+            &:hover {
+                background-color: #333;
+                color: #64b5f6;
+                border-color: #555;
+            }
+        }
+
         &__download-btn {
             color: #b0b0b0;
 

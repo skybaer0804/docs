@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'preact/hooks';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../contexts/AuthContext';
 import { fetchDocContent, createDoc, updateDoc } from '../utils/api';
 import { route } from 'preact-router';
+import { Button } from '../components/Button';
 import './EditorPage.scss';
 
 /**
@@ -10,8 +12,8 @@ import './EditorPage.scss';
  *  - mode: 'create' | 'edit'
  *  - path: 수정 시 문서 경로 (URL)
  */
-export function EditorPage({ mode = 'create', path }) {
-    const { user, loading: authLoading, supabase } = useAuth();
+export function EditorPage({ mode = 'create', path, onNavigate }) {
+    const { user, loading: authLoading } = useAuth();
     
     // 폼 상태
     const [title, setTitle] = useState('');
@@ -93,6 +95,18 @@ export function EditorPage({ mode = 'create', path }) {
         }
     };
 
+    const handleCancel = () => {
+        if (onNavigate) {
+            if (mode === 'edit' && path) {
+                onNavigate(path);
+            } else {
+                onNavigate('/');
+            }
+        } else {
+            window.history.back();
+        }
+    };
+
     return (
         <div className="editor-page">
             <h1>{mode === 'create' ? '새 문서 작성' : '문서 수정'}</h1>
@@ -109,7 +123,7 @@ export function EditorPage({ mode = 'create', path }) {
                             required 
                             placeholder="예: guide"
                         />
-                        <span className="helper">.md 확장자는 자동 추가됩니다.</span>
+                        <span className="helper">문서를 직접 작성 추가하면 .md 파일로 저장됩니다.</span>
                     </div>
                     
                     {mode === 'create' && (
@@ -126,18 +140,6 @@ export function EditorPage({ mode = 'create', path }) {
                     )}
                 </div>
 
-                <div className="form-group">
-                    <label>공개 여부</label>
-                    <div className="checkbox-wrapper">
-                        <input 
-                            type="checkbox" 
-                            checked={isPublic} 
-                            onChange={e => setIsPublic(e.target.checked)} 
-                        />
-                        <span>전체 공개 (로그인 없이 열람 가능)</span>
-                    </div>
-                </div>
-
                 <div className="form-group editor-area">
                     <label>내용 (Markdown)</label>
                     <textarea 
@@ -147,11 +149,26 @@ export function EditorPage({ mode = 'create', path }) {
                     ></textarea>
                 </div>
 
-                <div className="button-group">
-                    <button type="button" onClick={() => window.history.back()} disabled={loading}>취소</button>
-                    <button type="submit" className="primary" disabled={loading}>
-                        {loading ? '저장 중...' : '저장하기'}
-                    </button>
+                <div className="editor-footer">
+                    <div className="form-group checkbox-group">
+                        <div className="checkbox-wrapper">
+                            <input 
+                                type="checkbox" 
+                                id="isPublic"
+                                checked={isPublic} 
+                                onChange={e => setIsPublic(e.target.checked)} 
+                            />
+                            <label htmlFor="isPublic">전체 공개 (로그인 없이 열람 가능)</label>
+                        </div>
+                    </div>
+                    <div className="button-group">
+                        <Button type="button" variant="secondary" onClick={handleCancel} disabled={loading}>
+                            취소
+                        </Button>
+                        <Button type="submit" variant="primary" disabled={loading}>
+                            {loading ? '저장 중...' : '저장하기'}
+                        </Button>
+                    </div>
                 </div>
             </form>
         </div>

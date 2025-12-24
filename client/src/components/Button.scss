@@ -1,0 +1,116 @@
+.button {
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    &:not(:disabled):hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
+
+    &:not(:disabled):active {
+        transform: translateY(0);
+    }
+
+    // Variants
+    &--primary {
+        background-color: #1976d2;
+        color: white;
+        border-color: #1976d2;
+
+        &:not(:disabled):hover {
+            background-color: #1565c0;
+            border-color: #1565c0;
+        }
+    }
+
+    &--secondary {
+        background-color: transparent;
+        color: #333;
+        border-color: #e0e0e0;
+
+        &:not(:disabled):hover {
+            background-color: #f5f5f5;
+            border-color: #ccc;
+        }
+    }
+
+    &--info {
+        background-color: #2196f3;
+        color: white;
+        border-color: #2196f3;
+
+        &:not(:disabled):hover {
+            background-color: #1976d2;
+            border-color: #1976d2;
+        }
+    }
+
+    &--warning {
+        background-color: #ff9800;
+        color: white;
+        border-color: #ff9800;
+
+        &:not(:disabled):hover {
+            background-color: #f57c00;
+            border-color: #f57c00;
+        }
+    }
+
+    &--danger {
+        background-color: #f44336;
+        color: white;
+        border-color: #f44336;
+
+        &:not(:disabled):hover {
+            background-color: #d32f2f;
+            border-color: #d32f2f;
+        }
+    }
+
+    // Sizes
+    &--small {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    &--medium {
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+    }
+
+    &--large {
+        padding: 1rem 2rem;
+        font-size: 1.125rem;
+    }
+}
+
+// 다크모드
+body[data-theme='dark'] {
+    .button {
+        &--secondary {
+            color: #e0e0e0;
+            border-color: #444;
+            background-color: transparent;
+
+            &:not(:disabled):hover {
+                background-color: #333;
+                border-color: #555;
+            }
+        }
+    }
+}
+

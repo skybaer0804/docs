@@ -52,6 +52,14 @@ export function LayoutPresenter({
         <header class="header">
           <Breadcrumb currentRoute={currentPath} onNavigate={onNavigate} onOpenSearch={onOpenSearch} />
           <div class="header__actions">
+            <button
+              class="header__theme-toggle"
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
+              title={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
+            >
+              {theme === 'dark' ? <IconSun size={20} /> : <IconMoon size={20} />}
+            </button>
             {user && (
               <button class="header__auth-btn" onClick={handleNewDoc} title="새 문서 작성">
                 <IconFilePlus size={20} />
@@ -66,14 +74,6 @@ export function LayoutPresenter({
                 <IconLogin size={20} />
               </button>
             )}
-            <button
-              class="header__theme-toggle"
-              onClick={toggleTheme}
-              aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
-              title={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
-            >
-              {theme === 'dark' ? <IconSun size={20} /> : <IconMoon size={20} />}
-            </button>
           </div>
         </header>
 

@@ -8,81 +8,101 @@ import { devError } from '../utils/logger';
  * TDD 친화적: 로직을 분리하여 테스트 용이
  */
 export function useBreadcrumb(currentRoute) {
-    const [allFiles, setAllFiles] = useState([]);
+  const [allFiles, setAllFiles] = useState([]);
 
-    useEffect(() => {
-        async function loadData() {
-            try {
-                const nodes = await fetchAllDocs();
-                // 파일 노드들만 추출 및 변환
-                const files = nodes
-                    .filter((n) => n.type === 'FILE')
-                    .map((n) => {
-                        const parts = n.path.split('/').filter(Boolean);
-                        // parts: ['docs', 'Platform', 'Web', 'guide']
-                        let directoryPath = [];
-                        if (parts[0] === 'docs') {
-                            directoryPath = parts.slice(1, -1);
-                        } else {
-                            directoryPath = parts.slice(0, -1);
-                        }
-                        
-                        return {
-                            path: n.path,
-                            route: n.path,
-                            title: n.name.replace(/\.md$/, ''),
-                            name: n.name,
-                            directoryPath: directoryPath
-                        };
-                    });
-                setAllFiles(files);
-            } catch (error) {
-                devError('Error loading docs for breadcrumb:', error);
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const nodes = await fetchAllDocs();
+        // 파일 노드들만 추출 및 변환
+        const files = nodes
+          .filter((n) => n.type === 'FILE')
+          .map((n) => {
+            const parts = n.path.split('/').filter(Boolean);
+            // parts: ['docs', 'Platform', 'Web', 'guide']
+            let directoryPath = [];
+            if (parts[0] === 'docs') {
+              directoryPath = parts.slice(1, -1);
+            } else {
+              directoryPath = parts.slice(0, -1);
             }
-        }
-        loadData();
-    }, []);
-
-    return useMemo(() => {
-        // 홈일 때도 브레드크럼 표시
-        if (!currentRoute || currentRoute === '/') {
-            const homeItems = [{ label: 'Home', route: '/', type: 'link' }];
-            return {
-                items: homeItems,
-                displayType: 'home',
-            };
-        }
-
-        // 카테고리/서브카테고리 경로인 경우
-        if (currentRoute.startsWith('/category/')) {
-            // 무제한 중첩 경로 파싱
-            const pathParts = currentRoute
-                .replace('/category/', '')
-                .split('/')
-                .filter((p) => p); // 빈 문자열 제거
-
-            const breadcrumbItems = buildCategoryBreadcrumbItems(pathParts);
 
             return {
-                items: breadcrumbItems,
-                displayType: 'category',
+              path: n.path,
+              route: n.path,
+              title: n.name.replace(/\.md$/, ''),
+              name: n.name,
+              directoryPath: directoryPath,
             };
-        }
+          });
+        setAllFiles(files);
+      } catch (error) {
+        devError('Error loading docs for breadcrumb:', error);
+      }
+    }
+    loadData();
+  }, []);
 
-        const file = allFiles.find((f) => f.route === currentRoute);
+  return useMemo(() => {
+    // 로그인 페이지는 브레드크럼 표시
+    if (currentRoute === '/login') {
+      const items = [{ label: '로그인', route: '/login', type: 'current' }];
+      return {
+        items: items,
+        displayType: 'file',
+      };
+    }
 
-        if (!file) {
-            return {
-                items: [],
-                displayType: 'none',
-            };
-        }
+    // 문서 작성/수정 페이지는 브레드크럼 표시
+    if (currentRoute.startsWith('/write') || currentRoute.startsWith('/edit')) {
+      const items = currentRoute.startsWith('/write')
+        ? [{ label: '새 문서 작성', route: currentRoute, type: 'current' }]
+        : [{ label: '문서 수정', route: currentRoute, type: 'current' }];
+      return {
+        items: items,
+        displayType: 'file',
+      };
+    }
 
-        const breadcrumbItems = buildFileBreadcrumbItems(file);
+    // 홈일 때도 브레드크럼 표시
+    if (!currentRoute || currentRoute === '/') {
+      const homeItems = [{ label: 'Home', route: '/', type: 'link' }];
+      return {
+        items: homeItems,
+        displayType: 'home',
+      };
+    }
 
-        return {
-            items: breadcrumbItems,
-            displayType: 'file',
-        };
-    }, [currentRoute, allFiles]);
+    // 카테고리/서브카테고리 경로인 경우
+    if (currentRoute.startsWith('/category/')) {
+      // 무제한 중첩 경로 파싱
+      const pathParts = currentRoute
+        .replace('/category/', '')
+        .split('/')
+        .filter((p) => p); // 빈 문자열 제거
+
+      const breadcrumbItems = buildCategoryBreadcrumbItems(pathParts);
+
+      return {
+        items: breadcrumbItems,
+        displayType: 'category',
+      };
+    }
+
+    const file = allFiles.find((f) => f.route === currentRoute);
+
+    if (!file) {
+      return {
+        items: [],
+        displayType: 'none',
+      };
+    }
+
+    const breadcrumbItems = buildFileBreadcrumbItems(file);
+
+    return {
+      items: breadcrumbItems,
+      displayType: 'file',
+    };
+  }, [currentRoute, allFiles]);
 }
