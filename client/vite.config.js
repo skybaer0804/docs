@@ -1,65 +1,6 @@
 import { defineConfig } from 'vite';
 import preact from '@preact/preset-vite';
 import { VitePWA } from 'vite-plugin-pwa';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
-const execAsync = promisify(exec);
-
-// 문서 목록 생성 플러그인
-function generateDocsPlugin() {
-    return {
-        name: 'generate-docs',
-        buildStart() {
-            // 빌드 시작 시 문서 목록 생성
-            execAsync('node scripts/generate-docs-list.js').catch((err) => {
-                console.error('Error generating docs list:', err);
-            });
-        },
-        configureServer(server) {
-            // 개발 서버 시작 시 문서 목록 생성
-            execAsync('node scripts/generate-docs-list.js').catch((err) => {
-                console.error('Error generating docs list:', err);
-            });
-
-            // 마크다운 파일 요청 시 UTF-8 인코딩 헤더 추가
-            server.middlewares.use((req, res, next) => {
-                // 마크다운 파일 요청인 경우 UTF-8 인코딩 헤더 추가
-                if (req.url && (req.url.endsWith('.md') || req.url.endsWith('.template'))) {
-                    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-                }
-                next();
-            });
-
-            // public/docs 디렉토리 변경 감지
-            server.watcher.add('public/docs/**/*');
-            server.watcher.on('change', (path) => {
-                if (path.includes('public/docs')) {
-                    console.log('📝 Docs changed, regenerating docs list...');
-                    execAsync('node scripts/generate-docs-list.js').catch((err) => {
-                        console.error('Error generating docs list:', err);
-                    });
-                }
-            });
-            server.watcher.on('add', (path) => {
-                if (path.includes('public/docs')) {
-                    console.log('📝 New doc added, regenerating docs list...');
-                    execAsync('node scripts/generate-docs-list.js').catch((err) => {
-                        console.error('Error generating docs list:', err);
-                    });
-                }
-            });
-            server.watcher.on('unlink', (path) => {
-                if (path.includes('public/docs')) {
-                    console.log('📝 Doc removed, regenerating docs list...');
-                    execAsync('node scripts/generate-docs-list.js').catch((err) => {
-                        console.error('Error generating docs list:', err);
-                    });
-                }
-            });
-        },
-    };
-}
 
 export default defineConfig({
     define: {
@@ -76,7 +17,6 @@ export default defineConfig({
     },
     plugins: [
         preact(),
-        generateDocsPlugin(),
         VitePWA({
             registerType: 'autoUpdate',
             includeAssets: ['favicon.svg', 'apple-touch-icon.svg', 'icon.svg'],

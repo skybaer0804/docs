@@ -36,12 +36,14 @@ export function DirectoryTreePresenter({
       dnd.beginDrag(item, e.currentTarget);
     },
     onDragEnd: () => dnd.endDrag(),
+    ...(dnd.bindTouchDragSource ? dnd.bindTouchDragSource(item) : {}),
   });
 
   const bindDropTarget = (targetFolderDocsPath) => {
     const canDrop = dnd.canDropTo(targetFolderDocsPath);
     const isOver = dnd.dragOverPath === targetFolderDocsPath;
     const isSuccess = dnd.dropSuccessPath === targetFolderDocsPath;
+    const isDragging = dnd.isDragging;
 
     return {
       onDragEnter: (e) => {
@@ -50,10 +52,19 @@ export function DirectoryTreePresenter({
         dnd.markDragOver(targetFolderDocsPath);
       },
       onDragOver: (e) => {
-        if (!canDrop) return;
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        dnd.markDragOver(targetFolderDocsPath);
+        if (canDrop) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          dnd.markDragOver(targetFolderDocsPath);
+          return;
+        }
+        if (isDragging) {
+          try {
+            e.dataTransfer.dropEffect = 'none';
+          } catch {
+            // noop
+          }
+        }
       },
       onDragLeave: () => {
         if (isOver) dnd.clearDragOver();
@@ -64,9 +75,10 @@ export function DirectoryTreePresenter({
         e.stopPropagation();
         dnd.dropTo(targetFolderDocsPath, e.currentTarget);
       },
-      dndHeaderClassName: `${isOver ? 'folder-item__header--drag-over' : ''} ${
-        isSuccess ? 'folder-item__header--drop-success' : ''
-      }`.trim(),
+      dndHeaderClassName: `${isDragging && canDrop ? 'folder-item__header--droppable' : ''} ${
+        isDragging && !canDrop ? 'folder-item__header--drop-disabled' : ''
+      } ${isOver ? 'folder-item__header--drag-over' : ''} ${isSuccess ? 'folder-item__header--drop-success' : ''}`.trim(),
+      dndTitle: isDragging ? (canDrop ? '여기로 이동 (드롭)' : '이 위치로는 이동할 수 없습니다') : '',
     };
   };
 
@@ -124,10 +136,15 @@ export function DirectoryTreePresenter({
               return null;
             }
 
-            const hasContent =
-              subNode._files?.length > 0 || Object.keys(subNode).filter((k) => k !== '_files' && k !== '_meta').length > 0;
+            // NOTE:
+            // - DB(nodes) 기반에선 "빈 폴더"도 존재할 수 있음
+            // - 기존 hasContent 로직은 빈 폴더를 Sidebar에서 숨겨버려 폴더 생성 직후 안 보이는 문제가 있었음
+            // - _meta(폴더 메타)가 있으면 빈 폴더라도 렌더링하도록 허용
+            const hasRenderableFolderMeta = Boolean(subNode?._meta);
+            const hasFiles = (subNode._files?.length || 0) > 0;
+            const hasSubFolders = Object.keys(subNode).filter((k) => k !== '_files' && k !== '_meta').length > 0;
 
-            if (!hasContent) return null;
+            if (!hasRenderableFolderMeta && !hasFiles && !hasSubFolders) return null;
 
             const isSubExpanded = expandedPaths[subPath] === true; // 기본값 false
 
@@ -183,6 +200,11 @@ export function DirectoryTreePresenter({
 
   return (
     <div class="directory-tree">
+      {dnd.isDragging && (
+        <div class="directory-tree__dnd-hint" role="note">
+          폴더에만 드롭할 수 있어요. 상위로 빼기는 상단의 ⬆ 드롭존에 드롭하세요.
+        </div>
+      )}
       {categoryKeys
         .filter((category) => category !== '_files')
         .map((category) => {
@@ -245,7 +267,7 @@ function FolderItem({
   const meta = subNode?._meta;
   const folderDocsPath = meta?.path || `/docs/${subPath}`;
   const drop = bindDropTarget ? bindDropTarget(folderDocsPath) : { dndHeaderClassName: '' };
-  const { dndHeaderClassName = '', ...dropHandlers } = drop || {};
+  const { dndHeaderClassName = '', dndTitle = '', ...dropHandlers } = drop || {};
 
   const handleFolderClick = (e) => {
     // + 아이콘 클릭이 아닌 경우에만 폴더 클릭 처리
@@ -288,7 +310,8 @@ function FolderItem({
           onClick={handleFolderClick}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
-          title={subPath}
+          title={dndTitle || subPath}
+          data-dnd-drop-path={folderDocsPath}
           {...dropHandlers}
           {...(meta && bindDragSource
             ? bindDragSource({

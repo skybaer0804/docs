@@ -101,12 +101,15 @@ export function buildDirectoryTree(nodes) {
 
 function transformFileNode(node) {
     // 기존 MarkdownLoader가 반환하던 파일 객체 포맷에 맞춤
+    const rawName = typeof node?.name === 'string' ? node.name : '';
+    const hasDot = rawName.includes('.') && !rawName.startsWith('.') && rawName.lastIndexOf('.') > 0;
+    const ext = hasDot ? `.${rawName.split('.').pop()}` : '';
     return {
         path: node.path,
         route: node.path, // 라우팅 경로
-        title: node.name.replace(/\.md$/, ''), // 확장자 제거된 제목
-        name: node.name,
-        ext: node.name.split('.').pop() || '',
+        title: rawName.replace(/\.(md|template)$/i, ''), // 확장자 제거된 제목
+        name: rawName,
+        ext,
         id: node.id,
         type: node.type,
         author_id: node.author_id

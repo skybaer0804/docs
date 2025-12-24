@@ -41,10 +41,7 @@ export function useUpdateDocMutation(options = {}) {
       await queryClient.invalidateQueries({ queryKey: docsKeys.tree() });
 
       // 수정된 문서가 응답에 path를 포함하면, content 캐시를 최신으로 갱신
-      const updatedPath =
-        safeString(variables?.path) ||
-        safeString(data?.path) ||
-        safeString(variables?.data?.path);
+      const updatedPath = safeString(variables?.path) || safeString(data?.path) || safeString(variables?.data?.path);
       if (updatedPath) {
         queryClient.setQueryData(docsKeys.content(updatedPath), data);
         await queryClient.invalidateQueries({ queryKey: docsKeys.content(updatedPath) });
@@ -137,5 +134,3 @@ export function useCreateFolderMutation(options = {}) {
     ...options,
   });
 }
-
-

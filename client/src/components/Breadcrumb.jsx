@@ -62,6 +62,7 @@ function BreadcrumbNavPresenter({ items, onNavigate, sidebarCollapsed, onToggleC
             class={`breadcrumb__drop-zone ${canDropUp ? 'breadcrumb__drop-zone--enabled' : ''} ${
               isDragOverUp ? 'breadcrumb__drop-zone--drag-over' : ''
             } ${isDropSuccessUp ? 'breadcrumb__drop-zone--drop-success' : ''}`}
+            data-dnd-drop-path={upTargetDocsPath}
             onDragEnter={(e) => {
               if (!canDropUp) return;
               e.preventDefault();
@@ -100,6 +101,7 @@ function BreadcrumbNavPresenter({ items, onNavigate, sidebarCollapsed, onToggleC
             class={`breadcrumb__drop-zone ${canDropUp ? 'breadcrumb__drop-zone--enabled' : ''} ${
               isDragOverUp ? 'breadcrumb__drop-zone--drag-over' : ''
             } ${isDropSuccessUp ? 'breadcrumb__drop-zone--drop-success' : ''}`}
+            data-dnd-drop-path={upTargetDocsPath}
             onDragEnter={(e) => {
               if (!canDropUp) return;
               e.preventDefault();

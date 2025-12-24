@@ -17,6 +17,36 @@ function splitNameForAutoRename(name) {
   return { base: name.slice(0, lastDot), ext: name.slice(lastDot) };
 }
 
+async function ensureDocsRootDirectory(author_id) {
+  // /docs 루트 노드가 없는 DB(마이그레이션/초기 데이터)에서도 move 대상이 될 수 있어 보강
+  const { data: existing } = await supabase.from('nodes').select('id, type, path').eq('path', '/docs').single();
+  if (existing && existing.type === 'DIRECTORY') return existing;
+
+  // 없으면 생성 (동시 생성 시 UNIQUE(path) 충돌 가능 → 재조회로 복구)
+  const insertData = {
+    parent_id: null,
+    type: 'DIRECTORY',
+    name: 'docs',
+    content: null,
+    path: '/docs',
+    is_public: true,
+    author_id,
+  };
+
+  const { data, error } = await supabase.from('nodes').insert([insertData]).select('id, type, path').single();
+  if (!error && data) return data;
+
+  // 이미 생겼거나 기타 에러면 재조회 시도
+  const { data: reFetched, error: refetchErr } = await supabase
+    .from('nodes')
+    .select('id, type, path')
+    .eq('path', '/docs')
+    .single();
+  if (refetchErr) throw error || refetchErr;
+  if (reFetched.type !== 'DIRECTORY') throw new Error('Invalid /docs root node type');
+  return reFetched;
+}
+
 async function getUniqueNameInParent({ parentId, desiredName, excludeId }) {
   const { base, ext } = splitNameForAutoRename(desiredName);
   let candidate = desiredName;
@@ -48,7 +78,7 @@ exports.getAllDocs = async (req, res) => {
     const { data, error } = await supabase
       .from('nodes')
       .select('id, parent_id, name, type, path, is_public, author_id')
-      .order('type', { ascending: false }) // 폴더 먼저, 그 다음 파일
+      .order('type', { ascending: true }) // 폴더(DIRECTORY) 먼저, 그 다음 파일(FILE)
       .order('name', { ascending: true });
 
     if (error) throw error;
@@ -337,17 +367,29 @@ exports.moveDoc = async (req, res) => {
     }
 
     // target parent node
-    const { data: targetParent, error: targetErr } = await supabase
+    let targetParent = null;
+    const { data: fetchedTargetParent, error: targetErr } = await supabase
       .from('nodes')
       .select('id, type, path')
       .eq('path', targetParentPath)
       .single();
 
     if (targetErr) {
-      if (targetErr.code === 'PGRST116') return res.status(404).json({ error: 'Target parent directory not found' });
-      throw targetErr;
+      if (targetErr.code === 'PGRST116') {
+        // /docs 루트는 데이터에 따라 없을 수 있어 자동 보강
+        if (targetParentPath === '/docs') {
+          targetParent = await ensureDocsRootDirectory(author_id);
+        } else {
+          return res.status(404).json({ error: 'Target parent directory not found' });
+        }
+      } else {
+        throw targetErr;
+      }
+    } else {
+      targetParent = fetchedTargetParent;
     }
-    if (targetParent.type !== 'DIRECTORY') {
+
+    if (!targetParent || targetParent.type !== 'DIRECTORY') {
       return res.status(400).json({ error: 'Drop target must be a directory.' });
     }
 
@@ -433,6 +475,12 @@ exports.moveDoc = async (req, res) => {
       descendantCount: descendants.length,
     });
   } catch (err) {
+    console.error('moveDoc error:', {
+      message: err?.message,
+      stack: err?.stack,
+      body: req?.body,
+      userId: req?.user?.id,
+    });
     res.status(500).json({ error: err.message });
   }
 };

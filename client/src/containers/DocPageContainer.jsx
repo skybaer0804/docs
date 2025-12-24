@@ -5,7 +5,6 @@ import { useNotification } from '../hooks/useNotification';
 import { useReadingTracker } from '../hooks/useReadingTracker';
 import { useTimerNotification } from '../hooks/useTimerNotification';
 import { navigationObserver } from '../observers/NavigationObserver';
-import { getMarkdownFiles } from '../utils/markdownLoader';
 import { DocPagePresenter } from '../pages/DocPage';
 
 /**

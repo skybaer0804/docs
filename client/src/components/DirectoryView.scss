@@ -7,6 +7,17 @@
     }
 }
 
+.directory-view__dnd-hint {
+    margin: 0 0 10px 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(25, 118, 210, 0.2);
+    background: rgba(25, 118, 210, 0.08);
+    color: #1a2a53;
+    font-size: 0.85rem;
+    line-height: 1.35;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -73,6 +84,23 @@
 
     &--drop-success {
         animation: directoryDropPulse 520ms ease;
+    }
+
+    &--droppable {
+        outline: 1px dashed rgba(25, 118, 210, 0.45);
+        outline-offset: 2px;
+    }
+
+    &--drop-disabled {
+        opacity: 0.75;
+        filter: grayscale(0.15);
+        border-style: dashed;
+        border-color: rgba(180, 180, 180, 0.9);
+        cursor: not-allowed;
+    }
+
+    &--not-droppable {
+        cursor: not-allowed;
     }
 
     &.folder-item {
@@ -164,6 +192,12 @@
 
 // 다크모드
 body[data-theme='dark'] {
+    .directory-view__dnd-hint {
+        border-color: rgba(100, 181, 246, 0.22);
+        background: rgba(100, 181, 246, 0.1);
+        color: #e0e0e0;
+    }
+
     .directory-item {
         background: #2a2a2a;
         border-color: #444;
@@ -182,6 +216,14 @@ body[data-theme='dark'] {
             border-color: rgba(100, 181, 246, 0.85);
             background: rgba(100, 181, 246, 0.12);
             box-shadow: 0 8px 16px rgba(100, 181, 246, 0.14);
+        }
+
+        &--droppable {
+            outline-color: rgba(100, 181, 246, 0.35);
+        }
+
+        &--drop-disabled {
+            border-color: rgba(90, 90, 90, 0.9);
         }
 
         &.folder-item {

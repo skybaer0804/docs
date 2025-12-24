@@ -12,16 +12,16 @@
 
 ### 아키텍처 개요
 
-이 문서 사이트는 **Preact + Vite** 기반의 정적 문서 뷰어입니다. `public/docs` 디렉토리의 마크다운 파일을 자동으로 감지하고, 디렉토리 구조를 시각적으로 표현하여 탐색할 수 있도록 합니다.
+이 문서 사이트는 **Preact + Vite** 기반의 문서 뷰어이며, 문서/폴더 구조는 **Supabase DB의 `nodes` 테이블**을 통해 관리됩니다. 클라이언트는 `/api/docs` API를 통해 트리 구조와 문서 콘텐츠를 조회합니다. (즉, `client/public/docs` 정적 디렉토리에 의존하지 않습니다.)
 
 ### 주요 기능
 
-#### 1. 자동 문서 목록 생성
+#### 1. 문서 트리/콘텐츠 DB 기반 조회
 
--   `scripts/generate-docs-list.js`가 `public/docs` 디렉토리를 재귀적으로 탐색
--   모든 `.md` 및 `.template` 파일을 자동으로 감지
--   `src/docs-list.json` 파일로 구조화된 메타데이터 생성
--   무제한 중첩 디렉토리 구조 지원
+-   문서/폴더 구조는 Supabase `nodes` 테이블에 저장
+-   트리 조회: `GET /api/docs`
+-   문서 조회(경로 기반): `GET /api/docs/*`
+-   TanStack Query 캐시를 사용하여 Sidebar/DirectoryView가 동일한 트리 데이터를 공유
 
 #### 2. 동적 라우팅
 
@@ -72,31 +72,25 @@
 -   디렉토리 구조 시각화
 -   재귀적 렌더링으로 무제한 중첩 지원
 
-#### `markdownLoader.js`
+#### `markdownLoader.js` (레거시)
 
--   파일 목록 제공 (`getMarkdownFiles`)
--   마크다운 파일 로딩 (`getMarkdownContent`)
--   BOM 자동 감지 및 인코딩 처리 (UTF-8, UTF-16 LE/BE)
+-   과거 `public/docs` 기반 정적 로딩을 위해 사용되었으나, 현재는 DB 기반으로 전환되어 사용하지 않습니다.
 
 ### 빌드 프로세스
 
 1. **개발 모드** (`npm run dev`)
 
-    - 문서 목록 자동 생성
     - 아이콘 생성
     - Vite 개발 서버 시작
-    - 파일 변경 감지 및 자동 재생성
 
 2. **빌드 모드** (`npm run build`)
 
-    - 문서 목록 생성
     - 아이콘 생성
     - Vite 프로덕션 빌드
     - PWA 매니페스트 및 Service Worker 생성
-
-3. **파일 감지**
-    - `public/docs` 디렉토리 변경 시 자동으로 `docs-list.json` 재생성
-    - Vite 플러그인을 통한 실시간 감지
+ 
+3. **문서 변경 반영**
+    - 문서/폴더 생성/수정/삭제 시 TanStack Query의 트리 캐시(`docsKeys.tree()`)를 무효화하여 Sidebar가 즉시 갱신됩니다.
 
 ---
 
@@ -133,9 +127,6 @@
 ### NPM 스크립트
 
 ```bash
-# 문서 목록 생성
-npm run generate-docs
-
 # 아이콘 생성
 npm run generate-icons
 

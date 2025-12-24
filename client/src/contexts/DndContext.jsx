@@ -27,6 +27,30 @@ export function DndProvider({ children, currentRoute, onNavigate }) {
   const [fly, setFly] = useState(null); // { fromRect, toRect, label }
 
   const fromRectRef = useRef(null);
+  const touchDragRef = useRef({
+    active: false,
+    pointerId: null,
+    sourceEl: null,
+    lastDropEl: null,
+  });
+  const touchPreRef = useRef({
+    timerId: null,
+    pointerId: null,
+    startX: 0,
+    startY: 0,
+    moved: false,
+    sourceEl: null,
+    item: null,
+    cleanup: null,
+  });
+
+  const getDropTargetFromPoint = useCallback((x, y) => {
+    if (typeof document === 'undefined') return null;
+    const el = document.elementFromPoint(x, y);
+    if (!el) return null;
+    const target = el.closest?.('[data-dnd-drop-path]');
+    return target || null;
+  }, []);
 
   const canDropTo = useCallback(
     (targetParentPath) => {
@@ -56,6 +80,10 @@ export function DndProvider({ children, currentRoute, onNavigate }) {
     // dragItem은 drop/cancel 모두에서 정리
     setDragItem(null);
     fromRectRef.current = null;
+    touchDragRef.current.active = false;
+    touchDragRef.current.pointerId = null;
+    touchDragRef.current.sourceEl = null;
+    touchDragRef.current.lastDropEl = null;
   }, []);
 
   const markDragOver = useCallback((targetPath) => {
@@ -137,6 +165,152 @@ export function DndProvider({ children, currentRoute, onNavigate }) {
     [performMove],
   );
 
+  const cancelTouchPre = useCallback(() => {
+    const pre = touchPreRef.current;
+    if (pre.timerId) {
+      window.clearTimeout(pre.timerId);
+    }
+    if (typeof pre.cleanup === 'function') {
+      pre.cleanup();
+    }
+    touchPreRef.current = {
+      timerId: null,
+      pointerId: null,
+      startX: 0,
+      startY: 0,
+      moved: false,
+      sourceEl: null,
+      item: null,
+      cleanup: null,
+    };
+  }, []);
+
+  const activateTouchDrag = useCallback(
+    ({ pointerId, sourceEl, item }) => {
+      // 이미 다른 드래그 중이면 무시
+      if (!item || !sourceEl) return;
+
+      beginDrag(item, sourceEl);
+      touchDragRef.current.active = true;
+      touchDragRef.current.pointerId = pointerId;
+      touchDragRef.current.sourceEl = sourceEl;
+      touchDragRef.current.lastDropEl = null;
+
+      try {
+        sourceEl.setPointerCapture?.(pointerId);
+      } catch {
+        // noop
+      }
+
+      const onMove = (e) => {
+        if (!touchDragRef.current.active) return;
+        if (e.pointerId !== touchDragRef.current.pointerId) return;
+        // 드래그 중 스크롤 방지
+        e.preventDefault();
+
+        const dropEl = getDropTargetFromPoint(e.clientX, e.clientY);
+        touchDragRef.current.lastDropEl = dropEl;
+
+        const dropPath = dropEl?.getAttribute?.('data-dnd-drop-path') || '';
+        if (dropPath) {
+          markDragOver(dropPath);
+        } else {
+          clearDragOver();
+        }
+      };
+
+      const onEnd = (e) => {
+        if (e.pointerId !== touchDragRef.current.pointerId) return;
+        const dropEl = touchDragRef.current.lastDropEl;
+        const dropPath = dropEl?.getAttribute?.('data-dnd-drop-path') || '';
+
+        if (dropPath && canDropTo(dropPath)) {
+          dropTo(dropPath, dropEl);
+        } else {
+          endDrag();
+        }
+
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onEnd);
+        window.removeEventListener('pointercancel', onEnd);
+      };
+
+      window.addEventListener('pointermove', onMove, { passive: false });
+      window.addEventListener('pointerup', onEnd, { passive: true });
+      window.addEventListener('pointercancel', onEnd, { passive: true });
+    },
+    [beginDrag, canDropTo, clearDragOver, dropTo, endDrag, getDropTargetFromPoint, markDragOver],
+  );
+
+  // 모바일/터치 폴백: 롱프레스(기본 320ms)로 드래그 시작
+  const bindTouchDragSource = useCallback(
+    (item) => ({
+      onPointerDown: (e) => {
+        if (!e || (e.pointerType !== 'touch' && e.pointerType !== 'pen')) return;
+        if (!item) return;
+        if (moveMutation.isPending) return;
+
+        // 기존 대기 상태 정리
+        cancelTouchPre();
+
+        const sourceEl = e.currentTarget;
+        const pointerId = e.pointerId;
+        const startX = e.clientX;
+        const startY = e.clientY;
+
+        const onPreMove = (ev) => {
+          if (ev.pointerId !== pointerId) return;
+          const dx = ev.clientX - startX;
+          const dy = ev.clientY - startY;
+          if (Math.hypot(dx, dy) > 10) {
+            touchPreRef.current.moved = true;
+            cancelTouchPre();
+          }
+        };
+        const onPreEnd = (ev) => {
+          if (ev.pointerId !== pointerId) return;
+          cancelTouchPre();
+        };
+
+        window.addEventListener('pointermove', onPreMove, { passive: true });
+        window.addEventListener('pointerup', onPreEnd, { passive: true });
+        window.addEventListener('pointercancel', onPreEnd, { passive: true });
+
+        const cleanup = () => {
+          window.removeEventListener('pointermove', onPreMove);
+          window.removeEventListener('pointerup', onPreEnd);
+          window.removeEventListener('pointercancel', onPreEnd);
+        };
+
+        touchPreRef.current = {
+          timerId: null,
+          pointerId,
+          startX,
+          startY,
+          moved: false,
+          sourceEl,
+          item,
+          cleanup,
+        };
+
+        // 롱프레스 후 드래그 활성화
+        const timerId = window.setTimeout(() => {
+          // 이동해서 취소된 경우 방지
+          if (touchPreRef.current.pointerId !== pointerId) return;
+          if (touchPreRef.current.moved) return;
+
+          cleanup();
+          touchPreRef.current.cleanup = null;
+
+          activateTouchDrag({ pointerId, sourceEl, item });
+        }, 320);
+
+        touchPreRef.current.timerId = timerId;
+      },
+    }),
+    [activateTouchDrag, cancelTouchPre, moveMutation.isPending],
+  );
+
   const dropToParentOfCurrent = useCallback(
     (targetEl) => {
       const currentDocs = routeToDocsPath(currentRoute);
@@ -160,7 +334,9 @@ export function DndProvider({ children, currentRoute, onNavigate }) {
       dropTo,
       dropToParentOfCurrent,
       canDropTo,
+      isDragging: !!dragItem,
       isMoving: moveMutation.isPending,
+      bindTouchDragSource,
     }),
     [
       dragItem,
@@ -173,7 +349,9 @@ export function DndProvider({ children, currentRoute, onNavigate }) {
       dropTo,
       dropToParentOfCurrent,
       canDropTo,
+      !!dragItem,
       moveMutation.isPending,
+      bindTouchDragSource,
     ],
   );
 

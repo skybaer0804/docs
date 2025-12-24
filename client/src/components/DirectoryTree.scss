@@ -8,6 +8,17 @@
     }
 }
 
+.directory-tree__dnd-hint {
+    margin: 0 0 10px 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(25, 118, 210, 0.2);
+    background: rgba(25, 118, 210, 0.08);
+    color: #1a2a53;
+    font-size: 0.85rem;
+    line-height: 1.35;
+}
+
 .category-section {
     display: flex;
     flex-direction: column;
@@ -94,6 +105,19 @@
 
   &__header--drop-success {
     animation: treeDropPulse 520ms ease;
+  }
+
+  &__header--droppable {
+    outline: 1px dashed rgba(25, 118, 210, 0.45);
+    outline-offset: 2px;
+  }
+
+  &__header--drop-disabled {
+    opacity: 0.78;
+    filter: grayscale(0.15);
+    border-style: dashed !important;
+    border-color: rgba(180, 180, 180, 0.9) !important;
+    cursor: not-allowed !important;
   }
     }
 
@@ -274,6 +298,12 @@
 
 // 다크모드
 body[data-theme='dark'] {
+    .directory-tree__dnd-hint {
+        border-color: rgba(100, 181, 246, 0.22);
+        background: rgba(100, 181, 246, 0.1);
+        color: #e0e0e0;
+    }
+
     .category-header {
         @media (min-width: 769px) {
             &:hover {
@@ -322,6 +352,14 @@ body[data-theme='dark'] {
         border-color: rgba(100, 181, 246, 0.85) !important;
         background-color: rgba(100, 181, 246, 0.12) !important;
         color: #90caf9 !important;
+      }
+
+      &__header--droppable {
+        outline-color: rgba(100, 181, 246, 0.35);
+      }
+
+      &__header--drop-disabled {
+        border-color: rgba(90, 90, 90, 0.9) !important;
       }
     }
         }
