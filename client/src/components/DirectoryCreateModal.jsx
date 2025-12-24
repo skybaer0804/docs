@@ -1,8 +1,10 @@
 import { useState } from 'preact/hooks';
 import { IconX, IconCheck } from '@tabler/icons-preact';
 import { Button } from './Button';
-import { createFolder, getParentPathFromCurrentPath } from '../utils/docManagement';
+import { getParentPathFromCurrentPath } from '../utils/docManagement';
 import { useToast } from '../contexts/ToastContext';
+import { useCreateFolderMutation } from '../hooks/useDocMutations';
+import { navigationObserver } from '../observers/NavigationObserver';
 import './DirectoryCreateModal.scss';
 
 /**
@@ -17,7 +19,8 @@ import './DirectoryCreateModal.scss';
 export function DirectoryCreateModal({ isOpen, onClose, onSuccess, currentPath }) {
   const { showSuccess, showError } = useToast();
   const [folderName, setFolderName] = useState('');
-  const [loading, setLoading] = useState(false);
+  const createFolderMutation = useCreateFolderMutation();
+  const loading = createFolderMutation.isPending;
 
   if (!isOpen) return null;
 
@@ -31,10 +34,10 @@ export function DirectoryCreateModal({ isOpen, onClose, onSuccess, currentPath }
       return;
     }
 
-    setLoading(true);
     try {
-      const result = await createFolder({
-        name: folderName.trim(),
+      const name = folderName.trim();
+      const result = await createFolderMutation.mutateAsync({
+        name,
         parentPath,
         isPublic: true,
       });
@@ -42,16 +45,17 @@ export function DirectoryCreateModal({ isOpen, onClose, onSuccess, currentPath }
       showSuccess('폴더가 생성되었습니다.');
       setFolderName('');
 
+      const newPath = `${parentPath}/${name}`.replace('//', '/');
+      navigationObserver.notify(newPath, { type: 'directory', action: 'create', folder: result });
+
       if (onSuccess) {
-        onSuccess(result);
+        onSuccess({ ...result, path: newPath });
       }
 
       onClose();
     } catch (error) {
       console.error('폴더 생성 실패:', error);
       showError(error.message || '폴더 생성에 실패했습니다.');
-    } finally {
-      setLoading(false);
     }
   };
 

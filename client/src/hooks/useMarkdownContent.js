@@ -1,68 +1,46 @@
-import { useState, useEffect } from 'preact/hooks';
-import { fetchDocContent } from '../utils/api';
-import { devLog, devWarn } from '../utils/logger';
+import { useMemo } from 'preact/hooks';
+import { useDocContentQuery } from './useDocContentQuery';
 
 /**
  * 마크다운 콘텐츠 로딩을 담당하는 Custom Hook
  */
 export function useMarkdownContent(url) {
-    const [content, setContent] = useState('');
-    const [loading, setLoading] = useState(true);
-    const [fileExt, setFileExt] = useState('');
-    const [currentFile, setCurrentFile] = useState(null);
+    const routePath = url || '/';
+    const isCategoryRoute = routePath.startsWith('/category/');
+    const isRootRoute = routePath === '/';
+    const isDocRoute = routePath.startsWith('/docs/');
 
-    useEffect(() => {
-        setContent('');
-        setFileExt('');
-        setCurrentFile(null);
-        setLoading(true);
-        
-        let cancelled = false;
-        
-        const loadContent = async () => {
-            const routePath = url || '/';
+    const shouldFetch = !isCategoryRoute && !isRootRoute && isDocRoute;
+    const { data: doc, isLoading } = useDocContentQuery(routePath, { enabled: shouldFetch });
 
-            if (routePath.startsWith('/category/')) {
-                if (!cancelled) setLoading(false);
-                return;
-            }
+    const { content, fileExt, currentFile } = useMemo(() => {
+        if (!shouldFetch) {
+            return { content: '', fileExt: '', currentFile: null };
+        }
 
-            try {
-                const doc = await fetchDocContent(routePath);
-                
-                if (!cancelled) {
-                    if (doc) {
-                        setContent(doc.content || '');
-                        setCurrentFile({
-                            path: doc.path,
-                            route: doc.path,
-                            title: doc.name.replace(/\.md$/, ''),
-                            ext: 'md' // DB에는 ext 필드가 없을 수 있으므로 고정
-                        });
-                        setFileExt('md');
-                    } else {
-                        // 404
-                        setCurrentFile(null);
-                    }
-                }
-            } catch (error) {
-                devWarn(`Error loading content for ${routePath}:`, error);
-                if (!cancelled) setCurrentFile(null);
-            } finally {
-                if (!cancelled) setLoading(false);
-            }
+        if (!doc) {
+            // 404 or not loaded yet
+            return { content: '', fileExt: '', currentFile: null };
+        }
+
+        const name = doc.name || '';
+        const ext = name.includes('.') ? `.${name.split('.').pop()}` : '.md';
+
+        return {
+            content: doc.content || '',
+            fileExt: ext,
+            currentFile: {
+                path: doc.path,
+                route: doc.path,
+                title: name.replace(/\.md$/, '').replace(/\.template$/, ''),
+                ext,
+            },
         };
-
-        loadContent();
-        
-        return () => {
-            cancelled = true;
-        };
-    }, [url]);
+    }, [doc, shouldFetch]);
 
     return {
         content,
-        loading,
+        loading: shouldFetch ? isLoading : false,
         fileExt,
         currentFile,
     };

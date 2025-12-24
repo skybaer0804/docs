@@ -3,13 +3,11 @@ import { IconX, IconSearch, IconFilePlus, IconFolderPlus, IconTrash, IconEdit, I
 import { FileTree } from './FileTree';
 import { FileEditorContent } from './FileEditorContent';
 import { useToast } from '../../contexts/ToastContext';
-import { createDoc, updateDoc, deleteDoc } from '../../utils/api';
 import { buildDirectoryTree } from '../../utils/treeUtils';
 import { buildUserGroupedTree } from '../../utils/userTreeUtils';
 import { navigationObserver } from '../../observers/NavigationObserver';
 import { useDocsTreeQuery } from '../../hooks/useDocsTreeQuery';
-import { useQueryClient } from '@tanstack/react-query';
-import { docsKeys } from '../../query/queryKeys';
+import { useCreateDocMutation, useUpdateDocMutation, useDeleteDocMutation } from '../../hooks/useDocMutations';
 import './FileEditor.scss';
 
 /**
@@ -20,13 +18,15 @@ export function FileEditor({ isOpen, onClose, userId, username }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [expandedPaths, setExpandedPaths] = useState({});
-  const [mutating, setMutating] = useState(false);
   const { showSuccess, showError } = useToast();
   const searchInputRef = useRef(null);
-  const queryClient = useQueryClient();
 
   const { data: nodes = [], isLoading } = useDocsTreeQuery({ enabled: isOpen });
-  const loading = isLoading || mutating;
+  const createDocMutation = useCreateDocMutation();
+  const updateDocMutation = useUpdateDocMutation();
+  const deleteDocMutation = useDeleteDocMutation();
+  const loading =
+    isLoading || createDocMutation.isPending || updateDocMutation.isPending || deleteDocMutation.isPending;
 
   const fileTree = useMemo(() => {
     if (!nodes || nodes.length === 0) return {};
@@ -45,9 +45,7 @@ export function FileEditor({ isOpen, onClose, userId, username }) {
   // (Query 기반) isOpen 시점에 nodes를 로드하며, 트리는 useMemo로 구성됨
 
   // 검색 필터링
-  const filteredTree = searchQuery
-    ? filterTreeBySearch(fileTree, searchQuery)
-    : fileTree;
+  const filteredTree = searchQuery ? filterTreeBySearch(fileTree, searchQuery) : fileTree;
 
   // 파일 선택 핸들러
   const handleFileSelect = (file) => {
@@ -65,8 +63,7 @@ export function FileEditor({ isOpen, onClose, userId, username }) {
   // 파일 생성 핸들러
   const handleCreateFile = async (parentPath, name, content) => {
     try {
-      setMutating(true);
-      const result = await createDoc({
+      const result = await createDocMutation.mutateAsync({
         type: 'FILE',
         parent_path: parentPath,
         name,
@@ -74,35 +71,28 @@ export function FileEditor({ isOpen, onClose, userId, username }) {
         is_public: false,
       });
       showSuccess('파일이 생성되었습니다');
-      
+
       // FileEditor는 자체 트리를 관리하므로 navigationObserver 이벤트는 발생시키지 않음
       // (useDirectoryTree에서 중복 로드 방지)
-      await queryClient.invalidateQueries({ queryKey: docsKeys.tree() });
     } catch (error) {
       showError(error.message || '파일 생성에 실패했습니다');
-    } finally {
-      setMutating(false);
     }
   };
 
   // 파일 수정 핸들러
   const handleUpdateFile = async (fileId, updates) => {
     try {
-      setMutating(true);
-      const result = await updateDoc(fileId, updates);
+      const result = await updateDocMutation.mutateAsync({ id: fileId, data: updates });
       showSuccess('파일이 수정되었습니다');
-      
+
       // FileEditor는 자체 트리를 관리하므로 navigationObserver 이벤트는 발생시키지 않음
       // (useDirectoryTree에서 중복 로드 방지)
-      await queryClient.invalidateQueries({ queryKey: docsKeys.tree() });
       // 수정된 파일 정보 업데이트
       if (selectedFile && selectedFile.id === fileId) {
         setSelectedFile({ ...selectedFile, ...updates });
       }
     } catch (error) {
       showError(error.message || '파일 수정에 실패했습니다');
-    } finally {
-      setMutating(false);
     }
   };
 
@@ -113,18 +103,14 @@ export function FileEditor({ isOpen, onClose, userId, username }) {
     }
 
     try {
-      setMutating(true);
-      await deleteDoc(fileId);
+      await deleteDocMutation.mutateAsync({ id: fileId });
       showSuccess('파일이 삭제되었습니다');
-      
+
       // FileEditor는 자체 트리를 관리하므로 navigationObserver 이벤트는 발생시키지 않음
       // (useDirectoryTree에서 중복 로드 방지)
       setSelectedFile(null);
-      await queryClient.invalidateQueries({ queryKey: docsKeys.tree() });
     } catch (error) {
       showError(error.message || '파일 삭제에 실패했습니다');
-    } finally {
-      setMutating(false);
     }
   };
 
@@ -139,9 +125,7 @@ export function FileEditor({ isOpen, onClose, userId, username }) {
       // 파일 검색
       if (node._files) {
         result._files = node._files.filter(
-          (file) =>
-            file.title.toLowerCase().includes(lowerQuery) ||
-            file.path.toLowerCase().includes(lowerQuery)
+          (file) => file.title.toLowerCase().includes(lowerQuery) || file.path.toLowerCase().includes(lowerQuery),
         );
       }
 
@@ -166,10 +150,7 @@ export function FileEditor({ isOpen, onClose, userId, username }) {
 
     Object.keys(tree).forEach((key) => {
       const filteredNode = searchInNode(tree[key], key);
-      if (
-        filteredNode._files.length > 0 ||
-        Object.keys(filteredNode).filter((k) => k !== '_files').length > 0
-      ) {
+      if (filteredNode._files.length > 0 || Object.keys(filteredNode).filter((k) => k !== '_files').length > 0) {
         filtered[key] = filteredNode;
       }
     });
@@ -180,7 +161,10 @@ export function FileEditor({ isOpen, onClose, userId, username }) {
   if (!isOpen) return null;
 
   return (
-    <div className="file-editor__overlay" onClick={(e) => e.target.classList.contains('file-editor__overlay') && onClose()}>
+    <div
+      className="file-editor__overlay"
+      onClick={(e) => e.target.classList.contains('file-editor__overlay') && onClose()}
+    >
       <div className="file-editor__container">
         <div className="file-editor__header">
           <div className="file-editor__title">
@@ -238,4 +222,3 @@ export function FileEditor({ isOpen, onClose, userId, username }) {
     </div>
   );
 }
-

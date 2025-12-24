@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'preact/hooks';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { fetchDocContent, createDoc, updateDoc, deleteDoc } from '../utils/api';
 import { route } from 'preact-router';
 import { Button } from '../components/Button';
 import { FileLocationModal } from '../components/FileEditor/FileLocationModal';
 import { IconFolder, IconEye, IconEyeOff, IconTrash } from '@tabler/icons-preact';
 import { navigationObserver } from '../observers/NavigationObserver';
+import { useDocContentQuery } from '../hooks/useDocContentQuery';
+import { useCreateDocMutation, useUpdateDocMutation, useDeleteDocMutation } from '../hooks/useDocMutations';
 import './EditorPage.scss';
 
 /**
@@ -56,7 +57,6 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
   const [isPublic, setIsPublic] = useState(true);
   const [docId, setDocId] = useState(null);
 
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [locationModalOpen, setLocationModalOpen] = useState(false);
 
@@ -81,29 +81,41 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
     }
   }, [mode]);
 
-  // 수정 모드일 때 데이터 로드
+  const isEditMode = mode === 'edit' && !!path;
+  const { data: doc, isLoading: docLoading, error: docError } = useDocContentQuery(path || '', { enabled: isEditMode });
+
+  // 수정 모드일 때 데이터 로드 (Query 결과를 폼 상태로 반영)
   useEffect(() => {
-    if (mode === 'edit' && path) {
-      setLoading(true);
-      fetchDocContent(path)
-        .then((doc) => {
-          if (doc) {
-            setDocId(doc.id);
-            setTitle(doc.name.replace('.md', ''));
-            setContent(doc.content || '');
-            setIsPublic(doc.is_public);
-            // 부모 경로는 path에서 추출
-            const parts = doc.path.split('/');
-            parts.pop(); // 파일명 제거
-            setParentPath(parts.join('/'));
-          } else {
-            setError('문서를 찾을 수 없습니다.');
-          }
-        })
-        .catch((err) => setError(err.message))
-        .finally(() => setLoading(false));
+    if (!isEditMode) return;
+
+    if (docError) {
+      setError(docError.message);
+      return;
     }
-  }, [mode, path]);
+
+    if (doc === null) {
+      setError('문서를 찾을 수 없습니다.');
+      return;
+    }
+
+    if (doc) {
+      setDocId(doc.id);
+      setTitle((doc.name || '').replace('.md', ''));
+      setContent(doc.content || '');
+      setIsPublic(!!doc.is_public);
+      // 부모 경로는 path에서 추출
+      const parts = (doc.path || '').split('/');
+      parts.pop(); // 파일명 제거
+      setParentPath(parts.join('/'));
+    }
+  }, [isEditMode, doc, docError]);
+
+  const createDocMutation = useCreateDocMutation();
+  const updateDocMutation = useUpdateDocMutation();
+  const deleteDocMutation = useDeleteDocMutation();
+
+  const loading =
+    docLoading || createDocMutation.isPending || updateDocMutation.isPending || deleteDocMutation.isPending;
 
   // 인증 체크
   if (authLoading) return <div>Loading auth...</div>;
@@ -114,12 +126,11 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
 
     try {
       if (mode === 'create') {
         const name = `${title}.md`;
-        const result = await createDoc({
+        const result = await createDocMutation.mutateAsync({
           type: 'FILE',
           parent_path: parentPath,
           name,
@@ -139,10 +150,13 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
           route(newPath);
         }
       } else {
-        const result = await updateDoc(docId, {
-          content,
-          is_public: isPublic,
-          name: `${title}.md`, // 제목 수정 시 이름도 변경
+        const result = await updateDocMutation.mutateAsync({
+          id: docId,
+          data: {
+            content,
+            is_public: isPublic,
+            name: `${title}.md`, // 제목 수정 시 이름도 변경
+          },
         });
 
         showSuccess('문서가 수정되었습니다.');
@@ -160,8 +174,6 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
       console.error(err);
       setError(err.message);
       showError(err.message || '작업에 실패했습니다.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -188,11 +200,10 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
       return;
     }
 
-    setLoading(true);
     setError('');
 
     try {
-      await deleteDoc(docId);
+      await deleteDocMutation.mutateAsync({ id: docId });
       showSuccess('문서가 삭제되었습니다.');
 
       // 트리 업데이트를 위한 이벤트 발생
@@ -207,8 +218,6 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
       console.error(err);
       setError(err.message);
       showError(err.message || '삭제에 실패했습니다.');
-    } finally {
-      setLoading(false);
     }
   };
 
