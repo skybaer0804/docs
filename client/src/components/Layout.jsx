@@ -5,6 +5,7 @@ import { Resizer } from './Resizer';
 import { useState, useRef } from 'preact/hooks';
 import {
   IconChevronsLeft,
+  IconExternalLink,
   IconLogin,
   IconLogout,
   IconFilePlus,
@@ -46,6 +47,9 @@ export function LayoutPresenter({
   const { theme, toggleTheme } = useTheme();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settingsButtonRef = useRef(null);
+  const documentTitle = user?.document_title || 'Nodnjs Documentation';
+  const personalLink =
+    user?.personal_link || 'https://skybear.notion.site/Web-Developer-91775e3d66dd4b0893b871bce56894db?pvs=74';
 
   const handleLogout = async () => {
     try {
@@ -93,12 +97,36 @@ export function LayoutPresenter({
     onNavigate('/profile');
   };
 
+  const handleExternalLinkClick = (e) => {
+    e.preventDefault();
+    if (!personalLink) return;
+    window.open(personalLink, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <div class="layout">
       <div class={`layout__overlay ${sidebarOpen ? 'layout__overlay--open' : ''}`} onClick={onCloseSidebar}></div>
       <div class="layout__container">
         <header class="header">
-          <Breadcrumb currentRoute={currentPath} onNavigate={onNavigate} />
+          <div class="header__breadcrumb">
+            <div class="header__title-wrapper">
+              <h1 class="header__title">
+                {documentTitle}
+                {personalLink && (
+                  <a
+                    href={personalLink}
+                    onClick={handleExternalLinkClick}
+                    class="header__external-link"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="외부 링크 열기"
+                  >
+                    <IconExternalLink size={16} />
+                  </a>
+                )}
+              </h1>
+            </div>
+          </div>
           <div class="header__actions">
             {user && (
               <button class="header__profile" onClick={handleProfile} title={user.username || user.email}>
@@ -174,7 +202,12 @@ export function LayoutPresenter({
           {isDesktop && !sidebarCollapsed && (
             <Resizer onResize={onSidebarResize} minSidebarWidth={170} minContentWidth={300} />
           )}
-          <main class="layout__main">{children}</main>
+          <main class="layout__main">
+            <div class="layout__breadcrumb-bar">
+              <Breadcrumb currentRoute={currentPath} onNavigate={onNavigate} />
+            </div>
+            <div class="layout__main-content">{children}</div>
+          </main>
         </div>
       </div>
       <DirectoryCreateModal

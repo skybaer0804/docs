@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'preact/hooks';
 import { IconX, IconSearch, IconCheck } from '@tabler/icons-preact';
 import { FileTree } from './FileTree';
-import { fetchAllDocs } from '../../utils/api';
 import { buildDirectoryTree } from '../../utils/treeUtils';
 import { buildUserGroupedTree } from '../../utils/userTreeUtils';
 import { useAuth } from '../../contexts/AuthContext';
+import { useDocsTreeQuery } from '../../hooks/useDocsTreeQuery';
 import './FileLocationModal.scss';
 
 /**
@@ -13,50 +13,39 @@ import './FileLocationModal.scss';
  */
 export function FileLocationModal({ isOpen, onClose, onSelect, currentPath = '/docs' }) {
   const { user } = useAuth();
+  const { data: allNodes = [], isLoading: loading } = useDocsTreeQuery({ enabled: isOpen });
   const [searchQuery, setSearchQuery] = useState('');
-  const [fileTree, setFileTree] = useState({});
   const [selectedPath, setSelectedPath] = useState(currentPath);
   const [expandedPaths, setExpandedPaths] = useState({});
-  const [loading, setLoading] = useState(false);
 
   // 파일 트리 로드
   useEffect(() => {
     if (!isOpen) return;
-    loadFileTree();
     setSelectedPath(currentPath);
   }, [isOpen, currentPath]);
 
-  const loadFileTree = async () => {
-    try {
-      setLoading(true);
-      const nodes = await fetchAllDocs();
-      // 폴더만 표시 (type이 'DIRECTORY'인 것만)
-      const folders = nodes.filter((node) => node.type === 'DIRECTORY');
-      // author_id별로 그룹화하여 username 표시
-      const userMap = {};
-      const groupedTree = buildUserGroupedTree(folders, userMap);
-      setFileTree(groupedTree);
+  // currentPath의 부모 경로들을 자동으로 펼치기
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!currentPath) return;
+    const parts = currentPath.split('/').filter(Boolean);
+    if (parts[0] === 'docs') parts.shift();
 
-      // currentPath의 부모 경로들을 자동으로 펼치기
-      if (currentPath) {
-        const parts = currentPath.split('/').filter(Boolean);
-        if (parts[0] === 'docs') parts.shift();
+    const newExpanded = {};
+    let accumulated = '';
+    parts.forEach((part) => {
+      const key = accumulated ? `${accumulated}/${part}` : part;
+      accumulated = key;
+      newExpanded[key] = true;
+    });
+    setExpandedPaths(newExpanded);
+  }, [isOpen, currentPath]);
 
-        const newExpanded = {};
-        let accumulated = '';
-        parts.forEach((part) => {
-          const key = accumulated ? `${accumulated}/${part}` : part;
-          accumulated = key;
-          newExpanded[key] = true;
-        });
-        setExpandedPaths(newExpanded);
-      }
-    } catch (error) {
-      console.error('Error loading file tree:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // 폴더만 표시 (type이 'DIRECTORY'인 것만)
+  const folders = allNodes.filter((node) => node.type === 'DIRECTORY');
+  // author_id별로 그룹화하여 username 표시
+  const userMap = {};
+  const fileTree = buildUserGroupedTree(folders, userMap);
 
   // 검색 필터링
   const filteredTree = searchQuery ? filterTreeBySearch(fileTree, searchQuery) : fileTree;

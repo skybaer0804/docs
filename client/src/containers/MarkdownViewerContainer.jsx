@@ -1,10 +1,9 @@
 import { useEffect, useState, useRef, useMemo } from 'preact/hooks';
 import { marked } from 'marked';
 import { downloadFile } from '../utils/downloadUtils';
-import { fetchAllDocs } from '../utils/api';
 import { MarkdownViewerPresenter } from '../components/MarkdownViewer';
 import { MarkdownParser, resolvePath, findTargetFile } from '../tdd/MarkdownLogic';
-import { devError } from '../utils/logger';
+import { useDocsTreeQuery } from '../hooks/useDocsTreeQuery';
 
 /**
  * MarkdownViewer Container 컴포넌트
@@ -14,32 +13,22 @@ import { devError } from '../utils/logger';
  */
 export function MarkdownViewerContainer({ content, file, onNavigate, onContentRef }) {
     const [html, setHtml] = useState('');
-    const [allFiles, setAllFiles] = useState([]);
     const contentRef = useRef(null);
+    const { data: nodes = [] } = useDocsTreeQuery();
+
+    const allFiles = useMemo(() => {
+        return nodes
+            .filter((n) => n.type === 'FILE')
+            .map((n) => ({
+                path: n.path,
+                route: n.path,
+                title: n.name.replace(/\.md$/, ''),
+                name: n.name,
+            }));
+    }, [nodes]);
 
     // MarkdownParser 인스턴스 메모이제이션 (marked 라이브러리 주입)
     const parser = useMemo(() => new MarkdownParser(marked), []);
-
-    // 전체 문서 구조 조회 (내부 링크 처리용)
-    useEffect(() => {
-        async function loadData() {
-            try {
-                const nodes = await fetchAllDocs();
-                const files = nodes
-                    .filter(n => n.type === 'FILE')
-                    .map(n => ({
-                        path: n.path,
-                        route: n.path,
-                        title: n.name.replace(/\.md$/, ''),
-                        name: n.name
-                    }));
-                setAllFiles(files);
-            } catch (error) {
-                devError('Error loading docs for link resolver:', error);
-            }
-        }
-        loadData();
-    }, []);
 
     // contentRef를 외부로 노출 (알림 기능 등에서 사용)
     useEffect(() => {

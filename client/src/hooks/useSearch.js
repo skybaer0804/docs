@@ -1,6 +1,5 @@
-import { useState, useMemo, useEffect } from 'preact/hooks';
-import { fetchAllDocs } from '../utils/api';
-import { devError } from '../utils/logger';
+import { useMemo } from 'preact/hooks';
+import { useDocsTreeQuery } from './useDocsTreeQuery';
 
 /**
  * 검색 로직을 담당하는 Custom Hook
@@ -8,24 +7,7 @@ import { devError } from '../utils/logger';
  * @returns {Object} 검색 결과 { results: Array }
  */
 export function useSearch(query) {
-    const [allNodes, setAllNodes] = useState([]);
-    const [loading, setLoading] = useState(false);
-
-    // 초기 데이터 로드 (API)
-    useEffect(() => {
-        async function loadData() {
-            try {
-                setLoading(true);
-                const nodes = await fetchAllDocs();
-                setAllNodes(nodes);
-            } catch (error) {
-                devError('Error loading docs for search:', error);
-            } finally {
-                setLoading(false);
-            }
-        }
-        loadData();
-    }, []);
+    const { data: allNodes = [], isLoading: loading } = useDocsTreeQuery();
 
     // 검색어에 따른 필터링
     const results = useMemo(() => {

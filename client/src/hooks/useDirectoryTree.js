@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'preact/hooks';
-import { fetchAllDocs } from '../utils/api';
+import { useState, useEffect, useMemo } from 'preact/hooks';
 import { buildDirectoryTree } from '../utils/treeUtils';
-import { devError } from '../utils/logger';
 import { navigationObserver } from '../observers/NavigationObserver';
+import { useQueryClient } from '@tanstack/react-query';
+import { docsKeys } from '../query/queryKeys';
+import { useDocsTreeQuery } from './useDocsTreeQuery';
 
 /**
  * 파일 경로에서 부모 경로들을 추출하는 유틸리티 함수
@@ -48,30 +49,9 @@ function getParentPathsFromFile(file) {
  */
 export function useDirectoryTree(currentPath, onNavigate) {
     const [expandedPaths, setExpandedPaths] = useState({});
-    const [categorized, setCategorized] = useState({});
-    const [loading, setLoading] = useState(true);
-
-    // 트리 데이터 로드 함수
-    const loadTreeData = useCallback(async () => {
-        try {
-            setLoading(true);
-            const nodes = await fetchAllDocs();
-            console.log('loadTreeData: Fetched nodes count:', nodes?.length);
-            console.log('loadTreeData: Sample nodes:', nodes?.slice(0, 5));
-            const tree = buildDirectoryTree(nodes);
-            console.log('loadTreeData: Built tree structure:', Object.keys(tree));
-            setCategorized(tree);
-        } catch (error) {
-            devError('Error loading docs tree:', error);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    // 초기 데이터 로드 (API)
-    useEffect(() => {
-        loadTreeData();
-    }, [loadTreeData]);
+    const queryClient = useQueryClient();
+    const { data: nodes = [], isLoading: loading } = useDocsTreeQuery();
+    const categorized = useMemo(() => buildDirectoryTree(nodes), [nodes]);
 
     // 문서 변경 이벤트 감지하여 트리 업데이트 (디바운싱 및 중복 로드 방지)
     useEffect(() => {
@@ -96,8 +76,8 @@ export function useDirectoryTree(currentPath, onNavigate) {
                 debounceTimer = setTimeout(async () => {
                     isReloading = true;
                     try {
-                        console.log('handleDocumentChange: Reloading tree data');
-                        await loadTreeData();
+                        console.log('handleDocumentChange: Invalidating docs tree query');
+                        await queryClient.invalidateQueries({ queryKey: docsKeys.tree() });
                     } finally {
                         isReloading = false;
                         debounceTimer = null;
@@ -113,7 +93,7 @@ export function useDirectoryTree(currentPath, onNavigate) {
                 clearTimeout(debounceTimer);
             }
         };
-    }, [loadTreeData]);
+    }, [queryClient]);
 
     // currentPath 변경 시 자동으로 부모 경로들을 펼치기
     useEffect(() => {

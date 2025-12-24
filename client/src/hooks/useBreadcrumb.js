@@ -1,47 +1,36 @@
-import { useState, useEffect, useMemo } from 'preact/hooks';
-import { fetchAllDocs } from '../utils/api';
+import { useMemo } from 'preact/hooks';
 import { buildCategoryBreadcrumbItems, buildFileBreadcrumbItems } from '../utils/breadcrumbUtils';
-import { devError } from '../utils/logger';
+import { useDocsTreeQuery } from './useDocsTreeQuery';
 
 /**
  * Breadcrumb의 로직을 담당하는 Custom Hook
  * TDD 친화적: 로직을 분리하여 테스트 용이
  */
 export function useBreadcrumb(currentRoute) {
-  const [allFiles, setAllFiles] = useState([]);
+  const { data: nodes = [] } = useDocsTreeQuery();
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const nodes = await fetchAllDocs();
-        // 파일 노드들만 추출 및 변환
-        const files = nodes
-          .filter((n) => n.type === 'FILE')
-          .map((n) => {
-            const parts = n.path.split('/').filter(Boolean);
-            // parts: ['docs', 'Platform', 'Web', 'guide']
-            let directoryPath = [];
-            if (parts[0] === 'docs') {
-              directoryPath = parts.slice(1, -1);
-            } else {
-              directoryPath = parts.slice(0, -1);
-            }
+  const allFiles = useMemo(() => {
+    return nodes
+      .filter((n) => n.type === 'FILE')
+      .map((n) => {
+        const parts = n.path.split('/').filter(Boolean);
+        // parts: ['docs', 'Platform', 'Web', 'guide']
+        let directoryPath = [];
+        if (parts[0] === 'docs') {
+          directoryPath = parts.slice(1, -1);
+        } else {
+          directoryPath = parts.slice(0, -1);
+        }
 
-            return {
-              path: n.path,
-              route: n.path,
-              title: n.name.replace(/\.md$/, ''),
-              name: n.name,
-              directoryPath: directoryPath,
-            };
-          });
-        setAllFiles(files);
-      } catch (error) {
-        devError('Error loading docs for breadcrumb:', error);
-      }
-    }
-    loadData();
-  }, []);
+        return {
+          path: n.path,
+          route: n.path,
+          title: n.name.replace(/\.md$/, ''),
+          name: n.name,
+          directoryPath: directoryPath,
+        };
+      });
+  }, [nodes]);
 
   return useMemo(() => {
     // 로그인 페이지는 브레드크럼 표시

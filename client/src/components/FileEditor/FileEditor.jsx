@@ -1,12 +1,15 @@
-import { useState, useEffect, useRef } from 'preact/hooks';
+import { useState, useEffect, useRef, useMemo } from 'preact/hooks';
 import { IconX, IconSearch, IconFilePlus, IconFolderPlus, IconTrash, IconEdit, IconFile } from '@tabler/icons-preact';
 import { FileTree } from './FileTree';
 import { FileEditorContent } from './FileEditorContent';
 import { useToast } from '../../contexts/ToastContext';
-import { fetchAllDocs, createDoc, updateDoc, deleteDoc } from '../../utils/api';
+import { createDoc, updateDoc, deleteDoc } from '../../utils/api';
 import { buildDirectoryTree } from '../../utils/treeUtils';
 import { buildUserGroupedTree } from '../../utils/userTreeUtils';
 import { navigationObserver } from '../../observers/NavigationObserver';
+import { useDocsTreeQuery } from '../../hooks/useDocsTreeQuery';
+import { useQueryClient } from '@tanstack/react-query';
+import { docsKeys } from '../../query/queryKeys';
 import './FileEditor.scss';
 
 /**
@@ -16,42 +19,30 @@ import './FileEditor.scss';
 export function FileEditor({ isOpen, onClose, userId, username }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
-  const [fileTree, setFileTree] = useState({});
-  const [loading, setLoading] = useState(false);
   const [expandedPaths, setExpandedPaths] = useState({});
+  const [mutating, setMutating] = useState(false);
   const { showSuccess, showError } = useToast();
   const searchInputRef = useRef(null);
+  const queryClient = useQueryClient();
 
-  // 파일 트리 로드
-  useEffect(() => {
-    if (!isOpen) return;
+  const { data: nodes = [], isLoading } = useDocsTreeQuery({ enabled: isOpen });
+  const loading = isLoading || mutating;
 
-    loadFileTree();
-  }, [isOpen, userId]);
+  const fileTree = useMemo(() => {
+    if (!nodes || nodes.length === 0) return {};
 
-  const loadFileTree = async () => {
-    try {
-      setLoading(true);
-      const nodes = await fetchAllDocs();
-      
-      if (userId) {
-        // 특정 사용자의 파일만 표시
-        const userNodes = nodes.filter((node) => node.author_id === userId);
-        const tree = buildDirectoryTree(userNodes);
-        setFileTree(tree);
-      } else {
-        // 모든 사용자의 파일을 author_id별로 그룹화하여 표시
-        const userMap = { [userId]: username };
-        const groupedTree = buildUserGroupedTree(nodes, userMap);
-        setFileTree(groupedTree);
-      }
-    } catch (error) {
-      console.error('Error loading file tree:', error);
-      showError('파일 목록을 불러오는데 실패했습니다');
-    } finally {
-      setLoading(false);
+    if (userId) {
+      // 특정 사용자의 파일만 표시
+      const userNodes = nodes.filter((node) => node.author_id === userId);
+      return buildDirectoryTree(userNodes);
     }
-  };
+
+    // 모든 사용자의 파일을 author_id별로 그룹화하여 표시
+    const userMap = { [userId]: username };
+    return buildUserGroupedTree(nodes, userMap);
+  }, [nodes, userId, username]);
+
+  // (Query 기반) isOpen 시점에 nodes를 로드하며, 트리는 useMemo로 구성됨
 
   // 검색 필터링
   const filteredTree = searchQuery
@@ -74,7 +65,7 @@ export function FileEditor({ isOpen, onClose, userId, username }) {
   // 파일 생성 핸들러
   const handleCreateFile = async (parentPath, name, content) => {
     try {
-      setLoading(true);
+      setMutating(true);
       const result = await createDoc({
         type: 'FILE',
         parent_path: parentPath,
@@ -86,24 +77,24 @@ export function FileEditor({ isOpen, onClose, userId, username }) {
       
       // FileEditor는 자체 트리를 관리하므로 navigationObserver 이벤트는 발생시키지 않음
       // (useDirectoryTree에서 중복 로드 방지)
-      await loadFileTree();
+      await queryClient.invalidateQueries({ queryKey: docsKeys.tree() });
     } catch (error) {
       showError(error.message || '파일 생성에 실패했습니다');
     } finally {
-      setLoading(false);
+      setMutating(false);
     }
   };
 
   // 파일 수정 핸들러
   const handleUpdateFile = async (fileId, updates) => {
     try {
-      setLoading(true);
+      setMutating(true);
       const result = await updateDoc(fileId, updates);
       showSuccess('파일이 수정되었습니다');
       
       // FileEditor는 자체 트리를 관리하므로 navigationObserver 이벤트는 발생시키지 않음
       // (useDirectoryTree에서 중복 로드 방지)
-      await loadFileTree();
+      await queryClient.invalidateQueries({ queryKey: docsKeys.tree() });
       // 수정된 파일 정보 업데이트
       if (selectedFile && selectedFile.id === fileId) {
         setSelectedFile({ ...selectedFile, ...updates });
@@ -111,7 +102,7 @@ export function FileEditor({ isOpen, onClose, userId, username }) {
     } catch (error) {
       showError(error.message || '파일 수정에 실패했습니다');
     } finally {
-      setLoading(false);
+      setMutating(false);
     }
   };
 
@@ -122,18 +113,18 @@ export function FileEditor({ isOpen, onClose, userId, username }) {
     }
 
     try {
-      setLoading(true);
+      setMutating(true);
       await deleteDoc(fileId);
       showSuccess('파일이 삭제되었습니다');
       
       // FileEditor는 자체 트리를 관리하므로 navigationObserver 이벤트는 발생시키지 않음
       // (useDirectoryTree에서 중복 로드 방지)
       setSelectedFile(null);
-      await loadFileTree();
+      await queryClient.invalidateQueries({ queryKey: docsKeys.tree() });
     } catch (error) {
       showError(error.message || '파일 삭제에 실패했습니다');
     } finally {
-      setLoading(false);
+      setMutating(false);
     }
   };
 
