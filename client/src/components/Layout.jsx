@@ -71,13 +71,8 @@ export function LayoutPresenter({
 
   const handleCreateDocument = () => {
     setSettingsOpen(false);
-    // 현재 경로를 기반으로 문서 생성 페이지로 이동
-    const currentDir = currentPath.startsWith('/category/')
-      ? currentPath.replace('/category/', '/docs/')
-      : currentPath === '/'
-      ? '/docs'
-      : currentPath;
-    onNavigate(`/write?parent=${encodeURIComponent(currentDir)}`);
+    // 루트 단 파일 생성 가능하도록 /docs로 설정
+    onNavigate(`/write?parent=${encodeURIComponent('/docs')}`);
   };
 
   const [directoryModalOpen, setDirectoryModalOpen] = useState(false);
@@ -203,10 +198,12 @@ export function LayoutPresenter({
             <Resizer onResize={onSidebarResize} minSidebarWidth={170} minContentWidth={300} />
           )}
           <main class="layout__main">
-            <div class="layout__breadcrumb-bar">
-              <Breadcrumb currentRoute={currentPath} onNavigate={onNavigate} />
+            <div class="layout__main-scroll">
+              <div class="layout__breadcrumb-bar">
+                <Breadcrumb currentRoute={currentPath} onNavigate={onNavigate} />
+              </div>
+              <div class="layout__main-content">{children}</div>
             </div>
-            <div class="layout__main-content">{children}</div>
           </main>
         </div>
       </div>

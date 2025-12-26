@@ -8,6 +8,11 @@ import { useDocsTreeQuery } from './useDocsTreeQuery';
  */
 export function useBreadcrumb(currentRoute) {
   const { data: nodes = [] } = useDocsTreeQuery();
+  
+  // path로 노드를 찾는 헬퍼 함수
+  const findNodeByPath = (path) => {
+    return nodes.find((n) => n.path === path);
+  };
 
   const allFiles = useMemo(() => {
     return nodes
@@ -71,9 +76,24 @@ export function useBreadcrumb(currentRoute) {
         .filter((p) => p); // 빈 문자열 제거
 
       const breadcrumbItems = buildCategoryBreadcrumbItems(pathParts);
+      
+      // 각 아이템에 nodeId 추가 (path로 노드 찾기)
+      const itemsWithNodeId = breadcrumbItems.map((item) => {
+        if (item.type === 'link' && item.route === '/') {
+          // 루트는 null
+          return { ...item, nodeId: null };
+        }
+        if (item.path) {
+          // path를 /docs/... 형태로 변환
+          const docsPath = item.path.startsWith('/docs') ? item.path : `/docs/${item.path}`;
+          const node = findNodeByPath(docsPath);
+          return { ...item, nodeId: node?.id || null };
+        }
+        return item;
+      });
 
       return {
-        items: breadcrumbItems,
+        items: itemsWithNodeId,
         displayType: 'category',
       };
     }
@@ -88,10 +108,25 @@ export function useBreadcrumb(currentRoute) {
     }
 
     const breadcrumbItems = buildFileBreadcrumbItems(file);
+    
+    // 각 아이템에 nodeId 추가 (path로 노드 찾기)
+    const itemsWithNodeId = breadcrumbItems.map((item) => {
+      if (item.type === 'link' && item.route === '/') {
+        // 루트는 null
+        return { ...item, nodeId: null };
+      }
+      if (item.path) {
+        // path를 /docs/... 형태로 변환
+        const docsPath = item.path.startsWith('/docs') ? item.path : `/docs/${item.path}`;
+        const node = findNodeByPath(docsPath);
+        return { ...item, nodeId: node?.id || null };
+      }
+      return item;
+    });
 
     return {
-      items: breadcrumbItems,
+      items: itemsWithNodeId,
       displayType: 'file',
     };
-  }, [currentRoute, allFiles]);
+  }, [currentRoute, allFiles, findNodeByPath]);
 }

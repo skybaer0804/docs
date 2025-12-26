@@ -24,7 +24,17 @@ export function DirectoryCreateModal({ isOpen, onClose, onSuccess, currentPath }
 
   if (!isOpen) return null;
 
-  const parentPath = currentPath ? getParentPathFromCurrentPath(currentPath) : '/docs';
+  // currentPath가 이미 /docs/로 시작하는 경로이면 그대로 사용, 아니면 변환
+  let parentPath = '/docs';
+  if (currentPath) {
+    if (currentPath.startsWith('/docs')) {
+      parentPath = currentPath; // 이미 /docs 경로면 그대로 사용
+    } else if (currentPath.startsWith('/category/')) {
+      parentPath = currentPath.replace('/category/', '/docs/');
+    } else {
+      parentPath = getParentPathFromCurrentPath(currentPath);
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();

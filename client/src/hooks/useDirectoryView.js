@@ -11,9 +11,14 @@ export function useDirectoryView(currentRoute, onNavigate) {
   const { data: allNodes = [], isLoading: loading } = useDocsTreeQuery();
 
   const { categorized, files } = useMemo(() => {
-    if (allNodes.length === 0) return { categorized: {}, files: [] };
+    console.log('[useDirectoryView] allNodes:', allNodes, 'length:', allNodes.length);
+    if (allNodes.length === 0) {
+      console.log('[useDirectoryView] No nodes found, returning empty');
+      return { categorized: {}, files: [] };
+    }
 
     const tree = buildDirectoryTree(allNodes);
+    console.log('[useDirectoryView] buildDirectoryTree result:', tree);
     const fileList = allNodes
       .filter((n) => n.type === 'FILE')
       .map((n) => ({
@@ -22,6 +27,7 @@ export function useDirectoryView(currentRoute, onNavigate) {
         title: n.name.replace(/\.md$/, ''),
         name: n.name,
         id: n.id,
+        author_id: n.author_id,
       }));
 
     return { categorized: tree, files: fileList };

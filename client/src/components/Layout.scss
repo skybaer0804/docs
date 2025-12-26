@@ -101,15 +101,13 @@
   &__main {
     background: #ffffff;
     padding: 0;
-    // PC: 가로 스크롤 허용 (코드 블록, 테이블용)
-    overflow-x: auto;
-    overflow-y: auto;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
     position: relative;
     flex: 1;
     min-width: 0;
-    height: calc(100vh - var(--header-height, 80px));
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     transition: background-color 0.3s ease;
     // PC: 우측 padding 5px + 스크롤바 공간 확보 (스크롤바 너비 8px + 여유 공간)
     // 세로 스크롤바가 콘텐츠에 겹치지 않도록 충분한 공간 확보
@@ -117,10 +115,24 @@
 
     // 모바일에서 페이지 전환 애니메이션을 위한 컨테이너
     @media (max-width: 768px) {
+      padding-right: 16px;
+    }
+  }
+
+  &__main-scroll {
+    flex: 1;
+    min-height: 0;
+    // PC: 가로 스크롤 허용 (코드 블록, 테이블용)
+    overflow-x: auto;
+    overflow-y: auto;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    position: relative;
+
+    @media (max-width: 768px) {
       overflow-x: hidden;
       overflow-y: auto;
       position: relative;
-      padding-right: 16px;
     }
   }
 

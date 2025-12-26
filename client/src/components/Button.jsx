@@ -16,6 +16,7 @@ export function Button({
     loading = false,
     onClick,
     className = '',
+    buttonRef,
     ...props 
 }) {
     const buttonClass = `button button--${variant} button--${size} ${loading ? 'button--loading' : ''} ${className}`.trim();
@@ -27,6 +28,7 @@ export function Button({
             class={buttonClass}
             disabled={isDisabled}
             onClick={onClick}
+            ref={buttonRef}
             {...props}
         >
             {loading && <IconLoader2 class="button__loader" size={16} />}

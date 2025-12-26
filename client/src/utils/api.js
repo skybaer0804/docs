@@ -247,7 +247,7 @@ export async function deleteDoc(id, token = null) {
 
 /**
  * 문서/폴더를 다른 폴더로 이동합니다. (본인(author_id)만 가능)
- * @param {Object} data - { id, target_parent_path }
+ * @param {Object} data - { id, target_parent_id } (target_parent_id는 null이면 루트로 이동)
  */
 export async function moveDoc(data, token = null) {
   const authToken = token || getToken();

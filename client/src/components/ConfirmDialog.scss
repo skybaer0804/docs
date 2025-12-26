@@ -1,0 +1,56 @@
+.confirm-dialog {
+  &__overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 20px;
+  }
+
+  &__container {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+    width: 100%;
+    max-width: 480px;
+    overflow: hidden;
+  }
+
+  &__header {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-color);
+  }
+
+  &__body {
+    padding: 16px 20px;
+  }
+
+  &__message {
+    margin: 0;
+    color: var(--text-color);
+    line-height: 1.5;
+    font-size: 0.95rem;
+    white-space: pre-wrap;
+  }
+
+  &__footer {
+    padding: 16px 20px 18px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+}
+
+

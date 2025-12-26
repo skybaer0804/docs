@@ -323,7 +323,7 @@ exports.deleteDoc = async (req, res) => {
 // body: { id: UUID, target_parent_path: "/docs/Some/Dir" }
 exports.moveDoc = async (req, res) => {
   try {
-    const { id, target_parent_path } = req.body || {};
+    const { id, target_parent_id } = req.body || {};
 
     // auth
     if (!req.user || !req.user.id) {
@@ -334,14 +334,14 @@ exports.moveDoc = async (req, res) => {
     if (!id) {
       return res.status(400).json({ error: 'Missing required field: id' });
     }
-    if (!target_parent_path || typeof target_parent_path !== 'string') {
-      return res.status(400).json({ error: 'Missing required field: target_parent_path' });
-    }
 
-    const targetParentPath = normalizePath(target_parent_path);
-    if (!isDocsPath(targetParentPath)) {
-      return res.status(400).json({ error: 'Invalid target parent path. Must be under /docs.' });
-    }
+    // 서버 로그: 드래그앤드롭 요청 시작
+    console.log('[DnD Server] 드래그앤드롭 요청:', {
+      itemId: id,
+      targetParentId: target_parent_id,
+      userId: author_id,
+      timestamp: new Date().toISOString(),
+    });
 
     // source node
     const { data: source, error: sourceErr } = await supabase
@@ -359,92 +359,57 @@ exports.moveDoc = async (req, res) => {
       return res.status(403).json({ error: 'Permission denied. You can only move your own nodes.' });
     }
 
-    if (!isDocsPath(source.path)) {
-      return res.status(400).json({ error: 'Only nodes under /docs can be moved.' });
-    }
-    if (source.path === '/docs') {
-      return res.status(400).json({ error: 'The /docs root cannot be moved.' });
-    }
+    // target_parent_id가 null이면 루트로 이동
+    let targetParentId = target_parent_id === null || target_parent_id === 'null' ? null : target_parent_id;
 
-    // target parent node
-    let targetParent = null;
-    const { data: fetchedTargetParent, error: targetErr } = await supabase
-      .from('nodes')
-      .select('id, type, path')
-      .eq('path', targetParentPath)
-      .single();
+    // target_parent_id가 제공된 경우, 해당 노드가 DIRECTORY인지 확인
+    if (targetParentId) {
+      const { data: targetParent, error: targetErr } = await supabase
+        .from('nodes')
+        .select('id, type')
+        .eq('id', targetParentId)
+        .single();
 
-    if (targetErr) {
-      if (targetErr.code === 'PGRST116') {
-        // /docs 루트는 데이터에 따라 없을 수 있어 자동 보강
-        if (targetParentPath === '/docs') {
-          targetParent = await ensureDocsRootDirectory(author_id);
-        } else {
+      if (targetErr) {
+        if (targetErr.code === 'PGRST116') {
           return res.status(404).json({ error: 'Target parent directory not found' });
         }
-      } else {
         throw targetErr;
       }
-    } else {
-      targetParent = fetchedTargetParent;
-    }
 
-    if (!targetParent || targetParent.type !== 'DIRECTORY') {
-      return res.status(400).json({ error: 'Drop target must be a directory.' });
-    }
+      if (!targetParent || targetParent.type !== 'DIRECTORY') {
+        return res.status(400).json({ error: 'Drop target must be a directory.' });
+      }
 
-    // prevent cycles (dir -> its descendant)
-    if (source.type === 'DIRECTORY') {
-      const oldPrefix = normalizePath(source.path);
-      const targetPrefix = normalizePath(targetParent.path);
-      if (targetPrefix === oldPrefix || targetPrefix.startsWith(`${oldPrefix}/`)) {
-        return res.status(400).json({ error: 'Cannot move a directory into itself or its descendants.' });
+      // prevent cycles (dir -> its descendant)
+      if (source.type === 'DIRECTORY' && source.id === targetParentId) {
+        return res.status(400).json({ error: 'Cannot move a directory into itself.' });
       }
     }
 
-    // no-op: same parent + same name
-    if (source.parent_id === targetParent.id) {
-      const sameParentPath = normalizePath(targetParent.path);
-      const expectedPath = normalizePath(`${sameParentPath}/${source.name}`);
-      if (expectedPath === normalizePath(source.path)) {
-        return res.json({
-          id: source.id,
-          oldPath: source.path,
-          newPath: source.path,
-          name: source.name,
-          renamed: false,
-          noop: true,
-        });
-      }
+    // no-op: same parent
+    if (source.parent_id === targetParentId) {
+      return res.json({
+        id: source.id,
+        parent_id: source.parent_id,
+        noop: true,
+      });
     }
 
-    const uniqueName = await getUniqueNameInParent({
-      parentId: targetParent.id,
-      desiredName: source.name,
-      excludeId: source.id,
+    // 서버 로그: 업데이트 전 정보
+    console.log('[DnD Server] 파일 이동 업데이트:', {
+      itemId: source.id,
+      itemName: source.name,
+      oldParentId: source.parent_id,
+      newParentId: targetParentId,
+      timestamp: new Date().toISOString(),
     });
 
-    const oldPath = normalizePath(source.path);
-    const newPath = normalizePath(`${targetParent.path}/${uniqueName}`);
-
-    // descendants snapshot (before updating source path)
-    let descendants = [];
-    if (source.type === 'DIRECTORY') {
-      const { data: children, error: childrenErr } = await supabase
-        .from('nodes')
-        .select('id, path')
-        .like('path', `${oldPath}/%`);
-      if (childrenErr) throw childrenErr;
-      descendants = Array.isArray(children) ? children : [];
-    }
-
-    // update source
+    // update source: parent_id만 업데이트
     const { data: updated, error: updateErr } = await supabase
       .from('nodes')
       .update({
-        parent_id: targetParent.id,
-        name: uniqueName,
-        path: newPath,
+        parent_id: targetParentId,
       })
       .eq('id', source.id)
       .select('id, parent_id, name, type, path, author_id')
@@ -452,27 +417,18 @@ exports.moveDoc = async (req, res) => {
 
     if (updateErr) throw updateErr;
 
-    // update descendants paths (keep parent_id chain intact, only rewrite prefix)
-    if (descendants.length > 0) {
-      for (const child of descendants) {
-        const childPath = normalizePath(child.path);
-        if (!childPath.startsWith(`${oldPath}/`)) continue;
-        const suffix = childPath.slice(oldPath.length);
-        const rewritten = normalizePath(`${newPath}${suffix}`);
-
-        const { error: childUpdateErr } = await supabase.from('nodes').update({ path: rewritten }).eq('id', child.id);
-        if (childUpdateErr) throw childUpdateErr;
-      }
-    }
+    // 서버 로그: 업데이트 성공
+    console.log('[DnD Server] 파일 이동 성공:', {
+      itemId: updated.id,
+      itemName: updated.name,
+      oldParentId: source.parent_id,
+      newParentId: updated.parent_id,
+      timestamp: new Date().toISOString(),
+    });
 
     res.json({
       id: updated.id,
-      oldPath,
-      newPath: updated.path,
-      name: updated.name,
-      renamed: updated.name !== source.name,
-      movedType: updated.type,
-      descendantCount: descendants.length,
+      parent_id: updated.parent_id,
     });
   } catch (err) {
     console.error('moveDoc error:', {

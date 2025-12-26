@@ -63,17 +63,37 @@ export async function createFolder({ name, parentPath, isPublic = true }) {
  * @returns {string} 부모 경로
  */
 export function getParentPathFromCurrentPath(currentPath) {
+  if (!currentPath) return '/docs';
+  
+  // /category/ 경로인 경우 /docs/로 변환
+  let docsPath = currentPath;
   if (currentPath.startsWith('/category/')) {
-    return currentPath.replace('/category/', '/docs/');
-  }
-  if (currentPath === '/') {
+    docsPath = currentPath.replace('/category/', '/docs/');
+  } else if (currentPath === '/') {
     return '/docs';
+  } else if (!currentPath.startsWith('/docs')) {
+    // /docs로 시작하지 않으면 /docs로 변환
+    if (currentPath.startsWith('/')) {
+      docsPath = '/docs' + currentPath;
+    } else {
+      docsPath = '/docs/' + currentPath;
+    }
   }
+  
   // 파일 경로인 경우 부모 디렉토리 추출
-  const parts = currentPath.split('/').filter(Boolean);
+  const parts = docsPath.split('/').filter(Boolean);
   if (parts.length > 1) {
-    parts.pop(); // 파일명 제거
-    return '/' + parts.join('/');
+    // 마지막 부분이 파일인지 확인 (.md 확장자 등)
+    const lastPart = parts[parts.length - 1];
+    if (lastPart.includes('.') && !lastPart.startsWith('.')) {
+      // 파일명인 경우 제거
+      parts.pop();
+    }
+    if (parts.length > 0) {
+      return '/' + parts.join('/');
+    }
   }
-  return currentPath;
+  
+  // 루트 또는 빈 경로인 경우 /docs 반환
+  return '/docs';
 }

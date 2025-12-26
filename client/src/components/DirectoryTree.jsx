@@ -24,57 +24,21 @@ export function DirectoryTreePresenter({
   const dnd = useDnd();
 
   const bindDragSource = (item) => ({
-    draggable: true,
-    onDragStart: (e) => {
-      e.stopPropagation();
-      e.dataTransfer.effectAllowed = 'move';
-      try {
-        e.dataTransfer.setData('text/plain', item.path || '');
-      } catch {
-        // noop
-      }
-      dnd.beginDrag(item, e.currentTarget);
-    },
-    onDragEnd: () => dnd.endDrag(),
-    ...(dnd.bindTouchDragSource ? dnd.bindTouchDragSource(item) : {}),
+    ...(dnd.bindDragSource ? dnd.bindDragSource(item) : {}),
   });
 
-  const bindDropTarget = (targetFolderDocsPath) => {
-    const canDrop = dnd.canDropTo(targetFolderDocsPath);
-    const isOver = dnd.dragOverPath === targetFolderDocsPath;
-    const isSuccess = dnd.dropSuccessPath === targetFolderDocsPath;
+  const bindDropTarget = (targetFolderId, targetFolderType) => {
+    // targetFolderId가 null이면 실제 null로 비교 (루트 대응)
+    const normalizedTargetId = targetFolderId === 'null' ? null : targetFolderId;
+    
+    // stale closure 방지를 위해 Ref 사용 가능하면 사용, 아니면 state 사용
+    // DirectoryTree는 매번 렌더링되므로 state 기반 canDropTo도 동작함
+    const canDrop = dnd.canDropTo(targetFolderId, targetFolderType);
+    const isOver = dnd.dragOverId === normalizedTargetId;
+    const isSuccess = dnd.dropSuccessId === normalizedTargetId;
     const isDragging = dnd.isDragging;
 
     return {
-      onDragEnter: (e) => {
-        if (!canDrop) return;
-        e.preventDefault();
-        dnd.markDragOver(targetFolderDocsPath);
-      },
-      onDragOver: (e) => {
-        if (canDrop) {
-          e.preventDefault();
-          e.dataTransfer.dropEffect = 'move';
-          dnd.markDragOver(targetFolderDocsPath);
-          return;
-        }
-        if (isDragging) {
-          try {
-            e.dataTransfer.dropEffect = 'none';
-          } catch {
-            // noop
-          }
-        }
-      },
-      onDragLeave: () => {
-        if (isOver) dnd.clearDragOver();
-      },
-      onDrop: (e) => {
-        if (!canDrop) return;
-        e.preventDefault();
-        e.stopPropagation();
-        dnd.dropTo(targetFolderDocsPath, e.currentTarget);
-      },
       dndHeaderClassName: `${isDragging && canDrop ? 'folder-item__header--droppable' : ''} ${
         isDragging && !canDrop ? 'folder-item__header--drop-disabled' : ''
       } ${isOver ? 'folder-item__header--drag-over' : ''} ${isSuccess ? 'folder-item__header--drop-success' : ''}`.trim(),
@@ -105,26 +69,28 @@ export function DirectoryTreePresenter({
       const result = (
         <ul class={level === 0 ? 'file-list' : 'sub-file-list'}>
           {/* 파일들 */}
-          {files.map((file) => (
-            <li
-              key={file.path}
-              class={`file-item ${currentPath === file.route ? 'active' : ''} ${
-                dnd.dragItem?.path === file.path ? 'file-item--dragging' : ''
-              }`}
-              onClick={() => onFileClick(file)}
-              title={file.path}
-              {...bindDragSource({
-                id: file.id,
-                type: 'FILE',
-                path: file.path,
-                name: file.name || file.title,
-                author_id: file.author_id,
-              })}
-            >
-              <span class="file-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
-              <span class="file-name">{file.title}</span>
-            </li>
-          ))}
+          {files.map((file) => {
+            // 파일의 부모 경로를 드롭 타겟으로 설정
+
+            return (
+              <li
+                key={file.path}
+                class={`file-item ${currentPath === file.route ? 'active' : ''} ${
+                  dnd.dragItem?.id === file.id ? 'file-item--dragging' : ''
+                }`}
+                onClick={() => onFileClick(file)}
+                title={file.path}
+                data-dnd-item-id={file.id}
+                data-dnd-item-type="FILE"
+                data-dnd-item-path={file.path}
+                data-dnd-item-name={file.name || file.title}
+                data-dnd-item-author-id={file.author_id}
+              >
+                <span class="file-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
+                <span class="file-name">{file.title}</span>
+              </li>
+            );
+          })}
 
           {/* 하위 디렉토리들 */}
           {keys.map((key) => {
@@ -198,11 +164,22 @@ export function DirectoryTreePresenter({
     );
   }
 
+  // 루트 레벨(/docs) 드롭 타겟 설정 - null은 루트를 의미
+  const rootId = null;
+  const rootType = 'DIRECTORY';
+  const canDropToRoot = dnd.canDropTo(rootId, rootType);
+  const isDragOverRoot = dnd.dragOverId === rootId;
+  const isDropSuccessRoot = dnd.dropSuccessId === rootId;
+
   return (
-    <div class="directory-tree">
+    <div
+      class={`directory-tree ${isDragOverRoot && dnd.isDragging ? 'directory-tree--drag-over-root' : ''}`}
+      data-dnd-drop-id={rootId === null ? 'null' : rootId}
+      data-dnd-drop-type={rootType}
+    >
       {dnd.isDragging && (
         <div class="directory-tree__dnd-hint" role="note">
-          폴더에만 드롭할 수 있어요. 상위로 빼기는 상단의 ⬆ 드롭존에 드롭하세요.
+          폴더나 파일에 드롭할 수 있어요. 브레드크럼의 경로에도 드롭 가능합니다.
         </div>
       )}
       {categoryKeys
@@ -215,8 +192,17 @@ export function DirectoryTreePresenter({
           const categoryRoute = `/category/${categoryPath}`;
           const isCategoryActive = currentPath === categoryRoute;
 
+          const categoryMeta = categoryData?._meta;
           return (
-            <div key={category} class="category-section" data-expanded={isExpanded}>
+            <div 
+              key={category} 
+              class="category-section" 
+              data-expanded={isExpanded}
+              {...(categoryMeta ? {
+                'data-dnd-drop-id': categoryMeta.id,
+                'data-dnd-drop-type': 'DIRECTORY',
+              } : {})}
+            >
               <FolderItem
                 level={0}
                 subPath={categoryPath}
@@ -266,8 +252,8 @@ function FolderItem({
 
   const meta = subNode?._meta;
   const folderDocsPath = meta?.path || `/docs/${subPath}`;
-  const drop = bindDropTarget ? bindDropTarget(folderDocsPath) : { dndHeaderClassName: '' };
-  const { dndHeaderClassName = '', dndTitle = '', ...dropHandlers } = drop || {};
+  const drop = bindDropTarget ? bindDropTarget(meta?.id, 'DIRECTORY') : { dndHeaderClassName: '' };
+  const { dndHeaderClassName = '', dndTitle = '' } = drop || {};
 
   const handleFolderClick = (e) => {
     // + 아이콘 클릭이 아닌 경우에만 폴더 클릭 처리
@@ -291,6 +277,7 @@ function FolderItem({
   const handleCreateFolder = () => {
     setPopoverOpen(false);
     if (onCreateFolder) {
+      // 하위 디렉토리 생성시 현재 경로(subPath)를 그대로 사용
       onCreateFolder(`/docs/${subPath}`);
     }
   };
@@ -311,8 +298,8 @@ function FolderItem({
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
           title={dndTitle || subPath}
-          data-dnd-drop-path={folderDocsPath}
-          {...dropHandlers}
+          data-dnd-drop-id={meta?.id}
+          data-dnd-drop-type="DIRECTORY"
           {...(meta && bindDragSource
             ? bindDragSource({
                 id: meta.id,

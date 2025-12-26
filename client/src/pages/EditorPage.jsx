@@ -28,25 +28,7 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
     if (parent) {
       return decodeURIComponent(parent);
     }
-    // 기본값: 현재 경로를 기반으로 설정
-    const currentPath = window.location.pathname;
-    if (currentPath.startsWith('/category/')) {
-      return currentPath.replace('/category/', '/docs/');
-    }
-    if (currentPath === '/' || currentPath === '/write') {
-      return '/docs';
-    }
-    // 파일 경로인 경우 부모 디렉토리 추출
-    const parts = currentPath.split('/').filter(Boolean);
-    if (parts.length > 1) {
-      // 마지막 부분이 파일명인지 확인 (확장자가 있는 경우)
-      const lastPart = parts[parts.length - 1];
-      if (lastPart.includes('.') && !lastPart.startsWith('.')) {
-        // 파일명인 경우 제거
-        parts.pop();
-      }
-      return '/' + parts.join('/');
-    }
+    // 기본값: 항상 /docs (현재 문서 경로가 적용되지 않도록)
     return '/docs';
   };
 

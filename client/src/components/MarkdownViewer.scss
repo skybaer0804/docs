@@ -4,19 +4,13 @@
 
     &__actions {
         position: fixed;
-        top: 100px;
+        top: calc(var(--header-height, 80px) + 20px);
         right: 20px;
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
         align-items: center;
         gap: 8px;
         z-index: 100;
-        background-color: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(8px);
-        padding: 8px;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        transition: opacity 0.2s;
     }
 
     &__action-btn {
@@ -83,11 +77,6 @@
 // 다크모드
 body[data-theme='dark'] {
     .markdown-viewer {
-        &__actions {
-            background-color: rgba(37, 37, 37, 0.85);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        }
-
         &__action-btn {
             background: rgba(37, 37, 37, 0.9);
             color: #b0b0b0;

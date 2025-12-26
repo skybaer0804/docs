@@ -1,5 +1,5 @@
 import { DirectoryViewContainer } from '../containers/DirectoryViewContainer';
-import { useRef, useState } from 'preact/hooks';
+import { useRef, useState, useEffect, useCallback } from 'preact/hooks';
 import { IconDotsVertical, IconTrash } from '@tabler/icons-preact';
 import { Popover } from './Popover';
 import { List } from './List';
@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useDeleteDocMutation } from '../hooks/useDocMutations';
 import { useDnd } from '../contexts/DndContext';
+import { ConfirmDialog } from './ConfirmDialog';
 import './DirectoryView.scss';
 
 /**
@@ -32,6 +33,9 @@ export function DirectoryViewPresenter({
     const [menuOpen, setMenuOpen] = useState(false);
     const [menuTarget, setMenuTarget] = useState(null); // { type: 'folder'|'file', id, path, author_id, label }
     const menuButtonRef = useRef(null);
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const [confirmMessage, setConfirmMessage] = useState('');
+    const [deleteTarget, setDeleteTarget] = useState(null);
 
     const canManage = (authorId) => {
         if (!user?.id) return false;
@@ -39,60 +43,68 @@ export function DirectoryViewPresenter({
         return user.id === authorId;
     };
 
-    const bindDragSource = (item) => ({
-        draggable: true,
-        onDragStart: (e) => {
-            e.stopPropagation();
-            e.dataTransfer.effectAllowed = 'move';
-            // Firefox 호환을 위해 setData 필요
-            try {
-                e.dataTransfer.setData('text/plain', item.path || '');
-            } catch {
-                // noop
+    const bindDragSource = useCallback((item) => ({
+        ...(dnd.bindDragSource ? dnd.bindDragSource(item) : {}),
+    }), [dnd]);
+    
+    
+    // 이벤트 위임: 모든 directory-grid에 단일 pointerdown 리스너 추가
+    useEffect(() => {
+        const handlePointerDown = (e) => {
+            // directory-grid 내부인지 확인
+            const gridEl = e.target.closest('.directory-grid');
+            if (!gridEl) return;
+            
+            // 클릭 가능한 요소(버튼, 링크 등)는 드래그 대상에서 제외
+            if (e.target.closest('button, a, [role="button"]')) {
+                return;
             }
-            dnd.beginDrag(item, e.currentTarget);
-        },
-        onDragEnd: () => dnd.endDrag(),
-        ...(dnd.bindTouchDragSource ? dnd.bindTouchDragSource(item) : {}),
-    });
+            
+            // data-dnd-item-id 속성을 가진 요소 찾기
+            const target = e.target.closest('[data-dnd-item-id]');
+            if (!target) {
+                return;
+            }
+            
+            const itemId = target.getAttribute('data-dnd-item-id');
+            const itemType = target.getAttribute('data-dnd-item-type');
+            const itemPath = target.getAttribute('data-dnd-item-path');
+            const itemName = target.getAttribute('data-dnd-item-name');
+            const itemAuthorId = target.getAttribute('data-dnd-item-author-id');
+            
+            if (!itemId) return;
+            
+            // 해당 항목의 드래그 핸들러 가져오기
+            const dragHandlers = bindDragSource({
+                id: itemId,
+                type: itemType,
+                path: itemPath,
+                name: itemName,
+                author_id: itemAuthorId,
+            });
+            
+            if (dragHandlers.onPointerDown) {
+                // 드래그 핸들러 호출 (실제 드래그가 시작되면 이벤트를 처리함)
+                dragHandlers.onPointerDown(e);
+            }
+        };
+        
+        // document에 이벤트 리스너 추가 (이벤트 위임)
+        document.addEventListener('pointerdown', handlePointerDown, { passive: false });
+        
+        return () => {
+            document.removeEventListener('pointerdown', handlePointerDown);
+        };
+    }, [bindDragSource]);
 
-    const bindDropTarget = (targetFolderDocsPath) => {
-        const canDrop = dnd.canDropTo(targetFolderDocsPath);
-        const isOver = dnd.dragOverPath === targetFolderDocsPath;
-        const isSuccess = dnd.dropSuccessPath === targetFolderDocsPath;
+    const bindDropTarget = (targetFolderId, targetFolderType) => {
+        const normalizedTargetId = targetFolderId === 'null' ? null : targetFolderId;
+        const canDrop = dnd.canDropTo(targetFolderId, targetFolderType);
+        const isOver = dnd.dragOverId === normalizedTargetId;
+        const isSuccess = dnd.dropSuccessId === normalizedTargetId;
         const isDragging = dnd.isDragging;
 
         return {
-            onDragEnter: (e) => {
-                if (!canDrop) return;
-                e.preventDefault();
-                dnd.markDragOver(targetFolderDocsPath);
-            },
-            onDragOver: (e) => {
-                if (canDrop) {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
-                    dnd.markDragOver(targetFolderDocsPath);
-                    return;
-                }
-                // 드롭 불가 타겟에서도 커서/힌트를 위해 dropEffect를 명시
-                if (isDragging) {
-                    try {
-                        e.dataTransfer.dropEffect = 'none';
-                    } catch {
-                        // noop
-                    }
-                }
-            },
-            onDragLeave: () => {
-                if (isOver) dnd.clearDragOver();
-            },
-            onDrop: (e) => {
-                if (!canDrop) return;
-                e.preventDefault();
-                e.stopPropagation();
-                dnd.dropTo(targetFolderDocsPath, e.currentTarget);
-            },
             dndClassName: `${isDragging && canDrop ? 'directory-item--droppable' : ''} ${
                 isDragging && !canDrop ? 'directory-item--drop-disabled' : ''
             } ${isOver ? 'directory-item--drag-over' : ''} ${isSuccess ? 'directory-item--drop-success' : ''}`.trim(),
@@ -140,36 +152,45 @@ export function DirectoryViewPresenter({
         onFolderClick(parentRoute.replace('/category/', ''));
     };
 
-    const handleDelete = async () => {
+    const handleDeleteClick = () => {
         if (!menuTarget?.id) return;
         if (!canManage(menuTarget.author_id)) return;
 
-        const confirmMessage =
+        const message =
             menuTarget.type === 'folder'
                 ? '정말 이 폴더를 삭제하시겠습니까? (하위 항목도 함께 삭제됩니다)'
                 : '정말 이 파일을 삭제하시겠습니까?';
 
-        if (!confirm(confirmMessage)) return;
+        setDeleteTarget(menuTarget);
+        setConfirmMessage(message);
+        setConfirmOpen(true);
+        closeMenu();
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deleteTarget?.id) return;
+        if (!canManage(deleteTarget.author_id)) return;
 
         try {
-            await deleteDocMutation.mutateAsync({ id: menuTarget.id, path: menuTarget.path });
+            await deleteDocMutation.mutateAsync({ id: deleteTarget.id, path: deleteTarget.path });
             showSuccess('삭제되었습니다.');
 
             // 현재 경로가 삭제 대상에 포함되면 상위로 이동
             const currentDocsPath = toDocsPath(currentRoute || '');
             if (!currentDocsPath) return;
 
-            if (menuTarget.type === 'folder' && currentDocsPath.startsWith(menuTarget.path)) {
-                navigateToParentOfDocsPath(menuTarget.path);
+            if (deleteTarget.type === 'folder' && currentDocsPath.startsWith(deleteTarget.path)) {
+                navigateToParentOfDocsPath(deleteTarget.path);
             }
 
-            if (menuTarget.type === 'file' && currentDocsPath === menuTarget.path) {
-                navigateToParentOfDocsPath(menuTarget.path);
+            if (deleteTarget.type === 'file' && currentDocsPath === deleteTarget.path) {
+                navigateToParentOfDocsPath(deleteTarget.path);
             }
         } catch (e) {
             showError(e?.message || '삭제에 실패했습니다.');
         } finally {
-            closeMenu();
+            setConfirmOpen(false);
+            setDeleteTarget(null);
         }
     };
 
@@ -177,7 +198,8 @@ export function DirectoryViewPresenter({
 
     // 루트 레벨: 모든 카테고리 표시
     if (displayType === 'root') {
-        const categoryKeys = Object.keys(categorized).filter((key) => key !== '_files' && key !== '_meta');
+        const categoryKeys = Object.keys(categorized || {}).filter((key) => key !== '_files' && key !== '_meta');
+        console.log('[DirectoryView] categorized:', categorized, 'categoryKeys:', categoryKeys);
         if (categoryKeys.length === 0) {
             content = (
                 <div class="directory-view">
@@ -199,25 +221,31 @@ export function DirectoryViewPresenter({
                             const meta = categorized?.[category]?._meta;
                             const folderPath = meta?.path || `/docs/${category}`;
                             const showMenu = meta && canManage(meta.author_id);
-                            const drop = bindDropTarget(folderPath);
-                            const { dndClassName = '', dndTitle = '', ...dropHandlers } = drop || {};
+                            const drop = bindDropTarget(meta?.id, 'DIRECTORY');
+                            const { dndClassName = '', dndTitle = '' } = drop || {};
                             return (
                                 <div
                                     key={category}
                                     class={`directory-item folder-item ${dndClassName}`}
-                                    onClick={() => onFolderClick(category)}
+                                    onClick={(e) => {
+                                        // 드래그 중이면 클릭 무시
+                                        if (dnd.isDragging) {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            return;
+                                        }
+                                        onFolderClick(category);
+                                    }}
                                     title={dndTitle || category}
-                                    data-dnd-drop-path={folderPath}
-                                    {...dropHandlers}
-                                    {...(meta
-                                        ? bindDragSource({
-                                              id: meta.id,
-                                              type: 'DIRECTORY',
-                                              path: folderPath,
-                                              name: meta.name || category,
-                                              author_id: meta.author_id,
-                                          })
-                                        : {})}
+                                    {...(meta ? {
+                                        'data-dnd-drop-id': meta.id,
+                                        'data-dnd-drop-type': 'DIRECTORY',
+                                        'data-dnd-item-id': meta.id,
+                                        'data-dnd-item-type': 'DIRECTORY',
+                                        'data-dnd-item-path': folderPath,
+                                        'data-dnd-item-name': meta.name || category,
+                                        'data-dnd-item-author-id': meta.author_id,
+                                    } : {})}
                                 >
                                     <span class="item-icon">📁</span>
                                     <span class="item-name">{category}</span>
@@ -267,25 +295,23 @@ export function DirectoryViewPresenter({
                         const meta = node?.[subdir]?._meta;
                         const folderPath = meta?.path || `/docs/${subPath}`;
                         const showMenu = meta && canManage(meta.author_id);
-                        const drop = bindDropTarget(folderPath);
-                        const { dndClassName = '', dndTitle = '', ...dropHandlers } = drop || {};
+                        const drop = bindDropTarget(meta?.id, 'DIRECTORY');
+                        const { dndClassName = '', dndTitle = '' } = drop || {};
                         return (
                             <div
                                 key={subdir}
                                 class={`directory-item folder-item ${dndClassName}`}
                                 onClick={() => onFolderClick(subPath)}
                                 title={dndTitle || subPath}
-                                data-dnd-drop-path={folderPath}
-                                {...dropHandlers}
-                                {...(meta
-                                    ? bindDragSource({
-                                          id: meta.id,
-                                          type: 'DIRECTORY',
-                                          path: folderPath,
-                                          name: meta.name || subdir,
-                                          author_id: meta.author_id,
-                                      })
-                                    : {})}
+                                {...(meta ? {
+                                    'data-dnd-drop-id': meta.id,
+                                    'data-dnd-drop-type': 'DIRECTORY',
+                                    'data-dnd-item-id': meta.id,
+                                    'data-dnd-item-type': 'DIRECTORY',
+                                    'data-dnd-item-path': folderPath,
+                                    'data-dnd-item-name': meta.name || subdir,
+                                    'data-dnd-item-author-id': meta.author_id,
+                                } : {})}
                             >
                                 <span class="item-icon">📁</span>
                                 <span class="item-name">{subdir}</span>
@@ -310,34 +336,34 @@ export function DirectoryViewPresenter({
                             </div>
                         );
                     })}
-                    {directFiles.map((file) => (
-                        <div
-                            key={file.path}
-                            class={`directory-item file-item ${dnd.dragItem?.path === file.path ? 'directory-item--dragging' : ''} ${
-                                dnd.isDragging ? 'directory-item--not-droppable' : ''
-                            }`}
-                            onClick={() => onFileClick(file)}
-                            title={dnd.isDragging ? '파일에는 드롭할 수 없습니다 (폴더만 가능)' : file.path}
-                            onDragOver={(e) => {
-                                if (!dnd.isDragging) return;
-                                try {
-                                    e.dataTransfer.dropEffect = 'none';
-                                } catch {
-                                    // noop
-                                }
-                            }}
-                            {...bindDragSource({
-                                id: file.id,
-                                type: 'FILE',
-                                path: file.path,
-                                name: file.name || file.title,
-                                author_id: file.author_id,
-                            })}
-                        >
-                            <span class="item-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
-                            <span class="item-name">{file.title}</span>
-                        </div>
-                    ))}
+                    {directFiles.map((file) => {
+                        return (
+                            <div
+                                key={file.path}
+                                class={`directory-item file-item ${dnd.dragItem?.id === file.id ? 'directory-item--dragging' : ''} ${
+                                    dnd.isDragging ? 'directory-item--not-droppable' : ''
+                                }`}
+                                onClick={(e) => {
+                                    // 드래그 중이면 클릭 무시
+                                    if (dnd.isDragging) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        return;
+                                    }
+                                    onFileClick(file);
+                                }}
+                                title={dnd.isDragging ? '파일에는 드롭할 수 없습니다 (폴더만 가능)' : file.path}
+                                data-dnd-item-id={file.id}
+                                data-dnd-item-type="FILE"
+                                data-dnd-item-path={file.path}
+                                data-dnd-item-name={file.name || file.title}
+                                data-dnd-item-author-id={file.author_id}
+                            >
+                                <span class="item-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
+                                <span class="item-name">{file.title}</span>
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
         );
@@ -348,11 +374,26 @@ export function DirectoryViewPresenter({
             {content}
             <Popover isOpen={menuOpen} onClose={closeMenu} anchorRef={menuButtonRef}>
                 <List>
-                    <ListItem icon={<IconTrash size={18} />} onClick={handleDelete}>
+                    <ListItem className="list-item--danger" icon={<IconTrash size={18} />} onClick={handleDeleteClick}>
                         삭제
                     </ListItem>
                 </List>
             </Popover>
+            <ConfirmDialog
+                isOpen={confirmOpen}
+                title="삭제 확인"
+                message={confirmMessage}
+                confirmText="삭제"
+                cancelText="취소"
+                confirmVariant="danger"
+                loading={deleteDocMutation.isPending}
+                onConfirm={handleConfirmDelete}
+                onClose={() => {
+                    if (deleteDocMutation.isPending) return;
+                    setConfirmOpen(false);
+                    setDeleteTarget(null);
+                }}
+            />
         </>
     );
 }

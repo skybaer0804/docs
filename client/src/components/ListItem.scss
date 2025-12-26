@@ -67,6 +67,26 @@
   }
 }
 
+// danger variant (삭제 등)
+.list-item--danger {
+  .list-item__button {
+    color: #b91c1c;
+  }
+
+  .list-item__icon,
+  .list-item__right-icon {
+    color: #b91c1c;
+  }
+
+  .list-item__button:hover:not(:disabled) {
+    background-color: rgba(220, 38, 38, 0.08);
+  }
+
+  .list-item__button:active:not(:disabled) {
+    background-color: rgba(220, 38, 38, 0.14);
+  }
+}
+
 // 다크모드
 body[data-theme='dark'] {
   .list-item {
@@ -78,6 +98,27 @@ body[data-theme='dark'] {
       &:active:not(:disabled) {
         background-color: var(--active-bg-color, rgba(255, 255, 255, 0.1));
       }
+    }
+  }
+}
+
+body[data-theme='dark'] {
+  .list-item--danger {
+    .list-item__button {
+      color: #fca5a5;
+    }
+
+    .list-item__icon,
+    .list-item__right-icon {
+      color: #fca5a5;
+    }
+
+    .list-item__button:hover:not(:disabled) {
+      background-color: rgba(244, 67, 54, 0.18);
+    }
+
+    .list-item__button:active:not(:disabled) {
+      background-color: rgba(244, 67, 54, 0.26);
     }
   }
 }
