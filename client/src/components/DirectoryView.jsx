@@ -199,8 +199,10 @@ export function DirectoryViewPresenter({
     // 루트 레벨: 모든 카테고리 표시
     if (displayType === 'root') {
         const categoryKeys = Object.keys(categorized || {}).filter((key) => key !== '_files' && key !== '_meta');
-        console.log('[DirectoryView] categorized:', categorized, 'categoryKeys:', categoryKeys);
-        if (categoryKeys.length === 0) {
+        const rootFiles = categorized?._files || [];
+        console.log('[DirectoryView] categorized:', categorized, 'categoryKeys:', categoryKeys, 'rootFiles:', rootFiles);
+
+        if (categoryKeys.length === 0 && rootFiles.length === 0) {
             content = (
                 <div class="directory-view">
                     <div style="text-align: center; padding: 40px;">
@@ -270,6 +272,32 @@ export function DirectoryViewPresenter({
                                 </div>
                             );
                         })}
+                        {rootFiles.map((file) => (
+                            <div
+                                key={file.path}
+                                class={`directory-item file-item ${dnd.dragItem?.id === file.id ? 'directory-item--dragging' : ''} ${
+                                    dnd.isDragging ? 'directory-item--not-droppable' : ''
+                                }`}
+                                onClick={(e) => {
+                                    // 드래그 중이면 클릭 무시
+                                    if (dnd.isDragging) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        return;
+                                    }
+                                    onFileClick(file);
+                                }}
+                                title={dnd.isDragging ? '파일에는 드롭할 수 없습니다 (폴더만 가능)' : file.path}
+                                data-dnd-item-id={file.id}
+                                data-dnd-item-type="FILE"
+                                data-dnd-item-path={file.path}
+                                data-dnd-item-name={file.name || file.title}
+                                data-dnd-item-author-id={file.author_id}
+                            >
+                                <span class="item-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
+                                <span class="item-name">{file.title}</span>
+                            </div>
+                        ))}
                     </div>
                 </div>
             );

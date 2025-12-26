@@ -171,6 +171,8 @@ export function DirectoryTreePresenter({
   const isDragOverRoot = dnd.dragOverId === rootId;
   const isDropSuccessRoot = dnd.dropSuccessId === rootId;
 
+  const rootFiles = categorized?._files || [];
+
   return (
     <div
       class={`directory-tree ${isDragOverRoot && dnd.isDragging ? 'directory-tree--drag-over-root' : ''}`}
@@ -182,6 +184,31 @@ export function DirectoryTreePresenter({
           폴더나 파일에 드롭할 수 있어요. 브레드크럼의 경로에도 드롭 가능합니다.
         </div>
       )}
+
+      {rootFiles.length > 0 && (
+        <ul class="file-list root-file-list">
+          {rootFiles.map((file) => (
+            <li
+              key={file.path}
+              class={`file-item ${currentPath === file.route ? 'active' : ''} ${
+                dnd.dragItem?.id === file.id ? 'file-item--dragging' : ''
+              }`}
+              onClick={() => onFileClick(file)}
+              title={file.path}
+              data-dnd-item-id={file.id}
+              data-dnd-item-type="FILE"
+              data-dnd-item-path={file.path}
+              data-dnd-item-name={file.name || file.title}
+              data-dnd-item-author-id={file.author_id}
+              {...(dnd.bindDragSource ? dnd.bindDragSource(file) : {})}
+            >
+              <span class="file-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
+              <span class="file-name">{file.title}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
       {categoryKeys
         .filter((category) => category !== '_files')
         .map((category) => {

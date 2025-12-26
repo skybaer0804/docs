@@ -135,9 +135,9 @@ exports.createDoc = async (req, res) => {
       return res.status(401).json({ error: 'Invalid user ID. Please login again.' });
     }
 
-    // 1. 부모 ID 찾기 (Root인 경우 parent_path가 없거나 '/'일 수 있음)
+    // 1. 부모 ID 찾기 (Root인 경우 parent_path가 없거나 '/' 또는 '/docs'일 수 있음)
     let parent_id = null;
-    if (parent_path && parent_path !== '/') {
+    if (parent_path && parent_path !== '/' && parent_path !== '/docs') {
       const { data: parent } = await supabase.from('nodes').select('id').eq('path', parent_path).single();
 
       if (!parent) return res.status(404).json({ error: 'Parent directory not found' });
@@ -200,7 +200,7 @@ exports.uploadFile = async (req, res) => {
     // 로직 재사용을 위해 내부적으로 처리하거나 복붙
     // 여기선 복붙 형태로 간결하게
     let parent_id = null;
-    if (parent_path && parent_path !== '/') {
+    if (parent_path && parent_path !== '/' && parent_path !== '/docs') {
       const { data: parent } = await supabase.from('nodes').select('id').eq('path', parent_path).single();
 
       if (!parent) return res.status(404).json({ error: 'Parent directory not found' });
