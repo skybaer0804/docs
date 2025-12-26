@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'preact/hooks';
 import { buildDirectoryTree } from '../utils/treeUtils';
 import { navigationObserver } from '../observers/NavigationObserver';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { docsKeys, subKeys } from '../query/queryKeys';
 import { useDocsTreeQuery } from './useDocsTreeQuery';
 import { fetchSubscriptionList, fetchUserDocs } from '../utils/api';
@@ -12,7 +12,6 @@ import { useAuth } from '../contexts/AuthContext';
  */
 export function useDirectoryTree(currentPath, onNavigate) {
     const [expandedPaths, setExpandedPaths] = useState({});
-    const [followingUsers, setFollowingUsers] = useState([]);
     const [followingTrees, setFollowingTrees] = useState({}); // userId -> tree
     const [loadingTrees, setLoadingTrees] = useState({}); // userId -> boolean
     const queryClient = useQueryClient();
@@ -22,12 +21,13 @@ export function useDirectoryTree(currentPath, onNavigate) {
     const { data: nodes = [], isLoading: loading } = useDocsTreeQuery();
     const categorized = useMemo(() => buildDirectoryTree(nodes), [nodes]);
 
-    // 내가 팔로잉하는 유저 리스트 로드
-    useEffect(() => {
-        if (user) {
-            fetchSubscriptionList(user.id, 'following').then(setFollowingUsers).catch(console.error);
-        }
-    }, [user]);
+    // 내가 팔로잉하는 유저 리스트 (TanStack Query 적용하여 실시간 동기화 지원)
+    const { data: followingUsers = [] } = useQuery({
+        queryKey: subKeys.list(user?.id, 'following'),
+        queryFn: () => fetchSubscriptionList(user.id, 'following'),
+        enabled: !!user?.id,
+        staleTime: 30 * 1000,
+    });
 
     // 특정 유저의 트리 로드 (Lazy Load)
     const loadUserTree = useCallback(async (targetUserId) => {

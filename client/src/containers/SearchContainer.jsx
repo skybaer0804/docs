@@ -11,7 +11,8 @@ const RECENT_SEARCHES_KEY = 'docs_recent_searches';
  */
 export function SearchContainer({ isOpen, onClose, onNavigate }) {
     const [query, setQuery] = useState('');
-    const { results } = useSearch(query);
+    const [includeFollowing, setIncludeFollowing] = useState(false);
+    const { results, loading } = useSearch(query, includeFollowing);
     const [recentSearches, setRecentSearches] = useState([]);
 
     // 최근 검색어 불러오기
@@ -74,7 +75,10 @@ export function SearchContainer({ isOpen, onClose, onNavigate }) {
             onClose={handleClose}
             query={query}
             onQueryChange={handleQueryChange}
+            includeFollowing={includeFollowing}
+            onIncludeFollowingChange={setIncludeFollowing}
             results={results}
+            loading={loading}
             onSelect={handleSelect}
             recentSearches={recentSearches}
         />

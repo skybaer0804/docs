@@ -101,6 +101,33 @@
     &__input-wrapper {
       background: #2a2a2a;
     }
+
+    &__item {
+      background: #1a1a1a;
+      &:hover {
+        background: #2a2a2a;
+      }
+    }
+
+    &__username {
+      color: #e0e0e0;
+    }
+
+    &__doc-title {
+      color: #b0b0b0;
+    }
+
+    // 팔로잉 버튼 다크모드 개선
+    .button--secondary {
+      color: #64b5f6;
+      border-color: #64b5f6;
+      
+      &:hover {
+        background: rgba(100, 181, 246, 0.1);
+        color: #90caf9;
+        border-color: #90caf9;
+      }
+    }
   }
 }
 

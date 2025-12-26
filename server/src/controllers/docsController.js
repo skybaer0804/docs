@@ -94,6 +94,68 @@ exports.getAllDocs = async (req, res) => {
   }
 };
 
+// 통합 문서 검색 (내 문서 + 선택적으로 구독 유저 문서)
+exports.searchDocs = async (req, res) => {
+  try {
+    const { q, include_following } = req.query;
+    const userId = req.user.id;
+
+    if (!q || q.trim().length < 2) {
+      return res.status(400).json({ error: 'Search query must be at least 2 characters long' });
+    }
+
+    const keyword = q.trim();
+    let query;
+
+    if (include_following === 'true') {
+      // 1. 내가 팔로잉하는 유저 ID 목록 가져오기
+      const { data: subs } = await supabase
+        .from('subscriptions')
+        .select('following_id')
+        .eq('follower_id', userId);
+      
+      const followingIds = subs?.map(s => s.following_id) || [];
+
+      // 2. 통합 검색 쿼리 (내 문서 전체 + 팔로잉 유저의 공개/구독자 전용 문서)
+      let filterStr = `author_id.eq.${userId}`;
+      if (followingIds.length > 0) {
+        filterStr += `,and(author_id.in.(${followingIds.join(',')}),visibility_type.in.(public,subscriber_only))`;
+      }
+
+      query = supabase
+        .from('nodes')
+        .select(`
+          id, name, path, type, visibility_type, author_id,
+          users:author_id (username)
+        `)
+        .or(filterStr)
+        .ilike('name', `%${keyword}%`)
+        .order('type', { ascending: true })
+        .limit(50);
+    } else {
+      // 내 문서만 검색
+      query = supabase
+        .from('nodes')
+        .select(`
+          id, name, path, type, visibility_type, author_id,
+          users:author_id (username)
+        `)
+        .eq('author_id', userId)
+        .ilike('name', `%${keyword}%`)
+        .order('type', { ascending: true })
+        .limit(50);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    res.json(data);
+  } catch (err) {
+    console.error('searchDocs error:', err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // 특정 유저의 문서 구조 조회 (가시성 필터링 적용)
 exports.getUserDocs = async (req, res) => {
   try {

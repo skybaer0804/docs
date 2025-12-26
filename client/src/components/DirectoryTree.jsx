@@ -22,6 +22,7 @@ export function DirectoryTreePresenter({
   onFolderClick,
   onUserClick,
   onFileClick,
+  onNavigate,
   onCreateDocument,
   onCreateFolder,
   loading = false,
@@ -158,19 +159,58 @@ export function DirectoryTreePresenter({
   const categoryKeys = Object.keys(categorized);
 
   const handleCreateMyPage = () => {
-    onNavigate('/register');
+    if (!user) {
+      onNavigate('/register');
+    } else {
+      onNavigate(`/write?parent=${encodeURIComponent('/docs')}`);
+    }
   };
 
-  // 비회원용 사이드바 뷰
-  if (!user) {
+  // 비회원용 또는 문서가 하나도 없는 회원용 사이드바 뷰
+  if (!user || (categorized._files?.length === 0 && Object.keys(categorized).filter(k => k !== '_files' && k !== '_meta').length === 0)) {
     return (
       <div className="directory-tree">
         <div className="directory-tree__guest-cta">
-          <p className="directory-tree__guest-text">나만의 문서 저장소를 만들어보세요.</p>
+          <p className="directory-tree__guest-text">
+            {!user ? '나만의 문서 저장소를 만들어보세요.' : '아직 작성된 문서가 없습니다.'}
+          </p>
           <button className="directory-tree__guest-btn" onClick={handleCreateMyPage}>
-            내 페이지 만들기
+            {!user ? '내 페이지 만들기' : '첫 문서 작성하기'}
           </button>
         </div>
+        
+        {/* 구독 페이지는 회원인 경우에만 보여줌 */}
+        {user && followingUsers.length > 0 && (
+          <div className="directory-tree__section">
+            <h3 className="directory-tree__section-title">구독 페이지</h3>
+            {followingUsers.map((u) => {
+              const userId = u.id;
+              const username = u.username;
+              const docTitle = u.document_title || username;
+              const isUserExpanded = expandedPaths[`sub_${userId}`] === true;
+              const userTree = followingTrees[userId];
+              const isLoading = loadingTrees[userId];
+
+              return (
+                <div key={userId} className="category-section" data-expanded={isUserExpanded}>
+                  <div
+                    className={`category-header ${isUserExpanded ? 'active' : ''}`}
+                    onClick={() => onUserClick(userId)}
+                  >
+                    <span className="folder-icon">👤</span>
+                    <span className="category-title">{docTitle}</span>
+                    {isLoading && <span className="directory-tree__loading-icon">...</span>}
+                  </div>
+                  {isUserExpanded && userTree && (
+                    <div className="category-content">
+                      {renderTree(userTree, `sub_${userId}`, 0, new Set())}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     );
   }

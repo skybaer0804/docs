@@ -38,9 +38,9 @@
     }
 
     &__loading-spinner {
-        color: var(--primary-color);
+        color: #64b5f6; // 아이콘 색상 참조
         animation: rotate 1.5s linear infinite;
-        opacity: 0.6;
+        opacity: 0.8;
     }
 
     &__guest-cta {
@@ -61,7 +61,7 @@
     &__guest-btn {
         width: 100%;
         padding: 0.6rem;
-        background: var(--primary-color, #007bff);
+        background: #64b5f6; // 아이콘 색상 참조 (밝은 파랑)
         color: white;
         border: none;
         border-radius: 6px;
@@ -71,7 +71,7 @@
         transition: all 0.2s;
 
         &:hover {
-            background: var(--primary-hover, #0056b3);
+            background: #42a5f5;
             transform: translateY(-1px);
         }
     }
@@ -79,7 +79,7 @@
     &__loading-icon {
         margin-left: auto;
         font-size: 0.75rem;
-        color: var(--primary-color);
+        color: #64b5f6; // 아이콘 색상 참조
         animation: pulse 1.5s infinite;
     }
 
@@ -394,6 +394,15 @@
 
 // 다크모드
 body[data-theme='dark'] {
+    .directory-tree__guest-cta {
+        background: #2a2a2a;
+        border-color: #444;
+    }
+
+    .directory-tree__guest-text {
+        color: #b0b0b0;
+    }
+
     .directory-tree__dnd-hint {
         border-color: rgba(100, 181, 246, 0.22);
         background: rgba(100, 181, 246, 0.1);

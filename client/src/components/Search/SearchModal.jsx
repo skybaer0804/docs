@@ -1,12 +1,23 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { IconSearch, IconFileText, IconFolder, IconHistory, IconX } from '@tabler/icons-preact';
+import { IconSearch, IconFileText, IconFolder, IconHistory, IconX, IconLoader2, IconUser } from '@tabler/icons-preact';
 import './SearchModal.scss';
 
 /**
  * SearchModal Presenter 컴포넌트
  * 검색창 UI와 결과 리스트를 렌더링합니다.
  */
-export function SearchModal({ isOpen, onClose, query, onQueryChange, results, onSelect, recentSearches = [] }) {
+export function SearchModal({
+  isOpen,
+  onClose,
+  query,
+  onQueryChange,
+  includeFollowing,
+  onIncludeFollowingChange,
+  results,
+  loading,
+  onSelect,
+  recentSearches = [],
+}) {
   const inputRef = useRef(null);
   const modalRef = useRef(null);
   const resultListRef = useRef(null);
@@ -93,7 +104,7 @@ export function SearchModal({ isOpen, onClose, query, onQueryChange, results, on
       <div class="search-modal__container" ref={modalRef}>
         <div class="search-modal__header">
           <div class="search-modal__search-icon">
-            <IconSearch size={20} />
+            {loading ? <IconLoader2 className="search-modal__spinner" size={20} /> : <IconSearch size={20} />}
           </div>
           <input
             ref={inputRef}
@@ -103,17 +114,27 @@ export function SearchModal({ isOpen, onClose, query, onQueryChange, results, on
             value={query}
             onInput={(e) => onQueryChange(e.target.value)}
           />
-          <button 
-            class="search-modal__close-btn" 
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onClose();
-            }} 
-            aria-label="닫기"
-          >
-            <IconX size={20} />
-          </button>
+          <div className="search-modal__header-actions">
+            <label className="search-modal__checkbox-label">
+              <input
+                type="checkbox"
+                checked={includeFollowing}
+                onChange={(e) => onIncludeFollowingChange(e.target.checked)}
+              />
+              <span>구독자 포함</span>
+            </label>
+            <button
+              class="search-modal__close-btn"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onClose();
+              }}
+              aria-label="닫기"
+            >
+              <IconX size={20} />
+            </button>
+          </div>
         </div>
 
         <div class="search-modal__body">
@@ -142,7 +163,14 @@ export function SearchModal({ isOpen, onClose, query, onQueryChange, results, on
                     )}
                   </div>
                   <div class="search-modal__result-item-content">
-                    <div class="search-modal__result-item-title">{item.title}</div>
+                    <div class="search-modal__result-item-title">
+                      {item.title}
+                      {item.authorName && (
+                        <span className="search-modal__result-item-author">
+                          <IconUser size={12} /> {item.authorName}
+                        </span>
+                      )}
+                    </div>
                     <div class="search-modal__result-item-path">{item.path}</div>
                   </div>
                   {/* Enter 키 안내 (선택된 항목에만 표시) */}

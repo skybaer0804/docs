@@ -54,6 +54,7 @@ export function DirectoryTreeContainer({ currentPath, onNavigate }) {
         onFolderClick={handleFolderClick}
         onUserClick={handleUserClick}
         onFileClick={handleClick}
+        onNavigate={onNavigate}
         onCreateDocument={handleCreateDocument}
         onCreateFolder={handleCreateFolder}
         loading={loading}

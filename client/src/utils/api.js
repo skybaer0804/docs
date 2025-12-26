@@ -412,6 +412,31 @@ export async function fetchFollowingNodes() {
 }
 
 /**
+ * 문서 검색
+ * @param {string} query 검색어
+ * @param {boolean} includeFollowing 구독 유저 포함 여부
+ */
+export async function searchDocs(query, includeFollowing = false) {
+  const token = getToken();
+  if (!token) return [];
+
+  const response = await fetch(
+    `${API_BASE}/search?q=${encodeURIComponent(query)}&include_following=${includeFollowing}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error || 'Failed to search documents');
+  }
+  return response.json();
+}
+
+/**
  * 사용자 검색
  * @param {string} query
  */
