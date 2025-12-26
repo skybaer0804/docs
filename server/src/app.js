@@ -19,6 +19,7 @@ app.use(express.static(path.join(__dirname, '../../client/dist')));
 // API Routes
 app.use('/api/docs', require('./routes/docsRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/subscriptions', require('./routes/subscriptionRoutes'));
 
 // SPA Fallback
 // API 요청이 아닌 모든 GET 요청은 index.html을 반환하여 리액트 라우팅을 지원합니다.

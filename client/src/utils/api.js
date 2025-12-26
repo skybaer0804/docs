@@ -2,6 +2,7 @@
 
 const API_BASE = '/api/docs';
 const AUTH_API_BASE = '/api/auth';
+const SUB_API_BASE = '/api/subscriptions';
 
 /**
  * 로컬 스토리지에서 토큰 가져오기
@@ -291,10 +292,99 @@ export async function updateProfile(data) {
     body: JSON.stringify(data),
   });
 
+  return response.json();
+}
+
+/**
+ * 팔로우 요청
+ * @param {string} following_id - 팔로우할 대상 유저 ID
+ */
+export async function followUser(following_id) {
+  const token = getToken();
+  if (!token) throw new Error('Authentication required');
+
+  const response = await fetch(`${SUB_API_BASE}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ following_id }),
+  });
+
   if (!response.ok) {
     const err = await response.json();
-    throw new Error(err.error || 'Failed to update profile');
+    throw new Error(err.error || 'Failed to follow user');
   }
+  return response.json();
+}
 
+/**
+ * 언팔로우 요청
+ * @param {string} following_id - 언팔로우할 대상 유저 ID
+ */
+export async function unfollowUser(following_id) {
+  const token = getToken();
+  if (!token) throw new Error('Authentication required');
+
+  const response = await fetch(`${SUB_API_BASE}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ following_id }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error || 'Failed to unfollow user');
+  }
+  return response.json();
+}
+
+/**
+ * 특정 유저의 구독 통계 조회
+ */
+export async function fetchSubscriptionStats(userId) {
+  const token = getToken();
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const response = await fetch(`${SUB_API_BASE}/${userId}/stats`, { headers });
+  if (!response.ok) throw new Error('Failed to fetch subscription stats');
+  return response.json();
+}
+
+/**
+ * 특정 유저의 팔로워/팔로잉 리스트 조회
+ * @param {string} userId
+ * @param {'followers'|'following'} type
+ */
+export async function fetchSubscriptionList(userId, type) {
+  const token = getToken();
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const response = await fetch(`${SUB_API_BASE}/${userId}/list?type=${type}`, { headers });
+  if (!response.ok) throw new Error('Failed to fetch subscription list');
+  return response.json();
+}
+
+/**
+ * 내가 구독한 유저들의 노드 조회
+ */
+export async function fetchFollowingNodes() {
+  const token = getToken();
+  if (!token) return [];
+
+  const response = await fetch(`${SUB_API_BASE}/following-nodes`, {
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) throw new Error('Failed to fetch following nodes');
   return response.json();
 }

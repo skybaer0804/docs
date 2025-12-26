@@ -99,6 +99,35 @@ export function buildDirectoryTree(nodes) {
     return cleanTreeStructure(tree);
 }
 
+/**
+ * 구독한 유저들의 노드를 유저별로 그룹화하여 트리 구조로 변환합니다.
+ */
+export function buildSubscriptionTree(nodes) {
+  const userMap = {};
+
+  // 1. 유저별로 노드 분류
+  nodes.forEach((node) => {
+    if (!userMap[node.author_id]) {
+      userMap[node.author_id] = [];
+    }
+    userMap[node.author_id].push(node);
+  });
+
+  const subTree = {};
+
+  // 2. 각 유저별로 트리 구성
+  Object.keys(userMap).forEach((authorId) => {
+    const userNodes = userMap[authorId];
+    // 유저명이 노드에 포함되어 내려오므로 첫 번째 노드에서 유저명을 가져옴
+    const username = userNodes[0]?.users?.username || authorId;
+    
+    // 유저별로 별도의 루트를 가짐
+    subTree[username] = buildDirectoryTree(userNodes);
+  });
+
+  return subTree;
+}
+
 function transformFileNode(node) {
     // 기존 MarkdownLoader가 반환하던 파일 객체 포맷에 맞춤
     const rawName = typeof node?.name === 'string' ? node.name : '';

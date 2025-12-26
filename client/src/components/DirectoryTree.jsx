@@ -13,6 +13,7 @@ import './DirectoryTree.scss';
  */
 export function DirectoryTreePresenter({
   categorized,
+  followingCategorized = {},
   currentPath,
   expandedPaths,
   onFolderClick,
@@ -185,70 +186,103 @@ export function DirectoryTreePresenter({
         </div>
       )}
 
-      {rootFiles.length > 0 && (
-        <ul class="file-list root-file-list">
-          {rootFiles.map((file) => (
-            <li
-              key={file.path}
-              class={`file-item ${currentPath === file.route ? 'active' : ''} ${
-                dnd.dragItem?.id === file.id ? 'file-item--dragging' : ''
-              }`}
-              onClick={() => onFileClick(file)}
-              title={file.path}
-              data-dnd-item-id={file.id}
-              data-dnd-item-type="FILE"
-              data-dnd-item-path={file.path}
-              data-dnd-item-name={file.name || file.title}
-              data-dnd-item-author-id={file.author_id}
-              {...(dnd.bindDragSource ? dnd.bindDragSource(file) : {})}
-            >
-              <span class="file-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
-              <span class="file-name">{file.title}</span>
-            </li>
-          ))}
-        </ul>
+      {/* 내 페이지 섹션 */}
+      <div className="directory-tree__section">
+        <h3 className="directory-tree__section-title">내 페이지</h3>
+        {rootFiles.length > 0 && (
+          <ul class="file-list root-file-list">
+            {rootFiles.map((file) => (
+              <li
+                key={file.path}
+                class={`file-item ${currentPath === file.route ? 'active' : ''} ${
+                  dnd.dragItem?.id === file.id ? 'file-item--dragging' : ''
+                }`}
+                onClick={() => onFileClick(file)}
+                title={file.path}
+                data-dnd-item-id={file.id}
+                data-dnd-item-type="FILE"
+                data-dnd-item-path={file.path}
+                data-dnd-item-name={file.name || file.title}
+                data-dnd-item-author-id={file.author_id}
+                {...(dnd.bindDragSource ? dnd.bindDragSource(file) : {})}
+              >
+                <span class="file-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
+                <span class="file-name">{file.title}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {categoryKeys
+          .filter((category) => category !== '_files')
+          .map((category) => {
+            const categoryData = categorized[category];
+            const categoryPath = category;
+            const isExpanded = expandedPaths[categoryPath] === true;
+
+            const categoryRoute = `/category/${categoryPath}`;
+            const isCategoryActive = currentPath === categoryRoute;
+
+            const categoryMeta = categoryData?._meta;
+            return (
+              <div
+                key={category}
+                class="category-section"
+                data-expanded={isExpanded}
+                {...(categoryMeta ? {
+                  'data-dnd-drop-id': categoryMeta.id,
+                  'data-dnd-drop-type': 'DIRECTORY',
+                } : {})}
+              >
+                <FolderItem
+                  level={0}
+                  subPath={categoryPath}
+                  keyName={category}
+                  isSubExpanded={isExpanded}
+                  isSubcategoryActive={isCategoryActive}
+                  onFolderClick={onFolderClick}
+                  onCreateDocument={onCreateDocument}
+                  onCreateFolder={onCreateFolder}
+                  subNode={categoryData}
+                  renderTree={renderTree}
+                  visited={new Set()}
+                  isCategory={true}
+                  bindDragSource={bindDragSource}
+                  bindDropTarget={bindDropTarget}
+                />
+              </div>
+            );
+          })}
+      </div>
+
+      {/* 구독 페이지 섹션 */}
+      {Object.keys(followingCategorized).length > 0 && (
+        <div className="directory-tree__section">
+          <h3 className="directory-tree__section-title">구독 페이지</h3>
+          {Object.keys(followingCategorized).map((username) => {
+            const userTree = followingCategorized[username];
+            const isUserExpanded = expandedPaths[`sub_${username}`] === true;
+
+            return (
+              <div key={username} className="category-section" data-expanded={isUserExpanded}>
+                <FolderItem
+                  level={0}
+                  subPath={`sub_${username}`}
+                  keyName={username}
+                  isSubExpanded={isUserExpanded}
+                  isSubcategoryActive={false}
+                  onFolderClick={(path) => onFolderClick(path)}
+                  subNode={userTree}
+                  renderTree={renderTree}
+                  visited={new Set()}
+                  isCategory={true}
+                  // 구독 페이지는 수정 불가하므로 create 함수 미전달
+                />
+              </div>
+            );
+          })}
+        </div>
       )}
-
-      {categoryKeys
-        .filter((category) => category !== '_files')
-        .map((category) => {
-          const categoryData = categorized[category];
-          const categoryPath = category;
-          const isExpanded = expandedPaths[categoryPath] === true; // 기본값 false
-
-          const categoryRoute = `/category/${categoryPath}`;
-          const isCategoryActive = currentPath === categoryRoute;
-
-          const categoryMeta = categoryData?._meta;
-          return (
-            <div 
-              key={category} 
-              class="category-section" 
-              data-expanded={isExpanded}
-              {...(categoryMeta ? {
-                'data-dnd-drop-id': categoryMeta.id,
-                'data-dnd-drop-type': 'DIRECTORY',
-              } : {})}
-            >
-              <FolderItem
-                level={0}
-                subPath={categoryPath}
-                keyName={category}
-                isSubExpanded={isExpanded}
-                isSubcategoryActive={isCategoryActive}
-                onFolderClick={onFolderClick}
-                onCreateDocument={onCreateDocument}
-                onCreateFolder={onCreateFolder}
-                subNode={categoryData}
-                renderTree={renderTree}
-                visited={new Set()}
-                isCategory={true}
-                bindDragSource={bindDragSource}
-                bindDropTarget={bindDropTarget}
-              />
-            </div>
-          );
-        })}
     </div>
   );
 }

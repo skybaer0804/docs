@@ -3,16 +3,18 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { updateProfile } from '../utils/api';
 import { Button } from '../components/Button';
+import { SubscriptionTab } from '../components/SubscriptionTab';
 import './ProfilePage.scss';
 
 /**
  * 프로필 페이지
- * document_title, personal_link 편집 가능
+ * document_title, personal_link 편집 가능 및 구독 관리 기능
  */
 export function ProfilePage({ onNavigate }) {
   const { user, loading: authLoading, signIn } = useAuth();
   const { showSuccess, showError } = useToast();
 
+  const [activeTab, setActiveTab] = useState('settings'); // 'settings' or 'subscription'
   const [documentTitle, setDocumentTitle] = useState('');
   const [personalLink, setPersonalLink] = useState('');
   const [loading, setLoading] = useState(false);
@@ -70,46 +72,67 @@ export function ProfilePage({ onNavigate }) {
 
   return (
     <div className="profile-page">
-      <h1 className="profile-page__title">프로필 설정</h1>
+      <h1 className="profile-page__title">내 정보 설정</h1>
 
-      {error && <div className="profile-page__error">{error}</div>}
+      <div className="profile-page__tabs">
+        <button
+          className={`profile-page__tab ${activeTab === 'settings' ? 'profile-page__tab--active' : ''}`}
+          onClick={() => setActiveTab('settings')}
+        >
+          프로필 설정
+        </button>
+        <button
+          className={`profile-page__tab ${activeTab === 'subscription' ? 'profile-page__tab--active' : ''}`}
+          onClick={() => setActiveTab('subscription')}
+        >
+          구독 관리
+        </button>
+      </div>
 
-      <form onSubmit={handleSubmit} className="profile-page__form">
-        <div className="profile-page__form-group">
-          <label htmlFor="documentTitle">문서 제목</label>
-          <input
-            id="documentTitle"
-            type="text"
-            value={documentTitle}
-            onInput={(e) => setDocumentTitle(e.target.value)}
-            placeholder="예: Nodnjs Documentation"
-            className="profile-page__input"
-          />
-          <span className="profile-page__helper">브레드크럼에 표시될 제목입니다. 비워두면 기본 제목이 표시됩니다.</span>
-        </div>
+      {activeTab === 'settings' ? (
+        <>
+          {error && <div className="profile-page__error">{error}</div>}
 
-        <div className="profile-page__form-group">
-          <label htmlFor="personalLink">개인 링크</label>
-          <input
-            id="personalLink"
-            type="url"
-            value={personalLink}
-            onInput={(e) => setPersonalLink(e.target.value)}
-            placeholder="예: https://skybear.notion.site/..."
-            className="profile-page__input"
-          />
-          <span className="profile-page__helper">브레드크럼 제목 옆 외부 링크 아이콘을 클릭하면 이동할 URL입니다.</span>
-        </div>
+          <form onSubmit={handleSubmit} className="profile-page__form">
+            <div className="profile-page__form-group">
+              <label htmlFor="documentTitle">문서 제목</label>
+              <input
+                id="documentTitle"
+                type="text"
+                value={documentTitle}
+                onInput={(e) => setDocumentTitle(e.target.value)}
+                placeholder="예: Nodnjs Documentation"
+                className="profile-page__input"
+              />
+              <span className="profile-page__helper">브레드크럼에 표시될 제목입니다. 비워두면 기본 제목이 표시됩니다.</span>
+            </div>
 
-        <div className="profile-page__footer">
-          <Button type="button" variant="secondary" onClick={handleCancel} disabled={loading}>
-            취소
-          </Button>
-          <Button type="submit" variant="primary" loading={loading}>
-            저장하기
-          </Button>
-        </div>
-      </form>
+            <div className="profile-page__form-group">
+              <label htmlFor="personalLink">개인 링크</label>
+              <input
+                id="personalLink"
+                type="url"
+                value={personalLink}
+                onInput={(e) => setPersonalLink(e.target.value)}
+                placeholder="예: https://skybear.notion.site/..."
+                className="profile-page__input"
+              />
+              <span className="profile-page__helper">브레드크럼 제목 옆 외부 링크 아이콘을 클릭하면 이동할 URL입니다.</span>
+            </div>
+
+            <div className="profile-page__footer">
+              <Button type="button" variant="secondary" onClick={handleCancel} disabled={loading}>
+                취소
+              </Button>
+              <Button type="submit" variant="primary" loading={loading}>
+                저장하기
+              </Button>
+            </div>
+          </form>
+        </>
+      ) : (
+        <SubscriptionTab userId={user.id} />
+      )}
     </div>
   );
 }
