@@ -4,7 +4,7 @@ import { useToast } from '../contexts/ToastContext';
 import { route } from 'preact-router';
 import { Button } from '../components/Button';
 import { FileLocationModal } from '../components/FileEditor/FileLocationModal';
-import { IconFolder, IconEye, IconEyeOff, IconTrash, IconFileUpload } from '@tabler/icons-preact';
+import { IconFolder, IconEye, IconEyeOff, IconTrash, IconFileUpload, IconX, IconCheck } from '@tabler/icons-preact';
 import { navigationObserver } from '../observers/NavigationObserver';
 import { useDocContentQuery } from '../hooks/useDocContentQuery';
 import { useCreateDocMutation, useUpdateDocMutation, useDeleteDocMutation } from '../hooks/useDocMutations';
@@ -301,16 +301,18 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
                 className="editor-footer__delete-btn"
               >
                 <IconTrash size={18} />
-                삭제
+                <span className="btn-text">삭제</span>
               </Button>
             )}
           </div>
           <div className="button-group">
             <Button type="button" variant="secondary" onClick={handleCancel} disabled={loading}>
-              취소
+              <IconX size={18} />
+              <span className="btn-text">취소</span>
             </Button>
             <Button type="submit" variant="primary" loading={loading}>
-              저장하기
+              <IconCheck size={18} />
+              <span className="btn-text">저장하기</span>
             </Button>
           </div>
         </div>

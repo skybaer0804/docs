@@ -106,7 +106,9 @@ export function LayoutPresenter({
           <div class="header__breadcrumb">
             <div class="header__title-wrapper">
               <h1 class="header__title">
-                {documentTitle}
+                <span class="header__title-text" onClick={() => onNavigate('/')}>
+                  {documentTitle}
+                </span>
                 {personalLink && (
                   <a
                     href={personalLink}

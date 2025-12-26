@@ -224,27 +224,56 @@
     border-top: 1px solid var(--border-color);
 
     @media (max-width: 768px) {
-      flex-direction: column;
-      gap: 1rem;
-      align-items: stretch;
+      flex-direction: row; // 모바일에서도 한 줄 유지
+      gap: 0.5rem;
+      align-items: center;
     }
 
     &__left {
       display: flex;
       align-items: center;
       gap: 1rem;
+
+      @media (max-width: 768px) {
+        flex: 0 0 auto;
+      }
     }
 
     &__delete-btn {
       display: flex;
       align-items: center;
       gap: 0.5rem;
+
+      @media (max-width: 768px) {
+        padding: 0.5rem;
+        min-width: 0;
+
+        .btn-text {
+          display: none; // 모바일에서 텍스트 숨김
+        }
+      }
     }
 
     .button-group {
       display: flex;
       justify-content: flex-end;
       gap: 1rem;
+
+      @media (max-width: 768px) {
+        gap: 0.5rem;
+        flex: 1;
+
+        .button {
+          padding: 0.5rem;
+          min-width: 0;
+          flex: 1; // 버튼들이 남은 공간을 나눠 가짐
+          justify-content: center;
+
+          .btn-text {
+            display: none; // 모바일에서 텍스트 숨김
+          }
+        }
+      }
     }
   }
 }
