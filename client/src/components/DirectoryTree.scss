@@ -19,6 +19,13 @@
         }
     }
 
+    &__section-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 0.75rem;
+    }
+
     &__section-title {
         font-size: 0.75rem;
         font-weight: 700;
@@ -26,8 +33,54 @@
         text-transform: uppercase;
         letter-spacing: 0.1em;
         padding: 0 8px;
-        margin-bottom: 0.75rem;
+        margin-bottom: 0; // header와 정렬을 위해 0으로 변경
         opacity: 0.6;
+    }
+
+    &__loading-spinner {
+        color: var(--primary-color);
+        animation: rotate 1.5s linear infinite;
+        opacity: 0.6;
+    }
+
+    &__guest-cta {
+        padding: 1.5rem 1rem;
+        background: var(--bg-secondary, #f8f9fa);
+        border-radius: 12px;
+        text-align: center;
+        border: 1px dashed var(--border-color);
+    }
+
+    &__guest-text {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+        line-height: 1.4;
+    }
+
+    &__guest-btn {
+        width: 100%;
+        padding: 0.6rem;
+        background: var(--primary-color, #007bff);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:hover {
+            background: var(--primary-hover, #0056b3);
+            transform: translateY(-1px);
+        }
+    }
+
+    &__loading-icon {
+        margin-left: auto;
+        font-size: 0.75rem;
+        color: var(--primary-color);
+        animation: pulse 1.5s infinite;
     }
 
     @media (max-width: 768px) {
@@ -151,6 +204,12 @@
 
 .file-item--dragging {
   opacity: 0.55;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.4; }
+    50% { opacity: 1; }
+    100% { opacity: 0.4; }
 }
 
 @keyframes treeDropPulse {

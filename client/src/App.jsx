@@ -6,6 +6,7 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { EditorPage } from './pages/EditorPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { SubscriptionManagementPage } from './pages/SubscriptionManagementPage';
 
 /**
  * SPA 구조의 App 컴포넌트
@@ -91,6 +92,10 @@ export function App() {
 
     if (currentRoute === '/profile') {
       return <ProfilePage onNavigate={handleNavigate} />;
+    }
+
+    if (currentRoute === '/settings/subscriptions') {
+      return <SubscriptionManagementPage onNavigate={handleNavigate} />;
     }
 
     // 문서 작성/수정 페이지

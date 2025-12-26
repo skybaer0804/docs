@@ -37,7 +37,7 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
   const [title, setTitle] = useState('');
   const [parentPath, setParentPath] = useState(getParentPathFromQuery());
   const [content, setContent] = useState('# 제목\n\n내용을 입력하세요.');
-  const [isPublic, setIsPublic] = useState(true);
+  const [visibilityType, setVisibilityType] = useState('public');
   const [docId, setDocId] = useState(null);
 
   const [error, setError] = useState('');
@@ -90,7 +90,7 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
       // 생성 모드일 때 폼 초기화
       setTitle('');
       setContent('# 제목\n\n내용을 입력하세요.');
-      setIsPublic(true);
+      setVisibilityType('public');
       setDocId(null);
       setError('');
     }
@@ -117,7 +117,7 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
       setDocId(doc.id);
       setTitle((doc.name || '').replace('.md', ''));
       setContent(doc.content || '');
-      setIsPublic(!!doc.is_public);
+      setVisibilityType(doc.visibility_type || 'public');
       // 부모 경로는 path에서 추출
       const parts = (doc.path || '').split('/');
       parts.pop(); // 파일명 제거
@@ -150,7 +150,7 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
           parent_path: parentPath,
           name,
           content,
-          is_public: isPublic,
+          visibility_type: visibilityType,
         });
 
         showSuccess('문서가 생성되었습니다.');
@@ -170,7 +170,7 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
           path,
           data: {
             content,
-            is_public: isPublic,
+            visibility_type: visibilityType,
             name: `${title}.md`, // 제목 수정 시 이름도 변경
           },
         });
@@ -246,18 +246,16 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
           <div className="form-group">
             <div className="form-label-row">
               <label htmlFor="title">제목</label>
-              <button
-                type="button"
-                className={`editor-page__toggle-btn ${isPublic ? 'editor-page__toggle-btn--active' : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsPublic(!isPublic);
-                }}
-                aria-label={isPublic ? '전체 공개' : '비공개'}
-                title={isPublic ? '전체 공개 (로그인 없이 열람 가능)' : '비공개 (로그인 필요)'}
+              <select
+                className="editor-page__visibility-select"
+                value={visibilityType}
+                onChange={(e) => setVisibilityType(e.target.value)}
+                title="공개 범위 설정"
               >
-                {isPublic ? <IconEye size={18} /> : <IconEyeOff size={18} />}
-              </button>
+                <option value="public">🌐 전체 공개</option>
+                <option value="subscriber_only">👥 구독자 공개</option>
+                <option value="private">🔒 나만 보기</option>
+              </select>
             </div>
             <input
               id="title"

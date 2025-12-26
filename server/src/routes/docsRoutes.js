@@ -4,8 +4,11 @@ const docsController = require('../controllers/docsController');
 const upload = require('multer')(); 
 const authMiddleware = require('../middleware/authMiddleware');
 
-// 모든 문서 구조 조회 (공개)
-router.get('/', docsController.getAllDocs);
+// 모든 문서 구조 조회 (🔐 인증 필요 - 내 문서만 조회)
+router.get('/', authMiddleware, docsController.getAllDocs);
+
+// 특정 유저의 문서 구조 조회 (공개/구독자 전용 필터링)
+router.get('/user/:userId', authMiddleware, docsController.getUserDocs);
 
 // 문서 생성 (🔐 인증 필요)
 router.post('/', authMiddleware, docsController.createDoc);

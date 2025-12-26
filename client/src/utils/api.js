@@ -125,13 +125,35 @@ export function logout() {
 }
 
 /**
- * 모든 문서 구조(Nodes)를 가져옵니다.
+ * 모든 문서 구조(Nodes)를 가져옵니다. (내 문서)
  * @returns {Promise<Array>} 노드 목록 (id, parent_id, name, type, path 등)
  */
 export async function fetchAllDocs() {
-  const response = await fetch(API_BASE);
+  const token = getToken();
+  if (!token) return [];
+
+  const response = await fetch(API_BASE, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
   if (!response.ok) {
     throw new Error('Failed to fetch docs structure');
+  }
+  return response.json();
+}
+
+/**
+ * 특정 유저의 문서 구조를 가져옵니다. (가시성 필터링 적용)
+ */
+export async function fetchUserDocs(userId) {
+  const token = getToken();
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const response = await fetch(`${API_BASE}/user/${userId}`, { headers });
+  if (!response.ok) {
+    throw new Error('Failed to fetch user docs');
   }
   return response.json();
 }
@@ -386,5 +408,22 @@ export async function fetchFollowingNodes() {
   });
 
   if (!response.ok) throw new Error('Failed to fetch following nodes');
+  return response.json();
+}
+
+/**
+ * 사용자 검색
+ * @param {string} query
+ */
+export async function searchUsers(query) {
+  const token = getToken();
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const response = await fetch(`${AUTH_API_BASE}/search?q=${encodeURIComponent(query)}`, { headers });
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error || 'Failed to search users');
+  }
   return response.json();
 }

@@ -1,9 +1,10 @@
 import { DirectoryTreeContainer } from '../containers/DirectoryTreeContainer';
 import { useState, useRef } from 'preact/hooks';
-import { IconPlus } from '@tabler/icons-preact';
+import { IconPlus, IconLoader2, IconUserPlus } from '@tabler/icons-preact';
 import { Popover } from './Popover';
 import { FileManageList } from './FileManageList';
 import { useDnd } from '../contexts/DndContext';
+import { useAuth } from '../contexts/AuthContext';
 import './DirectoryTree.scss';
 
 /**
@@ -13,15 +14,19 @@ import './DirectoryTree.scss';
  */
 export function DirectoryTreePresenter({
   categorized,
-  followingCategorized = {},
+  followingUsers = [],
+  followingTrees = {},
+  loadingTrees = {},
   currentPath,
   expandedPaths,
   onFolderClick,
+  onUserClick,
   onFileClick,
   onCreateDocument,
   onCreateFolder,
   loading = false,
 }) {
+  const { user } = useAuth();
   const dnd = useDnd();
 
   const bindDragSource = (item) => ({
@@ -152,14 +157,19 @@ export function DirectoryTreePresenter({
   // 정렬 제거: 원본 순서 유지 (대소문자, 한글 그대로 표시)
   const categoryKeys = Object.keys(categorized);
 
-  if (loading || categoryKeys.length === 0) {
+  const handleCreateMyPage = () => {
+    onNavigate('/register');
+  };
+
+  // 비회원용 사이드바 뷰
+  if (!user) {
     return (
-      <div class="directory-tree">
-        <div class="category-section">
-          <div class="category-title">로딩 중...</div>
-          <ul class="file-list">
-            <li class="file-item">파일을 불러오는 중입니다...</li>
-          </ul>
+      <div className="directory-tree">
+        <div className="directory-tree__guest-cta">
+          <p className="directory-tree__guest-text">나만의 문서 저장소를 만들어보세요.</p>
+          <button className="directory-tree__guest-btn" onClick={handleCreateMyPage}>
+            내 페이지 만들기
+          </button>
         </div>
       </div>
     );
@@ -188,7 +198,10 @@ export function DirectoryTreePresenter({
 
       {/* 내 페이지 섹션 */}
       <div className="directory-tree__section">
-        <h3 className="directory-tree__section-title">내 페이지</h3>
+        <div className="directory-tree__section-header">
+          <h3 className="directory-tree__section-title">내 페이지</h3>
+          {loading && <IconLoader2 className="directory-tree__loading-spinner" size={14} />}
+        </div>
         {rootFiles.length > 0 && (
           <ul class="file-list root-file-list">
             {rootFiles.map((file) => (
@@ -256,28 +269,32 @@ export function DirectoryTreePresenter({
       </div>
 
       {/* 구독 페이지 섹션 */}
-      {Object.keys(followingCategorized).length > 0 && (
+      {followingUsers.length > 0 && (
         <div className="directory-tree__section">
           <h3 className="directory-tree__section-title">구독 페이지</h3>
-          {Object.keys(followingCategorized).map((username) => {
-            const userTree = followingCategorized[username];
-            const isUserExpanded = expandedPaths[`sub_${username}`] === true;
+          {followingUsers.map((u) => {
+            const userId = u.id;
+            const username = u.username;
+            const docTitle = u.document_title || username;
+            const isUserExpanded = expandedPaths[`sub_${userId}`] === true;
+            const userTree = followingTrees[userId];
+            const isLoading = loadingTrees[userId];
 
             return (
-              <div key={username} className="category-section" data-expanded={isUserExpanded}>
-                <FolderItem
-                  level={0}
-                  subPath={`sub_${username}`}
-                  keyName={username}
-                  isSubExpanded={isUserExpanded}
-                  isSubcategoryActive={false}
-                  onFolderClick={(path) => onFolderClick(path)}
-                  subNode={userTree}
-                  renderTree={renderTree}
-                  visited={new Set()}
-                  isCategory={true}
-                  // 구독 페이지는 수정 불가하므로 create 함수 미전달
-                />
+              <div key={userId} className="category-section" data-expanded={isUserExpanded}>
+                <div
+                  className={`category-header ${isUserExpanded ? 'active' : ''}`}
+                  onClick={() => onUserClick(userId)}
+                >
+                  <span className="folder-icon">👤</span>
+                  <span className="category-title">{docTitle}</span>
+                  {isLoading && <span className="directory-tree__loading-icon">...</span>}
+                </div>
+                {isUserExpanded && userTree && (
+                  <div className="category-content">
+                    {renderTree(userTree, `sub_${userId}`, 0, new Set())}
+                  </div>
+                )}
               </div>
             );
           })}

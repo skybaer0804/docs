@@ -18,22 +18,25 @@ export function useUserSubscriptions(userId) {
     }
   }, [userId]);
 
-  const loadList = useCallback(async (type) => {
-    if (!userId) return;
-    setLoading(true);
-    try {
-      const data = await fetchSubscriptionList(userId, type);
-      if (type === 'followers') {
-        setFollowers(data);
-      } else {
-        setFollowing(data);
+  const loadList = useCallback(
+    async (type) => {
+      if (!userId) return;
+      setLoading(true);
+      try {
+        const data = await fetchSubscriptionList(userId, type);
+        if (type === 'followers') {
+          setFollowers(data);
+        } else {
+          setFollowing(data);
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [userId]);
+    },
+    [userId],
+  );
 
   useEffect(() => {
     if (userId) {

@@ -217,3 +217,42 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+/**
+ * 사용자 검색
+ * GET /api/auth/search?q=keyword
+ */
+exports.searchUsers = async (req, res) => {
+  try {
+    const { q } = req.query;
+    const userId = req.user?.id;
+
+    if (!q || q.trim().length < 2) {
+      return res.status(400).json({ error: 'Search query must be at least 2 characters long' });
+    }
+
+    const users = await UserModel.search(q.trim(), userId);
+
+    // 각 사용자에 대해 현재 로그인 유저가 팔로우 중인지 여부 확인
+    if (userId && users.length > 0) {
+      const { data: subs } = await require('../config/supabase')
+        .from('subscriptions')
+        .select('following_id')
+        .eq('follower_id', userId)
+        .in(
+          'following_id',
+          users.map((u) => u.id),
+        );
+
+      const followingIds = new Set(subs?.map((s) => s.following_id) || []);
+      users.forEach((u) => {
+        u.is_following = followingIds.has(u.id);
+      });
+    }
+
+    res.json(users);
+  } catch (err) {
+    console.error('Search users error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};

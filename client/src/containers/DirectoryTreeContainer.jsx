@@ -10,8 +10,17 @@ import { route } from 'preact-router';
  * TDD 친화적: 로직을 분리하여 테스트 시 Mock으로 대체 가능
  */
 export function DirectoryTreeContainer({ currentPath, onNavigate }) {
-  const { categorized, followingCategorized, expandedPaths, handleFolderClick, handleClick, loading } =
-    useDirectoryTree(currentPath, onNavigate);
+  const {
+    categorized,
+    followingUsers,
+    followingTrees,
+    loadingTrees,
+    expandedPaths,
+    handleFolderClick,
+    handleUserClick,
+    handleClick,
+    loading,
+  } = useDirectoryTree(currentPath, onNavigate);
   const [directoryModalOpen, setDirectoryModalOpen] = useState(false);
   const [directoryModalPath, setDirectoryModalPath] = useState('/docs');
 
@@ -37,10 +46,13 @@ export function DirectoryTreeContainer({ currentPath, onNavigate }) {
     <>
       <DirectoryTreePresenter
         categorized={categorized}
-        followingCategorized={followingCategorized}
+        followingUsers={followingUsers}
+        followingTrees={followingTrees}
+        loadingTrees={loadingTrees}
         currentPath={currentPath}
         expandedPaths={expandedPaths}
         onFolderClick={handleFolderClick}
+        onUserClick={handleUserClick}
         onFileClick={handleClick}
         onCreateDocument={handleCreateDocument}
         onCreateFolder={handleCreateFolder}

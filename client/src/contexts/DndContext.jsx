@@ -1,5 +1,6 @@
 import { createContext } from 'preact';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { useAuth } from './AuthContext';
 import { useToast } from './ToastContext';
 import { useMoveDocMutation } from '../hooks/useDocMutations';
 import { DndFlyLayer } from '../components/DndFlyLayer';
@@ -18,6 +19,7 @@ export function useDnd() {
  * - prop 전달 최소화: DirectoryView/DirectoryTree/Breadcrumb 등에서 공용으로 사용
  */
 export function DndProvider({ children, currentRoute, onNavigate }) {
+  const { user } = useAuth();
   const { showSuccess, showError } = useToast();
   const moveMutation = useMoveDocMutation();
 
@@ -96,6 +98,9 @@ export function DndProvider({ children, currentRoute, onNavigate }) {
     (targetParentId, targetType, currentDragItem = dragItem) => {
       const item = currentDragItem;
       if (!item) return false;
+
+      // 타인 페이지 노드는 드래그/드롭 대상에서 제외 (author_id 체크)
+      if (user && item.author_id && item.author_id !== user.id) return false;
 
       // 'null' 문자열을 실제 null로 취급 (루트 폴더)
       const targetId = targetParentId === 'null' ? null : targetParentId;

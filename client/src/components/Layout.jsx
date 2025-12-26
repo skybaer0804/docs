@@ -92,6 +92,11 @@ export function LayoutPresenter({
     onNavigate('/profile');
   };
 
+  const handleSubscriptions = () => {
+    setSettingsOpen(false);
+    onNavigate('/settings/subscriptions');
+  };
+
   const handleExternalLinkClick = (e) => {
     e.preventDefault();
     if (!personalLink) return;
@@ -157,6 +162,9 @@ export function LayoutPresenter({
                     </ListItem>
                     <ListItem icon={<IconUserCircle size={18} />} onClick={handleProfile}>
                       프로필
+                    </ListItem>
+                    <ListItem icon={<IconUserCircle size={18} />} onClick={handleSubscriptions}>
+                      구독관리
                     </ListItem>
                   </>
                 )}

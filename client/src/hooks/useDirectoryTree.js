@@ -1,25 +1,49 @@
-import { useState, useEffect, useMemo } from 'preact/hooks';
-import { buildDirectoryTree, buildSubscriptionTree } from '../utils/treeUtils';
+import { useState, useEffect, useMemo, useCallback } from 'preact/hooks';
+import { buildDirectoryTree } from '../utils/treeUtils';
 import { navigationObserver } from '../observers/NavigationObserver';
 import { useQueryClient } from '@tanstack/react-query';
 import { docsKeys, subKeys } from '../query/queryKeys';
 import { useDocsTreeQuery } from './useDocsTreeQuery';
-import { useFollowingNodes } from './useFollowingNodes';
+import { fetchSubscriptionList, fetchUserDocs } from '../utils/api';
+import { useAuth } from '../contexts/AuthContext';
 
 /**
  * DirectoryTree의 로직을 담당하는 Custom Hook
  */
 export function useDirectoryTree(currentPath, onNavigate) {
     const [expandedPaths, setExpandedPaths] = useState({});
+    const [followingUsers, setFollowingUsers] = useState([]);
+    const [followingTrees, setFollowingTrees] = useState({}); // userId -> tree
+    const [loadingTrees, setLoadingTrees] = useState({}); // userId -> boolean
     const queryClient = useQueryClient();
+    const { user } = useAuth();
     
     // 내 문서 트리
     const { data: nodes = [], isLoading: loading } = useDocsTreeQuery();
     const categorized = useMemo(() => buildDirectoryTree(nodes), [nodes]);
 
-    // 구독한 유저들의 문서 트리
-    const { data: followingNodes = [], isLoading: subLoading } = useFollowingNodes();
-    const followingCategorized = useMemo(() => buildSubscriptionTree(followingNodes), [followingNodes]);
+    // 내가 팔로잉하는 유저 리스트 로드
+    useEffect(() => {
+        if (user) {
+            fetchSubscriptionList(user.id, 'following').then(setFollowingUsers).catch(console.error);
+        }
+    }, [user]);
+
+    // 특정 유저의 트리 로드 (Lazy Load)
+    const loadUserTree = useCallback(async (targetUserId) => {
+        if (followingTrees[targetUserId] || loadingTrees[targetUserId]) return;
+
+        setLoadingTrees(prev => ({ ...prev, [targetUserId]: true }));
+        try {
+            const userNodes = await fetchUserDocs(targetUserId);
+            const tree = buildDirectoryTree(userNodes);
+            setFollowingTrees(prev => ({ ...prev, [targetUserId]: tree }));
+        } catch (err) {
+            console.error('Failed to load user tree:', err);
+        } finally {
+            setLoadingTrees(prev => ({ ...prev, [targetUserId]: false }));
+        }
+    }, [followingTrees, loadingTrees]);
 
     // 문서 변경 이벤트 감지하여 트리 업데이트
     useEffect(() => {
@@ -35,7 +59,7 @@ export function useDirectoryTree(currentPath, onNavigate) {
                     isReloading = true;
                     try {
                         await queryClient.invalidateQueries({ queryKey: docsKeys.tree() });
-                        await queryClient.invalidateQueries({ queryKey: subKeys.followingNodes() });
+                        // 구독 관련 정보도 갱신이 필요할 수 있으나, 여기서는 필요시 추가
                     } finally {
                         isReloading = false;
                         debounceTimer = null;
@@ -105,12 +129,26 @@ export function useDirectoryTree(currentPath, onNavigate) {
         navigationObserver.notify(file.route, { type: 'file', file });
     };
 
+    const handleUserClick = (targetUserId) => {
+        const path = `sub_${targetUserId}`;
+        const isExpanding = !expandedPaths[path];
+        
+        setExpandedPaths(prev => ({ ...prev, [path]: !prev[path] }));
+        
+        if (isExpanding) {
+            loadUserTree(targetUserId);
+        }
+    };
+
     return {
         categorized,
-        followingCategorized,
+        followingUsers,
+        followingTrees,
+        loadingTrees,
         expandedPaths,
         handleFolderClick,
+        handleUserClick,
         handleClick,
-        loading: loading || subLoading
+        loading: loading
     };
 }

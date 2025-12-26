@@ -20,6 +20,7 @@ import './DirectoryCreateModal.scss';
 export function DirectoryCreateModal({ isOpen, onClose, onSuccess, currentPath }) {
   const { showSuccess, showError } = useToast();
   const [folderName, setFolderName] = useState('');
+  const [visibilityType, setVisibilityType] = useState('public');
   const createFolderMutation = useCreateFolderMutation();
   const loading = createFolderMutation.isPending;
 
@@ -50,7 +51,7 @@ export function DirectoryCreateModal({ isOpen, onClose, onSuccess, currentPath }
       const result = await createFolderMutation.mutateAsync({
         name,
         parentPath,
-        isPublic: true,
+        visibility_type: visibilityType,
       });
 
       showSuccess('폴더가 생성되었습니다.');
@@ -106,6 +107,19 @@ export function DirectoryCreateModal({ isOpen, onClose, onSuccess, currentPath }
             disabled={loading}
             className="directory-create-modal__input"
           />
+        </div>
+        <div className="directory-create-modal__form-group">
+          <label htmlFor="visibilityType">공개 범위</label>
+          <select
+            id="visibilityType"
+            value={visibilityType}
+            onChange={(e) => setVisibilityType(e.target.value)}
+            className="directory-create-modal__input"
+          >
+            <option value="public">🌐 전체 공개</option>
+            <option value="subscriber_only">👥 구독자 공개</option>
+            <option value="private">🔒 나만 보기</option>
+          </select>
           <span className="directory-create-modal__helper">현재 디렉토리: {parentPath}</span>
         </div>
       </form>

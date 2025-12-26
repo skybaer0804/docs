@@ -85,6 +85,31 @@ class UserModel {
     }
     return data;
   }
+
+  /**
+   * 사용자 검색 (username 또는 document_title)
+   * @param {string} query - 검색어
+   * @param {string} excludeId - 검색 결과에서 제외할 ID (본인)
+   */
+  static async search(query, excludeId) {
+    let q = supabase
+      .from('users')
+      .select('id, username, document_title, personal_link')
+      .or(`username.ilike.%${query}%,document_title.ilike.%${query}%`)
+      .limit(20);
+
+    if (excludeId) {
+      q = q.neq('id', excludeId);
+    }
+
+    const { data, error } = await q;
+
+    if (error) {
+      console.error('UserModel.search error:', error);
+      throw error;
+    }
+    return data;
+  }
 }
 
 module.exports = UserModel;

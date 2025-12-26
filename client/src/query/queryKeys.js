@@ -1,6 +1,7 @@
 export const docsKeys = {
   all: ['docs'],
   tree: () => [...docsKeys.all, 'tree'],
+  userTree: (userId) => [...docsKeys.all, 'tree', 'user', userId],
   content: (path) => [...docsKeys.all, 'content', path],
 };
 

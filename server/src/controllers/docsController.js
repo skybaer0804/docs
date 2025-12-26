@@ -72,13 +72,61 @@ async function getUniqueNameInParent({ parentId, desiredName, excludeId }) {
   throw new Error('Failed to generate unique name');
 }
 
-// 전체 문서 구조 조회
+// 전체 문서 구조 조회 (내 문서만 반환하도록 변경)
 exports.getAllDocs = async (req, res) => {
   try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.json([]); // 로그인 안했으면 빈 배열 (또는 public만 반환하도록 기획에 따라 조정 가능)
+    }
+
     const { data, error } = await supabase
       .from('nodes')
-      .select('id, parent_id, name, type, path, is_public, author_id')
-      .order('type', { ascending: true }) // 폴더(DIRECTORY) 먼저, 그 다음 파일(FILE)
+      .select('id, parent_id, name, type, path, visibility_type, author_id')
+      .eq('author_id', userId)
+      .order('type', { ascending: true })
+      .order('name', { ascending: true });
+
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// 특정 유저의 문서 구조 조회 (가시성 필터링 적용)
+exports.getUserDocs = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const viewerId = req.user?.id;
+
+    let allowedVisibilities = ['public'];
+
+    // 구독 여부 확인
+    if (viewerId) {
+      const { data: subscription } = await supabase
+        .from('subscriptions')
+        .select('id')
+        .eq('follower_id', viewerId)
+        .eq('following_id', userId)
+        .single();
+
+      if (subscription) {
+        allowedVisibilities.push('subscriber_only');
+      }
+      
+      // 본인인 경우 (이 API를 본인이 쓸 일은 적겠지만 처리)
+      if (viewerId === userId) {
+        allowedVisibilities.push('subscriber_only', 'private');
+      }
+    }
+
+    const { data, error } = await supabase
+      .from('nodes')
+      .select('id, parent_id, name, type, path, visibility_type, author_id')
+      .eq('author_id', userId)
+      .in('visibility_type', allowedVisibilities)
+      .order('type', { ascending: true })
       .order('name', { ascending: true });
 
     if (error) throw error;
@@ -155,7 +203,7 @@ exports.createDoc = async (req, res) => {
       name,
       content: type === 'FILE' ? content : null,
       path: newPath,
-      is_public: is_public !== undefined ? is_public : true,
+      visibility_type: req.body.visibility_type || 'public',
       author_id: author_id, // 필수 필드 추가 (명시적으로 설정)
     };
 
@@ -237,7 +285,7 @@ exports.uploadFile = async (req, res) => {
 exports.updateDoc = async (req, res) => {
   try {
     const { id } = req.params;
-    const { content, is_public, name } = req.body;
+    const { content, visibility_type, name } = req.body;
 
     // author_id 필수 체크
     if (!req.user || !req.user.id) {
@@ -258,7 +306,7 @@ exports.updateDoc = async (req, res) => {
 
     const updates = { updated_at: new Date() };
     if (content !== undefined) updates.content = content;
-    if (is_public !== undefined) updates.is_public = is_public;
+    if (visibility_type !== undefined) updates.visibility_type = visibility_type;
     if (name !== undefined) updates.name = name;
     // 이름 변경 시 path 업데이트 로직 필요 (복잡하므로 일단 생략하거나 추후 구현)
 

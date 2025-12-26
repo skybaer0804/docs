@@ -1,13 +1,8 @@
 import { createContext } from 'preact';
 import { useContext, useState, useEffect } from 'preact/hooks';
-import {
-  login as apiLogin,
-  register as apiRegister,
-  logout as apiLogout,
-  getCurrentUser,
-  getToken,
-} from '../utils/api';
+import { getCurrentUser, getToken, login as apiLogin, logout as apiLogout, register as apiRegister } from '../utils/api';
 import { useToast } from './ToastContext';
+import { queryClient } from '../query/queryClient';
 
 const AuthContext = createContext();
 
@@ -38,6 +33,7 @@ export function AuthProvider({ children }) {
   const signIn = async (email, password) => {
     try {
       const data = await apiLogin(email, password);
+      queryClient.clear(); // 로그인 시 이전 유저 캐시 삭제
       setUser(data.user);
       showSuccess('로그인되었습니다');
       return data;
@@ -50,6 +46,7 @@ export function AuthProvider({ children }) {
   const signUp = async (username, email, password) => {
     try {
       const data = await apiRegister(username, email, password);
+      queryClient.clear(); // 회원가입 시 캐시 초기화
       setUser(data.user);
       showSuccess('회원가입이 완료되었습니다');
       return data;
@@ -61,6 +58,7 @@ export function AuthProvider({ children }) {
 
   const signOut = async () => {
     apiLogout();
+    queryClient.clear(); // 로그아웃 시 모든 캐시 삭제
     setUser(null);
     showSuccess('로그아웃되었습니다');
   };

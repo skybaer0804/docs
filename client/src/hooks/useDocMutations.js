@@ -111,13 +111,13 @@ export function useCreateFolderMutation(options = {}) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ name, parentPath, isPublic = true }) =>
+    mutationFn: ({ name, parentPath, visibility_type = 'public' }) =>
       createDoc({
         type: 'DIRECTORY',
         parent_path: parentPath,
         name,
         content: null,
-        is_public: isPublic,
+        visibility_type,
       }),
     onSuccess: async (data, variables, context) => {
       await queryClient.invalidateQueries({ queryKey: docsKeys.tree() });

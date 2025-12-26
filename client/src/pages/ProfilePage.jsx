@@ -14,7 +14,6 @@ export function ProfilePage({ onNavigate }) {
   const { user, loading: authLoading, signIn } = useAuth();
   const { showSuccess, showError } = useToast();
 
-  const [activeTab, setActiveTab] = useState('settings'); // 'settings' or 'subscription'
   const [documentTitle, setDocumentTitle] = useState('');
   const [personalLink, setPersonalLink] = useState('');
   const [loading, setLoading] = useState(false);
@@ -74,26 +73,9 @@ export function ProfilePage({ onNavigate }) {
     <div className="profile-page">
       <h1 className="profile-page__title">내 정보 설정</h1>
 
-      <div className="profile-page__tabs">
-        <button
-          className={`profile-page__tab ${activeTab === 'settings' ? 'profile-page__tab--active' : ''}`}
-          onClick={() => setActiveTab('settings')}
-        >
-          프로필 설정
-        </button>
-        <button
-          className={`profile-page__tab ${activeTab === 'subscription' ? 'profile-page__tab--active' : ''}`}
-          onClick={() => setActiveTab('subscription')}
-        >
-          구독 관리
-        </button>
-      </div>
+      {error && <div className="profile-page__error">{error}</div>}
 
-      {activeTab === 'settings' ? (
-        <>
-          {error && <div className="profile-page__error">{error}</div>}
-
-          <form onSubmit={handleSubmit} className="profile-page__form">
+      <form onSubmit={handleSubmit} className="profile-page__form">
             <div className="profile-page__form-group">
               <label htmlFor="documentTitle">문서 제목</label>
               <input
@@ -129,10 +111,6 @@ export function ProfilePage({ onNavigate }) {
               </Button>
             </div>
           </form>
-        </>
-      ) : (
-        <SubscriptionTab userId={user.id} />
-      )}
     </div>
   );
 }
