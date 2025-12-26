@@ -312,7 +312,7 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
             </Button>
             <Button type="submit" variant="primary" loading={loading}>
               <IconCheck size={18} />
-              <span className="btn-text">저장하기</span>
+              <span className="btn-text">저장</span>
             </Button>
           </div>
         </div>

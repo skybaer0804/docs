@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'preact/hooks';
-import { IconX, IconSearch, IconCheck } from '@tabler/icons-preact';
+import { IconSearch, IconCheck } from '@tabler/icons-preact';
 import { FileTree } from './FileTree';
-import { buildDirectoryTree } from '../../utils/treeUtils';
 import { buildUserGroupedTree } from '../../utils/userTreeUtils';
+import { Modal } from '../Modal';
+import { Button } from '../Button';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDocsTreeQuery } from '../../hooks/useDocsTreeQuery';
 import './FileLocationModal.scss';
@@ -117,61 +118,54 @@ export function FileLocationModal({ isOpen, onClose, onSelect, currentPath = '/d
   if (!isOpen) return null;
 
   return (
-    <div
-      className="file-location-modal__overlay"
-      onClick={(e) => e.target.classList.contains('file-location-modal__overlay') && onClose()}
-    >
-      <div className="file-location-modal__container">
-        <div className="file-location-modal__header">
-          <h2 className="file-location-modal__title">파일 위치 선택</h2>
-          <button className="file-location-modal__close" onClick={onClose} aria-label="닫기">
-            <IconX size={20} />
-          </button>
-        </div>
-
-        <div className="file-location-modal__body">
-          <div className="file-location-modal__search">
-            <IconSearch size={18} />
-            <input
-              type="text"
-              placeholder="폴더 검색..."
-              value={searchQuery}
-              onInput={(e) => setSearchQuery(e.target.value)}
-              className="file-location-modal__search-input"
-            />
-          </div>
-
-          <div className="file-location-modal__tree">
-            <FileTree
-              tree={filteredTree}
-              selectedFile={null}
-              expandedPaths={expandedPaths}
-              onFileSelect={null}
-              onFolderClick={handleFolderClick}
-              onCreateFile={null}
-              onDeleteFile={null}
-              loading={loading}
-              onPathSelect={handlePathSelect}
-              selectedPath={selectedPath}
-            />
-          </div>
-
-          <div className="file-location-modal__selected">
-            <span className="file-location-modal__selected-label">선택된 경로:</span>
-            <span className="file-location-modal__selected-path">{selectedPath || '/docs'}</span>
-          </div>
-        </div>
-
-        <div className="file-location-modal__footer">
-          <button className="file-location-modal__cancel" onClick={onClose}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="파일 위치 선택"
+      footer={
+        <>
+          <Button type="button" variant="secondary" onClick={onClose}>
             취소
-          </button>
-          <button className="file-location-modal__confirm" onClick={handleConfirm}>
+          </Button>
+          <Button type="button" variant="primary" onClick={handleConfirm}>
             <IconCheck size={16} />
             확인
-          </button>
+          </Button>
+        </>
+      }
+    >
+      <div className="file-location-modal__body-inner">
+        <div className="file-location-modal__search">
+          <IconSearch size={18} />
+          <input
+            type="text"
+            placeholder="폴더 검색..."
+            value={searchQuery}
+            onInput={(e) => setSearchQuery(e.target.value)}
+            className="file-location-modal__search-input"
+          />
+        </div>
+
+        <div className="file-location-modal__tree">
+          <FileTree
+            tree={filteredTree}
+            selectedFile={null}
+            expandedPaths={expandedPaths}
+            onFileSelect={null}
+            onFolderClick={handleFolderClick}
+            onCreateFile={null}
+            onDeleteFile={null}
+            loading={loading}
+            onPathSelect={handlePathSelect}
+            selectedPath={selectedPath}
+          />
+        </div>
+
+        <div className="file-location-modal__selected">
+          <span className="file-location-modal__selected-label">선택된 경로:</span>
+          <span className="file-location-modal__selected-path">{selectedPath || '/docs'}</span>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

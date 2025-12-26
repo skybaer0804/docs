@@ -1,13 +1,16 @@
 import { DirectoryViewContainer } from '../containers/DirectoryViewContainer';
 import { useRef, useState, useEffect, useCallback } from 'preact/hooks';
-import { IconDotsVertical, IconTrash } from '@tabler/icons-preact';
+import { IconDotsVertical, IconTrash, IconPencil, IconCheck, IconX } from '@tabler/icons-preact';
 import { Popover } from './Popover';
 import { List } from './List';
 import { ListItem } from './ListItem';
+import { Button } from './Button';
+import { Modal } from './Modal';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { useDeleteDocMutation } from '../hooks/useDocMutations';
+import { useDeleteDocMutation, useUpdateDocMutation } from '../hooks/useDocMutations';
 import { useDnd } from '../contexts/DndContext';
+import { navigationObserver } from '../observers/NavigationObserver';
 import { ConfirmDialog } from './ConfirmDialog';
 import './DirectoryView.scss';
 
@@ -28,14 +31,22 @@ export function DirectoryViewPresenter({
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
   const deleteDocMutation = useDeleteDocMutation();
+  const updateDocMutation = useUpdateDocMutation();
   const dnd = useDnd();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuTarget, setMenuTarget] = useState(null); // { type: 'folder'|'file', id, path, author_id, label }
   const menuButtonRef = useRef(null);
+
+  // 삭제 관련 상태
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmMessage, setConfirmMessage] = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null);
+
+  // 이름 수정 관련 상태
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameValue, setRenameValue] = useState('');
+  const [renameTarget, setRenameTarget] = useState(null);
 
   const canManage = (authorId) => {
     if (!user?.id) return false;
@@ -167,6 +178,47 @@ export function DirectoryViewPresenter({
     setConfirmMessage(message);
     setConfirmOpen(true);
     closeMenu();
+  };
+
+  const handleRenameClick = () => {
+    if (!menuTarget?.id) return;
+    if (!canManage(menuTarget.author_id)) return;
+
+    setRenameTarget(menuTarget);
+    // 파일인 경우 .md 확장자 제거하여 표시
+    const initialValue = menuTarget.type === 'file' ? menuTarget.label.replace(/\.md$/, '') : menuTarget.label;
+    setRenameValue(initialValue);
+    setRenameOpen(true);
+    closeMenu();
+  };
+
+  const handleRenameConfirm = async (e) => {
+    if (e) e.preventDefault();
+    if (!renameTarget?.id || !renameValue.trim()) return;
+
+    try {
+      const newName = renameTarget.type === 'file' ? `${renameValue.trim()}.md` : renameValue.trim();
+
+      const result = await updateDocMutation.mutateAsync({
+        id: renameTarget.id,
+        path: renameTarget.path,
+        data: { name: newName },
+      });
+
+      showSuccess('이름이 변경되었습니다.');
+
+      // 트리 업데이트 알림
+      navigationObserver.notify(renameTarget.path, {
+        type: renameTarget.type === 'folder' ? 'directory' : 'file',
+        action: 'update',
+        file: result,
+      });
+
+      setRenameOpen(false);
+      setRenameTarget(null);
+    } catch (err) {
+      showError(err.message || '이름 변경에 실패했습니다.');
+    }
   };
 
   const handleConfirmDelete = async () => {
@@ -448,11 +500,55 @@ export function DirectoryViewPresenter({
       {content}
       <Popover isOpen={menuOpen} onClose={closeMenu} anchorRef={menuButtonRef}>
         <List>
+          <ListItem icon={<IconPencil size={18} />} onClick={handleRenameClick}>
+            제목 수정
+          </ListItem>
           <ListItem className="list-item--danger" icon={<IconTrash size={18} />} onClick={handleDeleteClick}>
             삭제
           </ListItem>
         </List>
       </Popover>
+
+      {/* 이름 수정 모달 */}
+      <Modal
+        isOpen={renameOpen}
+        onClose={() => setRenameOpen(false)}
+        title="제목 수정"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setRenameOpen(false)}
+              disabled={updateDocMutation.isPending}
+            >
+              취소
+            </Button>
+            <Button type="submit" form="rename-form" variant="primary" loading={updateDocMutation.isPending}>
+              <IconCheck size={16} />
+              수정
+            </Button>
+          </>
+        }
+      >
+        <form id="rename-form" onSubmit={handleRenameConfirm} className="directory-create-modal__form">
+          <div className="directory-create-modal__form-group">
+            <label htmlFor="renameValue">새 제목</label>
+            <input
+              id="renameValue"
+              type="text"
+              value={renameValue}
+              onInput={(e) => setRenameValue(e.target.value)}
+              placeholder="새 제목을 입력하세요"
+              required
+              autoFocus
+              disabled={updateDocMutation.isPending}
+              className="directory-create-modal__input"
+            />
+          </div>
+        </form>
+      </Modal>
+
       <ConfirmDialog
         isOpen={confirmOpen}
         title="삭제 확인"

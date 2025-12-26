@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
-import { IconX, IconCheck } from '@tabler/icons-preact';
+import { IconCheck } from '@tabler/icons-preact';
 import { Button } from './Button';
+import { Modal } from './Modal';
 import { getParentPathFromCurrentPath } from '../utils/docManagement';
 import { useToast } from '../contexts/ToastContext';
 import { useCreateFolderMutation } from '../hooks/useDocMutations';
@@ -75,48 +76,39 @@ export function DirectoryCreateModal({ isOpen, onClose, onSuccess, currentPath }
   };
 
   return (
-    <div
-      className="directory-create-modal__overlay"
-      onClick={(e) => e.target.classList.contains('directory-create-modal__overlay') && handleCancel()}
+    <Modal
+      isOpen={isOpen}
+      onClose={handleCancel}
+      title="폴더 생성"
+      footer={
+        <>
+          <Button type="button" variant="secondary" onClick={handleCancel} disabled={loading}>
+            취소
+          </Button>
+          <Button type="submit" form="directory-create-form" variant="primary" loading={loading}>
+            <IconCheck size={16} />
+            생성
+          </Button>
+        </>
+      }
     >
-      <div className="directory-create-modal__container">
-        <div className="directory-create-modal__header">
-          <h2 className="directory-create-modal__title">폴더 생성</h2>
-          <button className="directory-create-modal__close" onClick={handleCancel} aria-label="닫기">
-            <IconX size={20} />
-          </button>
+      <form id="directory-create-form" onSubmit={handleSubmit} className="directory-create-modal__form">
+        <div className="directory-create-modal__form-group">
+          <label htmlFor="folderName">폴더명</label>
+          <input
+            id="folderName"
+            type="text"
+            value={folderName}
+            onInput={(e) => setFolderName(e.target.value)}
+            placeholder="예: 새폴더"
+            required
+            autoFocus
+            disabled={loading}
+            className="directory-create-modal__input"
+          />
+          <span className="directory-create-modal__helper">현재 디렉토리: {parentPath}</span>
         </div>
-
-        <form onSubmit={handleSubmit} className="directory-create-modal__form">
-          <div className="directory-create-modal__body">
-            <div className="directory-create-modal__form-group">
-              <label htmlFor="folderName">폴더명</label>
-              <input
-                id="folderName"
-                type="text"
-                value={folderName}
-                onInput={(e) => setFolderName(e.target.value)}
-                placeholder="예: 새폴더"
-                required
-                autoFocus
-                disabled={loading}
-                className="directory-create-modal__input"
-              />
-              <span className="directory-create-modal__helper">현재 디렉토리: {parentPath}</span>
-            </div>
-          </div>
-
-          <div className="directory-create-modal__footer">
-            <Button type="button" variant="secondary" onClick={handleCancel} disabled={loading}>
-              취소
-            </Button>
-            <Button type="submit" variant="primary" loading={loading}>
-              <IconCheck size={16} />
-              생성
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+      </form>
+    </Modal>
   );
 }

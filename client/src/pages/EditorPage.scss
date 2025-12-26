@@ -246,7 +246,9 @@
 
       @media (max-width: 768px) {
         padding: 0.5rem;
-        min-width: 0;
+        min-width: 34px;
+        height: 34px;
+        justify-content: center;
 
         .btn-text {
           display: none; // 모바일에서 텍스트 숨김
@@ -261,12 +263,13 @@
 
       @media (max-width: 768px) {
         gap: 0.5rem;
-        flex: 1;
+        flex: 0 0 auto; // 남은 공간을 채우지 않고 필요한 만큼만
 
         .button {
           padding: 0.5rem;
-          min-width: 0;
-          flex: 1; // 버튼들이 남은 공간을 나눠 가짐
+          min-width: 34px; // 아이콘 버튼 크기 유지
+          height: 34px;
+          flex: 0 0 auto;
           justify-content: center;
 
           .btn-text {
