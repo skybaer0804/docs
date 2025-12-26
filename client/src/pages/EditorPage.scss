@@ -2,8 +2,8 @@
 
 .editor-page {
   padding: 1rem;
-  max-width: 1000px;
-  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
   background-color: var(--bg-color);
   color: var(--text-color);
 
@@ -89,8 +89,16 @@
     flex-direction: column;
     gap: 0.5rem;
 
-    label {
-      font-weight: 600;
+    .form-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      min-height: 34px;
+
+      label {
+        font-weight: 600;
+        margin-bottom: 0; // 초기화
+      }
     }
 
     input[type='text'],
@@ -231,11 +239,6 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      color: #dc2626;
-
-      &:hover {
-        background-color: #fee2e2;
-      }
     }
 
     .button-group {

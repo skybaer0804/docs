@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'preact/hooks';
+import { createPortal } from 'preact/compat';
 import { Button } from './Button';
 import './ConfirmDialog.scss';
 
@@ -37,7 +38,7 @@ export function ConfirmDialog({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div
       className="confirm-dialog__overlay"
       onClick={(e) => {
@@ -69,8 +70,7 @@ export function ConfirmDialog({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
-
-

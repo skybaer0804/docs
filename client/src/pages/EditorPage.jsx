@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useRef } from 'preact/hooks';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { route } from 'preact-router';
 import { Button } from '../components/Button';
 import { FileLocationModal } from '../components/FileEditor/FileLocationModal';
-import { IconFolder, IconEye, IconEyeOff, IconTrash } from '@tabler/icons-preact';
+import { IconFolder, IconEye, IconEyeOff, IconTrash, IconFileUpload } from '@tabler/icons-preact';
 import { navigationObserver } from '../observers/NavigationObserver';
 import { useDocContentQuery } from '../hooks/useDocContentQuery';
 import { useCreateDocMutation, useUpdateDocMutation, useDeleteDocMutation } from '../hooks/useDocMutations';
@@ -19,6 +19,7 @@ import './EditorPage.scss';
 export function EditorPage({ mode = 'create', path, onNavigate }) {
   const { user, loading: authLoading } = useAuth();
   const { showSuccess, showError } = useToast();
+  const fileInputRef = useRef(null);
 
   // URL 쿼리 파라미터에서 parent 경로 가져오기
   const getParentPathFromQuery = () => {
@@ -41,6 +42,38 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
 
   const [error, setError] = useState('');
   const [locationModalOpen, setLocationModalOpen] = useState(false);
+
+  // 파일 첨부 핸들러
+  const handleFileAttach = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.md')) {
+      showError('.md 확장자 파일만 첨부 가능합니다.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result;
+      if (typeof text === 'string') {
+        setContent(text);
+        // 파일명에서 확장자 제거하여 제목으로 제안
+        const fileName = file.name.replace(/\.md$/i, '');
+        if (!title) setTitle(fileName);
+        showSuccess('파일 내용을 불러왔습니다.');
+      }
+    };
+    reader.onerror = () => showError('파일을 읽는 중 오류가 발생했습니다.');
+    reader.readAsText(file);
+
+    // 같은 파일 다시 선택 가능하도록 초기화
+    e.target.value = '';
+  };
+
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click();
+  };
 
   // 파일 타입 확인 (쿼리 파라미터)
   const isFileType = () => {
@@ -209,61 +242,52 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
       {error && <div className="error-message">{error}</div>}
 
       <form onSubmit={handleSubmit} className="editor-form">
-        {/* 전체 공개 토글 - 우상단 */}
-        <div className="editor-page__public-toggle">
-          <button
-            type="button"
-            className={`editor-page__toggle-btn ${isPublic ? 'editor-page__toggle-btn--active' : ''}`}
-            onClick={() => setIsPublic(!isPublic)}
-            aria-label={isPublic ? '전체 공개' : '비공개'}
-            title={isPublic ? '전체 공개 (로그인 없이 열람 가능)' : '비공개 (로그인 필요)'}
-          >
-            {isPublic ? <IconEye size={20} /> : <IconEyeOff size={20} />}
-          </button>
-        </div>
-
         <div className="form-row">
           <div className="form-group">
-            <label>제목</label>
+            <div className="form-label-row">
+              <label htmlFor="title">제목</label>
+              <button
+                type="button"
+                className={`editor-page__toggle-btn ${isPublic ? 'editor-page__toggle-btn--active' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsPublic(!isPublic);
+                }}
+                aria-label={isPublic ? '전체 공개' : '비공개'}
+                title={isPublic ? '전체 공개 (로그인 없이 열람 가능)' : '비공개 (로그인 필요)'}
+              >
+                {isPublic ? <IconEye size={18} /> : <IconEyeOff size={18} />}
+              </button>
+            </div>
             <input
+              id="title"
               type="text"
               value={title}
               onInput={(e) => setTitle(e.target.value)}
               required
               placeholder="예: guide"
             />
-            <span className="helper">문서를 직접 작성 추가하면 .md 파일로 저장됩니다.</span>
+            <span className="helper">문서를 직접 작성하거나 파일을 첨부하면 .md 파일로 저장됩니다.</span>
           </div>
-
-          {mode === 'create' && (
-            <div className="form-group">
-              <label>상위 폴더 경로</label>
-              <div className="form-group__path-input-wrapper">
-                <input
-                  type="text"
-                  value={parentPath}
-                  onInput={(e) => setParentPath(e.target.value)}
-                  required
-                  placeholder="예: /docs/api"
-                  className="form-group__path-input"
-                />
-                <button
-                  type="button"
-                  className="form-group__path-button"
-                  onClick={() => setLocationModalOpen(true)}
-                  title="파일 위치 선택"
-                >
-                  <IconFolder size={18} />
-                </button>
-              </div>
-              <span className="helper">현재 디렉토리: {parentPath}</span>
-            </div>
-          )}
         </div>
 
         <div className="form-group editor-area">
-          <label>내용</label>
-          <textarea value={content} onInput={(e) => setContent(e.target.value)} required></textarea>
+          <div className="form-label-row">
+            <label htmlFor="content">내용</label>
+            <button
+              type="button"
+              className="editor-page__toggle-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                triggerFileUpload();
+              }}
+              title="마크다운 파일 첨부 (.md)"
+            >
+              <IconFileUpload size={18} />
+            </button>
+          </div>
+          <textarea id="content" value={content} onInput={(e) => setContent(e.target.value)} required></textarea>
+          <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept=".md" onInput={handleFileAttach} />
         </div>
 
         <div className="editor-footer">
@@ -292,8 +316,8 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
         </div>
       </form>
 
-      {/* 파일 위치 선택 모달 */}
-      {mode === 'create' && (
+      {/* 파일 위치 선택 모달 (현재는 숨겨진 입력란으로 인해 호출되지 않음) */}
+      {mode === 'create' && locationModalOpen && (
         <FileLocationModal
           isOpen={locationModalOpen}
           onClose={() => setLocationModalOpen(false)}

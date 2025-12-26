@@ -85,13 +85,13 @@
     }
 
     &--danger {
-        background-color: #f44336;
+        background-color: #d32f2f;
         color: white;
-        border-color: #f44336;
+        border-color: #d32f2f;
 
         &:not(:disabled):hover {
-            background-color: #d32f2f;
-            border-color: #d32f2f;
+            background-color: #b71c1c;
+            border-color: #b71c1c;
         }
     }
 
