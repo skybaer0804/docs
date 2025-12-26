@@ -147,7 +147,13 @@
 
   &__main-content {
     padding: 20px 0 0 20px;
-    min-height: 0;
+    min-height: calc(100vh - var(--header-height, 80px) - 64px); // 헤더와 브레드크럼 높이 제외
+    display: flex;
+    flex-direction: column;
+
+    & > * {
+      flex: 1;
+    }
   }
 }
 

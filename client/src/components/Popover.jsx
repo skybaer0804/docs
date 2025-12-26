@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'preact/hooks';
+import { createPortal } from 'preact/compat';
 import './Popover.scss';
 
 /**
@@ -37,46 +38,55 @@ export function Popover({ isOpen, onClose, children, className = '', anchorRef }
     document.addEventListener('keydown', handleEscape);
 
     // Popover 위치 조정
-    if (popoverRef.current && anchorRef?.current) {
-      const anchorRect = anchorRef.current.getBoundingClientRect();
-      const popoverRect = popoverRef.current.getBoundingClientRect();
+    const updatePosition = () => {
+      if (popoverRef.current && anchorRef?.current) {
+        const anchorRect = anchorRef.current.getBoundingClientRect();
+        const popoverRect = popoverRef.current.getBoundingClientRect();
 
-      // 기본: anchor 아래쪽에 표시 (메뉴/설정/점점점 등에 자연스러운 위치)
-      let top = anchorRect.bottom + 8;
-      let left = anchorRect.left;
+        // 기본: anchor 아래쪽에 표시 (메뉴/설정/점점점 등에 자연스러운 위치)
+        let top = anchorRect.bottom + 8;
+        let left = anchorRect.left;
 
-      // 화면 밖으로 나가면 위치 조정
-      if (top + popoverRect.height > window.innerHeight) {
-        // 아래 공간이 부족하면 위쪽에 배치
-        top = anchorRect.top - popoverRect.height - 8;
-      }
-      if (left + popoverRect.width > window.innerWidth) {
-        // 오른쪽 공간이 부족하면 anchor 기준 오른쪽 정렬
-        left = anchorRect.right - popoverRect.width;
-      }
-      if (left < 0) {
-        left = 8; // 최소 여백 유지
-      }
-      if (top < 0) {
-        top = 8; // 최소 여백 유지
-      }
+        // 화면 밖으로 나가면 위치 조정
+        if (top + popoverRect.height > window.innerHeight) {
+          // 아래 공간이 부족하면 위쪽에 배치
+          top = anchorRect.top - popoverRect.height - 8;
+        }
+        if (left + popoverRect.width > window.innerWidth) {
+          // 오른쪽 공간이 부족하면 anchor 기준 오른쪽 정렬
+          left = anchorRect.right - popoverRect.width;
+        }
+        if (left < 0) {
+          left = 8; // 최소 여백 유지
+        }
+        if (top < 0) {
+          top = 8; // 최소 여백 유지
+        }
 
-      popoverRef.current.style.top = `${top}px`;
-      popoverRef.current.style.left = `${left}px`;
-    }
+        popoverRef.current.style.top = `${top}px`;
+        popoverRef.current.style.left = `${left}px`;
+      }
+    };
+
+    updatePosition();
+    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('resize', updatePosition);
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
     };
   }, [isOpen, onClose, anchorRef]);
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className={`popover ${className}`.trim()} ref={popoverRef}>
       {children}
-    </div>
+    </div>,
+    document.body
   );
 }
 

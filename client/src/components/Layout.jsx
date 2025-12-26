@@ -123,11 +123,6 @@ export function LayoutPresenter({
             </div>
           </div>
           <div class="header__actions">
-            {user && (
-              <button class="header__profile" onClick={handleProfile} title={user.username || user.email}>
-                <IconUser size={20} />
-              </button>
-            )}
             <button class="header__search-btn" onClick={onOpenSearch} aria-label="검색 (Ctrl+K)" title="검색 (Ctrl+K)">
               <IconSearch size={20} />
             </button>
