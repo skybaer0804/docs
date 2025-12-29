@@ -1,32 +1,19 @@
 {
-    "name": "docs",
-    "version": "1.0.0",
-    "type": "module",
+    "name": "nodejs-docs-project",
+    "version": "2.0.0",
+    "description": "Node.js Document Project with Express and Supabase",
     "scripts": {
-        "generate-docs": "node scripts/generate-docs-list.js",
-        "generate-icons": "node scripts/generate-icons.js",
-        "clean": "node scripts/clean-cache.js",
-        "dev": "npm run generate-docs && npm run generate-icons && vite",
-        "dev:clean": "npm run clean && npm run generate-docs && npm run generate-icons && vite",
-        "build": "npm run generate-docs && npm run generate-icons && vite build",
-        "preview": "vite preview"
-    },
-    "dependencies": {
-        "@tabler/icons-preact": "^3.35.0",
-        "marked": "^11.1.1",
-        "preact": "^10.19.0",
-        "preact-router": "^4.1.1"
+        "postinstall": "cd client && npm install && cd ../server && npm install",
+        "build": "cd client && npm run build",
+        "start": "cd server && node src/app.js",
+        "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
+        "dev:client": "cd client && npm run dev",
+        "dev:server": "cd server && npm run dev"
     },
     "devDependencies": {
-        "@babel/core": "^7.28.5",
-        "@babel/preset-env": "^7.28.5",
-        "@preact/preset-vite": "^2.9.0",
-        "@types/jest": "^30.0.0",
-        "babel-jest": "^30.2.0",
-        "jest": "^30.2.0",
-        "jest-environment-jsdom": "^30.2.0",
-        "sass": "^1.94.0",
-        "vite": "^5.1.0",
-        "vite-plugin-pwa": "^1.1.0"
+        "concurrently": "^8.0.0"
+    },
+    "engines": {
+        "node": ">=18.0.0"
     }
 }

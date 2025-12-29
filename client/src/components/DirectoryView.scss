@@ -1,0 +1,260 @@
+.directory-view {
+    width: 100%;
+    animation: fadeIn 0.2s ease-in;
+
+    @media (max-width: 768px) {
+        animation: slideInFromRight 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+}
+
+.directory-view__dnd-hint {
+    margin: 0 0 10px 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(25, 118, 210, 0.2);
+    background: rgba(25, 118, 210, 0.08);
+    color: #1a2a53;
+    font-size: 0.85rem;
+    line-height: 1.35;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.directory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    padding: 0;
+}
+
+.directory-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    padding: 10px 12px;
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 40px;
+
+    &:hover {
+        background: #e9ecef;
+        border-color: #667eea;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    &:active {
+        transform: scale(0.98);
+        background: #dee2e6;
+    }
+
+    &--dragging {
+        opacity: 0.55;
+        transform: scale(0.99);
+    }
+
+    &--drag-over {
+        border-color: rgba(25, 118, 210, 0.9);
+        background: rgba(25, 118, 210, 0.08);
+        box-shadow: 0 8px 16px rgba(25, 118, 210, 0.12);
+    }
+
+    &--drop-success {
+        animation: directoryDropPulse 520ms ease;
+    }
+
+    &--droppable {
+        outline: 1px dashed rgba(25, 118, 210, 0.45);
+        outline-offset: 2px;
+    }
+
+    &--drop-disabled {
+        opacity: 0.75;
+        filter: grayscale(0.15);
+        border-style: dashed;
+        border-color: rgba(180, 180, 180, 0.9);
+        cursor: not-allowed;
+    }
+
+    &--not-droppable {
+        cursor: not-allowed;
+    }
+
+    &.folder-item {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+
+        &:hover {
+            background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+        }
+    }
+
+    &.file-item {
+        background: #f5f5f5;
+    }
+
+    &__menu-btn {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        background: transparent;
+        border: 1px solid rgba(224, 224, 224, 0.9);
+        color: #666;
+        cursor: pointer;
+        opacity: 0.9;
+        transition: all 0.2s;
+
+        &:hover {
+            background-color: rgba(245, 245, 245, 0.95);
+            color: #333;
+            border-color: #ccc;
+        }
+
+        &:active {
+            transform: scale(0.95);
+        }
+    }
+}
+
+@keyframes directoryDropPulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 rgba(25, 118, 210, 0);
+    }
+    40% {
+        transform: scale(1.04);
+        box-shadow: 0 0 0 7px rgba(25, 118, 210, 0.16);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 rgba(25, 118, 210, 0);
+    }
+}
+
+.item-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.item-name {
+    font-size: 0.95rem;
+    color: #495057;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.folder-item .item-name {
+    color: #333;
+}
+
+@media (max-width: 768px) {
+    .directory-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding: 0;
+    }
+
+    .directory-item {
+        min-height: 36px;
+        padding: 8px 10px;
+    }
+}
+
+// 다크모드
+body[data-theme='dark'] {
+    .directory-view__dnd-hint {
+        border-color: rgba(100, 181, 246, 0.22);
+        background: rgba(100, 181, 246, 0.1);
+        color: #e0e0e0;
+    }
+
+    .directory-item {
+        background: #2a2a2a;
+        border-color: #444;
+
+        &:hover {
+            background: #333;
+            border-color: #64b5f6;
+            box-shadow: 0 2px 8px rgba(100, 181, 246, 0.2);
+        }
+
+        &:active {
+            background: #3a3a3a;
+        }
+
+        &--drag-over {
+            border-color: rgba(100, 181, 246, 0.85);
+            background: rgba(100, 181, 246, 0.12);
+            box-shadow: 0 8px 16px rgba(100, 181, 246, 0.14);
+        }
+
+        &--droppable {
+            outline-color: rgba(100, 181, 246, 0.35);
+        }
+
+        &--drop-disabled {
+            border-color: rgba(90, 90, 90, 0.9);
+        }
+
+        &.folder-item {
+            background: linear-gradient(135deg, #2a2a2a 0%, #333 100%);
+
+            &:hover {
+                background: linear-gradient(135deg, #333 0%, #3a3a3a 100%);
+            }
+        }
+
+        &.file-item {
+            background: #2a2a2a;
+        }
+
+        &__menu-btn {
+            border-color: rgba(68, 68, 68, 0.9);
+            color: #b0b0b0;
+
+            &:hover {
+                background-color: rgba(51, 51, 51, 0.95);
+                color: #e0e0e0;
+                border-color: #555;
+            }
+        }
+    }
+
+    .item-name {
+        color: #d0d0d0;
+    }
+
+    .folder-item .item-name {
+        color: #e0e0e0;
+    }
+}

@@ -1,0 +1,103 @@
+.markdown-viewer {
+    position: relative;
+    width: 100%;
+
+    &__actions {
+        position: absolute;
+        top: 4px; // 제목 라인과 맞추기 위해 조정
+        right: 0;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        z-index: 10;
+    }
+
+    &__action-btn {
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(224, 224, 224, 0.6);
+        border-radius: 6px;
+        padding: 6px;
+        cursor: pointer;
+        color: #666;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        box-sizing: border-box;
+        opacity: 0.85;
+
+        &:hover {
+            background-color: rgba(245, 245, 245, 0.95);
+            color: #1976d2;
+            border-color: rgba(204, 204, 204, 0.8);
+            opacity: 1;
+        }
+
+        &:active {
+            transform: scale(0.95);
+        }
+    }
+
+    &__download-btn {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: transparent;
+        border: none;
+        border-radius: 50%;
+        padding: 8px;
+        cursor: pointer;
+        color: #666;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        z-index: 10;
+
+        &:hover {
+            background-color: #f0f0f0;
+            color: #1976d2;
+        }
+
+        &:active {
+            transform: scale(0.95);
+        }
+    }
+}
+
+.markdown-content {
+    // 기존 스타일은 style.scss에 있음
+}
+
+// 다크모드
+body[data-theme='dark'] {
+    .markdown-viewer {
+        &__action-btn {
+            background: rgba(37, 37, 37, 0.9);
+            color: #b0b0b0;
+            border-color: rgba(68, 68, 68, 0.6);
+            opacity: 0.85;
+
+            &:hover {
+                background-color: rgba(51, 51, 51, 0.95);
+                color: #64b5f6;
+                border-color: rgba(85, 85, 85, 0.8);
+                opacity: 1;
+            }
+        }
+
+        &__download-btn {
+            color: #b0b0b0;
+
+            &:hover {
+                background-color: #333;
+                color: #64b5f6;
+            }
+        }
+    }
+}

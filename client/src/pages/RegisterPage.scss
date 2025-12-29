@@ -1,0 +1,104 @@
+@use '../style.scss' as *;
+
+.register-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: calc(100vh - 60px); // 헤더 높이 제외
+    background-color: var(--bg-color);
+}
+
+.register-container {
+    background-color: var(--card-bg);
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    border: 1px solid var(--border-color);
+
+    h1 {
+        text-align: center;
+        margin-bottom: 2rem;
+        color: var(--text-color);
+    }
+
+    .error-message {
+        background-color: #fee2e2;
+        color: #dc2626;
+        padding: 0.75rem;
+        border-radius: 4px;
+        margin-bottom: 1rem;
+        font-size: 0.875rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--input-bg-color, #ffffff);
+            color: var(--text-color);
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+
+            &:focus {
+                outline: none;
+                border-color: var(--primary-color);
+            }
+
+            &::placeholder {
+                color: var(--text-muted-color, #999);
+            }
+        }
+    }
+
+    .register-button {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    .register-footer {
+        text-align: center;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+        color: var(--text-color);
+        font-size: 0.875rem;
+
+        .link-button {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            text-decoration: underline;
+            margin-left: 0.5rem;
+            padding: 0;
+            font-size: inherit;
+
+            &:hover {
+                color: var(--primary-hover-color);
+            }
+        }
+    }
+
+    // 다크모드
+    body[data-theme='dark'] & {
+        input {
+            background-color: var(--input-bg-color);
+            color: var(--text-color);
+            border-color: var(--border-color);
+        }
+    }
+}
+

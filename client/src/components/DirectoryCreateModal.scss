@@ -1,0 +1,70 @@
+.directory-create-modal {
+  &__form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  &__form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__form-group label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-color, #333);
+  }
+
+  &__input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 4px;
+    font-size: 0.875rem;
+    color: var(--text-color, #333);
+    background: var(--bg-color, #fff);
+    transition: border-color 0.2s ease;
+
+    &:focus {
+      outline: none;
+      border-color: var(--primary-color, #1976d2);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  &__helper {
+    font-size: 0.75rem;
+    color: var(--text-color-secondary, #666);
+  }
+}
+
+// 다크 모드
+body[data-theme='dark'] {
+  .directory-create-modal {
+    &__form-group label {
+      color: var(--text-color-dark, #e0e0e0);
+    }
+
+    &__input {
+      border-color: var(--border-color-dark, #333);
+      background: var(--bg-color-dark, #1e1e1e);
+      color: var(--text-color-dark, #e0e0e0);
+
+      &:focus {
+        border-color: var(--primary-color-dark, #64b5f6);
+      }
+    }
+
+    &__helper {
+      color: var(--text-color-secondary-dark, #999);
+    }
+  }
+}
+

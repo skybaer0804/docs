@@ -1,0 +1,444 @@
+.layout {
+  display: flex;
+  justify-content: center;
+  height: 100%;
+  min-height: 100vh;
+  padding: 0;
+  background-color: #ffffff;
+  transition: background-color 0.3s ease;
+
+  &__overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+
+    &--open {
+      display: block;
+    }
+  }
+
+  &__container {
+    max-width: 1100px;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff;
+    transition: background-color 0.3s ease;
+  }
+
+  &__content-wrapper {
+    display: flex;
+    align-items: stretch;
+    padding: 0;
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  &__sidebar {
+    position: sticky;
+    top: 0;
+    background: #ffffff;
+    padding: 5px 5px 0 5px;
+    max-height: calc(100vh - var(--header-height, 80px));
+    overflow-y: auto;
+    overflow-x: hidden;
+    align-self: stretch;
+    flex-shrink: 0;
+    width: 250px;
+    transition: width 0.3s ease, background-color 0.3s ease;
+    position: relative;
+
+    &--open {
+      transform: translateX(0);
+    }
+
+    &--collapsed {
+      padding: 0;
+      overflow: hidden;
+    }
+  }
+
+  &__sidebar-collapse {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    padding: 6px;
+    cursor: pointer;
+    color: #666;
+    z-index: 10;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+
+    &:hover {
+      background-color: #f0f0f0;
+      color: #333;
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+
+  &__sidebar-close {
+    display: none;
+  }
+
+  &__main {
+    background: #ffffff;
+    padding: 0;
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: background-color 0.3s ease;
+    // PC: 우측 padding 5px + 스크롤바 공간 확보 (스크롤바 너비 8px + 여유 공간)
+    // 세로 스크롤바가 콘텐츠에 겹치지 않도록 충분한 공간 확보
+    // padding-right: 17px;
+
+    // 모바일에서 페이지 전환 애니메이션을 위한 컨테이너
+    @media (max-width: 768px) {
+      padding-right: 16px;
+    }
+  }
+
+  &__main-scroll {
+    flex: 1;
+    min-height: 0;
+    // PC: 가로 스크롤 허용 (코드 블록, 테이블용)
+    overflow-x: auto;
+    overflow-y: auto;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    position: relative;
+
+    @media (max-width: 768px) {
+      overflow-x: hidden;
+      overflow-y: auto;
+      position: relative;
+    }
+  }
+
+  &__breadcrumb-bar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #ffffff;
+    padding: 6px 12px 6px 12px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  &__main-content {
+    padding: 10px 0 0 10px;
+    min-height: calc(100vh - var(--header-height, 80px) - 64px); // 헤더와 브레드크럼 높이 제외
+    display: flex;
+    flex-direction: column;
+
+    & > * {
+      flex: 1;
+    }
+  }
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: #ffffff;
+  padding: 5px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  &__breadcrumb {
+    flex: 1;
+    min-width: 0; // flex item overflow fix
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__title-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    // margin-bottom: 12px;
+    min-width: 0; // flex 자식의 ellipsis를 위해 추가
+  }
+
+  &__title {
+    font-size: 1.5rem;
+    color: #2c3e50;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.3s ease;
+    min-width: 0;
+    // flex: 1; 제거 (필요한 만큼만 차지하도록)
+  }
+
+  &__title-text {
+    cursor: pointer;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    // flex: 1; 제거 (아이콘이 바로 옆에 붙도록)
+    min-width: 0;
+
+    &:hover {
+      opacity: 0.7;
+    }
+  }
+
+  &__external-link {
+    color: #666;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    transition: color 0.2s;
+    opacity: 0.7;
+    flex-shrink: 0; // 아이콘 크기 유지
+
+    &:hover {
+      color: #1976d2;
+      opacity: 1;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto; // 오른쪽 끝으로 밀기
+  }
+
+  &__auth-btn,
+  &__profile,
+  &__search-btn,
+  &__theme-toggle,
+  &__settings-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 6px;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 34px;
+    height: 34px;
+    box-sizing: border-box;
+    position: relative;
+
+    &:hover {
+      background-color: #f5f5f5;
+      color: #333;
+      border-color: #ccc;
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+}
+
+// 다크모드
+body[data-theme='dark'] {
+  .layout {
+    background-color: #1a1a1a;
+
+    &__container {
+      background-color: #1a1a1a;
+    }
+
+    &__sidebar {
+      background: #252525;
+      border-right: 1px solid #333;
+    }
+
+    &__main {
+      background: #1a1a1a;
+    }
+
+    &__breadcrumb-bar {
+      background: #1a1a1a;
+      border-bottom: 1px solid #333;
+    }
+
+    &__sidebar-collapse {
+      color: #b0b0b0;
+
+      &:hover {
+        background-color: #333;
+        color: #e0e0e0;
+      }
+    }
+
+    &__overlay {
+      background-color: rgba(0, 0, 0, 0.7);
+    }
+  }
+
+  .header {
+    background-color: #252525;
+    border-bottom: 1px solid #333;
+
+    &__title {
+      color: #e0e0e0;
+    }
+
+    &__external-link {
+      color: #b0b0b0;
+
+      &:hover {
+        color: #64b5f6;
+      }
+    }
+
+    &__menu-toggle {
+      color: #b0b0b0;
+      border-color: #333;
+
+      &:active {
+        background-color: #333;
+      }
+    }
+
+    &__profile,
+    &__search-btn,
+    &__auth-btn,
+    &__theme-toggle,
+    &__settings-btn {
+      color: #b0b0b0;
+      border-color: #444;
+
+      &:hover {
+        background-color: #333;
+        color: #e0e0e0;
+        border-color: #555;
+      }
+    }
+  }
+}
+
+.header {
+  &__menu-toggle {
+    display: none;
+    background: transparent;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 6px 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #666;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    flex-shrink: 0;
+
+    &:active {
+      background-color: #e0e0e0;
+      transform: scale(0.95);
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .layout {
+    padding: 0;
+
+    &__content-wrapper {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      padding: 0;
+    }
+
+    &__sidebar {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 280px;
+      height: 100vh;
+      max-height: 100vh;
+      z-index: 1000;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      box-shadow: -2px 0 8px rgba(0, 0, 0, 0.2);
+      padding-top: 60px;
+      border-top-left-radius: 16px;
+      border-bottom-left-radius: 16px;
+    }
+
+    &__sidebar-close {
+      display: block;
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: transparent;
+      border: none;
+      font-size: 1.5rem;
+      color: #666;
+      cursor: pointer;
+      padding: 8px;
+      line-height: 1;
+      z-index: 1001;
+
+      &:hover {
+        color: #333;
+        background-color: #e0e0e0;
+        border-radius: 4px;
+      }
+    }
+
+    &__main {
+      padding: 0;
+    }
+
+    &__breadcrumb-bar {
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+
+    &__main-content {
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+  }
+
+  .header {
+    padding: 12px 16px;
+
+    &__title {
+      font-size: 1.25rem;
+    }
+  }
+}
