@@ -1,14 +1,35 @@
 import { useMemo } from 'preact/hooks';
 import { buildCategoryBreadcrumbItems, buildFileBreadcrumbItems } from '../utils/breadcrumbUtils';
 import { useDocsTreeQuery } from './useDocsTreeQuery';
+import { useQuery } from '@tanstack/react-query';
+import { subKeys } from '../query/queryKeys';
+import { fetchSubscriptionList } from '../utils/api';
+import { useAuth } from '../contexts/AuthContext';
 
 /**
  * Breadcrumb의 로직을 담당하는 Custom Hook
  * TDD 친화적: 로직을 분리하여 테스트 용이
  */
 export function useBreadcrumb(currentRoute) {
+  const { user: currentUser } = useAuth();
   const { data: nodes = [] } = useDocsTreeQuery();
-  
+
+  // 내가 팔로잉하는 유저 리스트 (UUID -> 이름 변환용)
+  const { data: followingUsers = [] } = useQuery({
+    queryKey: subKeys.list(currentUser?.id, 'following'),
+    queryFn: () => fetchSubscriptionList(currentUser.id, 'following'),
+    enabled: !!currentUser?.id,
+    staleTime: 30 * 1000,
+  });
+
+  // UUID를 사용자 이름으로 변환하는 헬퍼 함수
+  const getSubscribedUserName = (part) => {
+    if (!part || !part.startsWith('sub_')) return null;
+    const uuid = part.replace('sub_', '');
+    const found = followingUsers.find((u) => u.id === uuid);
+    return found ? found.document_title || found.username : null;
+  };
+
   // path로 노드를 찾는 헬퍼 함수
   const findNodeByPath = (path) => {
     return nodes.find((n) => n.path === path);
@@ -76,9 +97,17 @@ export function useBreadcrumb(currentRoute) {
         .filter((p) => p); // 빈 문자열 제거
 
       const breadcrumbItems = buildCategoryBreadcrumbItems(pathParts);
-      
-      // 각 아이템에 nodeId 추가 (path로 노드 찾기)
+
+      // 각 아이템에 nodeId 추가 (path로 노드 찾기) 및 구독자 UUID 라벨 변환
       const itemsWithNodeId = breadcrumbItems.map((item) => {
+        // 구독자 UUID 라벨 처리
+        if (item.label && item.label.startsWith('sub_')) {
+          const userName = getSubscribedUserName(item.label);
+          if (userName) {
+            return { ...item, label: userName, nodeId: null };
+          }
+        }
+
         if (item.type === 'link' && item.route === '/') {
           // 루트는 null
           return { ...item, nodeId: null };
@@ -108,9 +137,17 @@ export function useBreadcrumb(currentRoute) {
     }
 
     const breadcrumbItems = buildFileBreadcrumbItems(file);
-    
-    // 각 아이템에 nodeId 추가 (path로 노드 찾기)
+
+    // 각 아이템에 nodeId 추가 (path로 노드 찾기) 및 구독자 UUID 라벨 변환
     const itemsWithNodeId = breadcrumbItems.map((item) => {
+      // 구독자 UUID 라벨 처리
+      if (item.label && item.label.startsWith('sub_')) {
+        const userName = getSubscribedUserName(item.label);
+        if (userName) {
+          return { ...item, label: userName, nodeId: null };
+        }
+      }
+
       if (item.type === 'link' && item.route === '/') {
         // 루트는 null
         return { ...item, nodeId: null };
@@ -128,5 +165,5 @@ export function useBreadcrumb(currentRoute) {
       items: itemsWithNodeId,
       displayType: 'file',
     };
-  }, [currentRoute, allFiles, findNodeByPath]);
+  }, [currentRoute, allFiles, findNodeByPath, followingUsers]);
 }

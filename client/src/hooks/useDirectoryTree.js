@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'preact/hooks';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'preact/hooks';
 import { buildDirectoryTree } from '../utils/treeUtils';
 import { navigationObserver } from '../observers/NavigationObserver';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
@@ -16,6 +16,7 @@ export function useDirectoryTree(currentPath, onNavigate) {
     const [loadingTrees, setLoadingTrees] = useState({}); // userId -> boolean
     const queryClient = useQueryClient();
     const { user } = useAuth();
+    const lastPathRef = useRef('');
     
     // 내 문서 트리
     const { data: nodes = [], isLoading: loading } = useDocsTreeQuery();
@@ -77,7 +78,8 @@ export function useDirectoryTree(currentPath, onNavigate) {
 
     // currentPath 변경 시 자동으로 부모 경로들을 펼치기
     useEffect(() => {
-        if (!currentPath || Object.keys(categorized).length === 0) return;
+        if (!currentPath || currentPath === lastPathRef.current || Object.keys(categorized).length === 0) return;
+        lastPathRef.current = currentPath;
 
         let parts = [];
         

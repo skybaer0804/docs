@@ -37,7 +37,7 @@ export function DirectoryTreePresenter({
   const bindDropTarget = (targetFolderId, targetFolderType) => {
     // targetFolderId가 null이면 실제 null로 비교 (루트 대응)
     const normalizedTargetId = targetFolderId === 'null' ? null : targetFolderId;
-    
+
     // stale closure 방지를 위해 Ref 사용 가능하면 사용, 아니면 state 사용
     // DirectoryTree는 매번 렌더링되므로 state 기반 canDropTo도 동작함
     const canDrop = dnd.canDropTo(targetFolderId, targetFolderType);
@@ -48,7 +48,9 @@ export function DirectoryTreePresenter({
     return {
       dndHeaderClassName: `${isDragging && canDrop ? 'folder-item__header--droppable' : ''} ${
         isDragging && !canDrop ? 'folder-item__header--drop-disabled' : ''
-      } ${isOver ? 'folder-item__header--drag-over' : ''} ${isSuccess ? 'folder-item__header--drop-success' : ''}`.trim(),
+      } ${isOver ? 'folder-item__header--drag-over' : ''} ${
+        isSuccess ? 'folder-item__header--drop-success' : ''
+      }`.trim(),
       dndTitle: isDragging ? (canDrop ? '여기로 이동 (드롭)' : '이 위치로는 이동할 수 없습니다') : '',
     };
   };
@@ -167,7 +169,11 @@ export function DirectoryTreePresenter({
   };
 
   // 비회원용 또는 문서가 하나도 없는 회원용 사이드바 뷰
-  if (!user || (categorized._files?.length === 0 && Object.keys(categorized).filter(k => k !== '_files' && k !== '_meta').length === 0)) {
+  if (
+    !user ||
+    (categorized._files?.length === 0 &&
+      Object.keys(categorized).filter((k) => k !== '_files' && k !== '_meta').length === 0)
+  ) {
     return (
       <div className="directory-tree">
         <div className="directory-tree__guest-cta">
@@ -175,10 +181,10 @@ export function DirectoryTreePresenter({
             {!user ? '나만의 문서 저장소를 만들어보세요.' : '아직 작성된 문서가 없습니다.'}
           </p>
           <button className="directory-tree__guest-btn" onClick={handleCreateMyPage}>
-            {!user ? '내 페이지 만들기' : '첫 문서 작성하기'}
+            {!user ? '문서 작성하기' : '첫 문서 작성하기'}
           </button>
         </div>
-        
+
         {/* 구독 페이지는 회원인 경우에만 보여줌 */}
         {user && followingUsers.length > 0 && (
           <div className="directory-tree__section">
@@ -202,9 +208,7 @@ export function DirectoryTreePresenter({
                     {isLoading && <span className="directory-tree__loading-icon">...</span>}
                   </div>
                   {isUserExpanded && userTree && (
-                    <div className="category-content">
-                      {renderTree(userTree, `sub_${userId}`, 0, new Set())}
-                    </div>
+                    <div className="category-content">{renderTree(userTree, `sub_${userId}`, 0, new Set())}</div>
                   )}
                 </div>
               );
@@ -282,10 +286,12 @@ export function DirectoryTreePresenter({
                 key={category}
                 class="category-section"
                 data-expanded={isExpanded}
-                {...(categoryMeta ? {
-                  'data-dnd-drop-id': categoryMeta.id,
-                  'data-dnd-drop-type': 'DIRECTORY',
-                } : {})}
+                {...(categoryMeta
+                  ? {
+                      'data-dnd-drop-id': categoryMeta.id,
+                      'data-dnd-drop-type': 'DIRECTORY',
+                    }
+                  : {})}
               >
                 <FolderItem
                   level={0}
@@ -331,9 +337,7 @@ export function DirectoryTreePresenter({
                   {isLoading && <span className="directory-tree__loading-icon">...</span>}
                 </div>
                 {isUserExpanded && userTree && (
-                  <div className="category-content">
-                    {renderTree(userTree, `sub_${userId}`, 0, new Set())}
-                  </div>
+                  <div className="category-content">{renderTree(userTree, `sub_${userId}`, 0, new Set())}</div>
                 )}
               </div>
             );
@@ -443,9 +447,11 @@ function FolderItem({
             </button>
           )}
         </div>
-        {!isCategory && <div class="subcategory-content">{renderTree(subNode, subPath, level + 1, visited)}</div>}
+        {!isCategory && (
+          <div class="subcategory-content">{isSubExpanded && renderTree(subNode, subPath, level + 1, visited)}</div>
+        )}
       </li>
-      {isCategory && <div class="category-content">{renderTree(subNode, subPath, 0, visited)}</div>}
+      {isCategory && <div class="category-content">{isSubExpanded && renderTree(subNode, subPath, 0, visited)}</div>}
       <Popover isOpen={popoverOpen} onClose={() => setPopoverOpen(false)} anchorRef={buttonRef}>
         <FileManageList onCreateDocument={handleCreateDocument} onCreateFolder={handleCreateFolder} />
       </Popover>

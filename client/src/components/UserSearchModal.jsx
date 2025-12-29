@@ -102,3 +102,4 @@ export function UserSearchModal({ isOpen, onClose, onFollowSuccess }) {
   );
 }
 
+

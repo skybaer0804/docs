@@ -165,6 +165,20 @@ export function DirectoryViewPresenter({
     onFolderClick(parentRoute.replace('/category/', ''));
   };
 
+  const handleCreateNew = () => {
+    let parent = '/docs';
+    if (displayType === 'directory' && displayData?.path) {
+      // 구독 페이지인 경우(sub_로 시작) 해당 유저 폴더에 생성 시도 (백엔드에서 권한 체크됨)
+      parent = `/docs/${displayData.path}`;
+    }
+
+    if (onNavigate) {
+      onNavigate(`/write?parent=${encodeURIComponent(parent)}`);
+    } else {
+      navigationObserver.notify(`/write?parent=${encodeURIComponent(parent)}`);
+    }
+  };
+
   const handleDeleteClick = () => {
     if (!menuTarget?.id) return;
     if (!canManage(menuTarget.author_id)) return;
@@ -259,8 +273,11 @@ export function DirectoryViewPresenter({
     if (categoryKeys.length === 0 && rootFiles.length === 0) {
       content = (
         <div class="directory-view">
-          <div style="text-align: center; padding: 40px;">
-            <p style="color: #666;">문서가 없습니다.</p>
+          <div class="directory-view__empty" style="text-align: center; padding: 60px 20px;">
+            <p style="color: #666; margin-bottom: 20px;">문서가 없습니다.</p>
+            <Button variant="primary" onClick={handleCreateNew}>
+              첫 문서 작성하기
+            </Button>
           </div>
         </div>
       );
@@ -387,112 +404,128 @@ export function DirectoryViewPresenter({
     const subdirectories = Object.keys(node).filter((key) => key !== '_files' && key !== '_meta');
     const directFiles = node._files || [];
 
-    content = (
-      <div class="directory-view">
-        {dnd.isDragging && (
-          <div class="directory-view__dnd-hint" role="note">
-            폴더에만 드롭할 수 있어요. 상위로 빼기는 상단의 ⬆ 드롭존에 드롭하세요.
+    if (subdirectories.length === 0 && directFiles.length === 0) {
+      const isSubscribedPage = path?.startsWith('sub_');
+      content = (
+        <div class="directory-view">
+          <div class="directory-view__empty" style="text-align: center; padding: 60px 20px;">
+            <p style="color: #666; margin-bottom: 20px;">이 폴더는 비어 있습니다.</p>
+            {!isSubscribedPage && (
+              <Button variant="primary" onClick={handleCreateNew}>
+                이 폴더에 문서 작성하기
+              </Button>
+            )}
           </div>
-        )}
-        <div class="directory-grid">
-          {subdirectories.map((subdir) => {
-            const subPath = path ? `${path}/${subdir}` : subdir;
-            const meta = node?.[subdir]?._meta;
-            const folderPath = meta?.path || `/docs/${subPath}`;
-            const showMenu = meta && canManage(meta.author_id);
-            const drop = bindDropTarget(meta?.id, 'DIRECTORY');
-            const { dndClassName = '', dndTitle = '' } = drop || {};
-            return (
-              <div
-                key={subdir}
-                class={`directory-item folder-item ${dndClassName}`}
-                onClick={() => onFolderClick(subPath)}
-                title={dndTitle || subPath}
-                {...(meta
-                  ? {
-                      'data-dnd-drop-id': meta.id,
-                      'data-dnd-drop-type': 'DIRECTORY',
-                      'data-dnd-item-id': meta.id,
-                      'data-dnd-item-type': 'DIRECTORY',
-                      'data-dnd-item-path': folderPath,
-                      'data-dnd-item-name': meta.name || subdir,
-                      'data-dnd-item-author-id': meta.author_id,
-                    }
-                  : {})}
-              >
-                <span class="item-icon">📁</span>
-                <span class="item-name">{subdir}</span>
-                {showMenu && (
-                  <button
-                    class="directory-item__menu-btn"
-                    onClick={(e) =>
-                      openMenu(e, {
-                        type: 'folder',
-                        id: meta.id,
-                        path: folderPath,
-                        author_id: meta.author_id,
-                        label: subdir,
-                      })
-                    }
-                    aria-label="폴더 메뉴"
-                    title="폴더 메뉴"
-                  >
-                    <IconDotsVertical size={18} />
-                  </button>
-                )}
-              </div>
-            );
-          })}
-          {directFiles.map((file) => {
-            const showMenu = canManage(file.author_id);
-            return (
-              <div
-                key={file.path}
-                class={`directory-item file-item ${dnd.dragItem?.id === file.id ? 'directory-item--dragging' : ''} ${
-                  dnd.isDragging ? 'directory-item--not-droppable' : ''
-                }`}
-                onClick={(e) => {
-                  // 드래그 중이면 클릭 무시
-                  if (dnd.isDragging) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    return;
-                  }
-                  onFileClick(file);
-                }}
-                title={dnd.isDragging ? '파일에는 드롭할 수 없습니다 (폴더만 가능)' : file.path}
-                data-dnd-item-id={file.id}
-                data-dnd-item-type="FILE"
-                data-dnd-item-path={file.path}
-                data-dnd-item-name={file.name || file.title}
-                data-dnd-item-author-id={file.author_id}
-              >
-                <span class="item-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
-                <span class="item-name">{file.title}</span>
-                {showMenu && (
-                  <button
-                    class="directory-item__menu-btn"
-                    onClick={(e) =>
-                      openMenu(e, {
-                        type: 'file',
-                        id: file.id,
-                        path: file.path,
-                        author_id: file.author_id,
-                        label: file.title,
-                      })
-                    }
-                    aria-label="파일 메뉴"
-                    title="파일 메뉴"
-                  >
-                    <IconDotsVertical size={18} />
-                  </button>
-                )}
-              </div>
-            );
-          })}
         </div>
-      </div>
-    );
+      );
+    } else {
+      content = (
+        <div class="directory-view">
+          {dnd.isDragging && (
+            <div class="directory-view__dnd-hint" role="note">
+              폴더에만 드롭할 수 있어요. 상위로 빼기는 상단의 ⬆ 드롭존에 드롭하세요.
+            </div>
+          )}
+          <div class="directory-grid">
+            {subdirectories.map((subdir) => {
+              const subPath = path ? `${path}/${subdir}` : subdir;
+              const meta = node?.[subdir]?._meta;
+              const folderPath = meta?.path || `/docs/${subPath}`;
+              const showMenu = meta && canManage(meta.author_id);
+              const drop = bindDropTarget(meta?.id, 'DIRECTORY');
+              const { dndClassName = '', dndTitle = '' } = drop || {};
+              return (
+                <div
+                  key={subdir}
+                  class={`directory-item folder-item ${dndClassName}`}
+                  onClick={() => onFolderClick(subPath)}
+                  title={dndTitle || subPath}
+                  {...(meta
+                    ? {
+                        'data-dnd-drop-id': meta.id,
+                        'data-dnd-drop-type': 'DIRECTORY',
+                        'data-dnd-item-id': meta.id,
+                        'data-dnd-item-type': 'DIRECTORY',
+                        'data-dnd-item-path': folderPath,
+                        'data-dnd-item-name': meta.name || subdir,
+                        'data-dnd-item-author-id': meta.author_id,
+                      }
+                    : {})}
+                >
+                  <span class="item-icon">📁</span>
+                  <span class="item-name">{subdir}</span>
+                  {showMenu && (
+                    <button
+                      class="directory-item__menu-btn"
+                      onClick={(e) =>
+                        openMenu(e, {
+                          type: 'folder',
+                          id: meta.id,
+                          path: folderPath,
+                          author_id: meta.author_id,
+                          label: subdir,
+                        })
+                      }
+                      aria-label="폴더 메뉴"
+                      title="폴더 메뉴"
+                    >
+                      <IconDotsVertical size={18} />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+            {directFiles.map((file) => {
+              const showMenu = canManage(file.author_id);
+              return (
+                <div
+                  key={file.path}
+                  class={`directory-item file-item ${dnd.dragItem?.id === file.id ? 'directory-item--dragging' : ''} ${
+                    dnd.isDragging ? 'directory-item--not-droppable' : ''
+                  }`}
+                  onClick={(e) => {
+                    // 드래그 중이면 클릭 무시
+                    if (dnd.isDragging) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      return;
+                    }
+                    onFileClick(file);
+                  }}
+                  title={dnd.isDragging ? '파일에는 드롭할 수 없습니다 (폴더만 가능)' : file.path}
+                  data-dnd-item-id={file.id}
+                  data-dnd-item-type="FILE"
+                  data-dnd-item-path={file.path}
+                  data-dnd-item-name={file.name || file.title}
+                  data-dnd-item-author-id={file.author_id}
+                >
+                  <span class="item-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
+                  <span class="item-name">{file.title}</span>
+                  {showMenu && (
+                    <button
+                      class="directory-item__menu-btn"
+                      onClick={(e) =>
+                        openMenu(e, {
+                          type: 'file',
+                          id: file.id,
+                          path: file.path,
+                          author_id: file.author_id,
+                          label: file.title,
+                        })
+                      }
+                      aria-label="파일 메뉴"
+                      title="파일 메뉴"
+                    >
+                      <IconDotsVertical size={18} />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
   }
 
   return (
