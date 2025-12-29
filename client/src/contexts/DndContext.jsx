@@ -180,12 +180,6 @@ export function DndProvider({ children, currentRoute, onNavigate }) {
       const finalTargetId = targetParentId === 'null' ? null : targetParentId;
 
       // 클라이언트 로그: 드래그앤드롭 시작
-      console.log('[DnD Client] 드래그앤드롭 시작:', {
-        itemId: currentItem.id,
-        itemName: currentItem.name,
-        targetParentId: finalTargetId,
-        timestamp: new Date().toISOString(),
-      });
 
       try {
         const result = await moveMutation.mutateAsync({
@@ -194,13 +188,6 @@ export function DndProvider({ children, currentRoute, onNavigate }) {
         });
 
         // 클라이언트 로그: 드래그앤드롭 성공
-        console.log('[DnD Client] 드래그앤드롭 성공:', {
-          itemId: currentItem.id,
-          itemName: currentItem.name,
-          oldParentId: currentItem.parent_id,
-          newParentId: result?.parent_id,
-          timestamp: new Date().toISOString(),
-        });
 
         // 플라이 애니메이션
         runDropSuccessEffect(targetParentId);
@@ -279,18 +266,8 @@ export function DndProvider({ children, currentRoute, onNavigate }) {
     ({ pointerId, sourceEl, item }) => {
       // 이미 다른 드래그 중이면 무시
       if (!item || !sourceEl) {
-        console.log('[DnD Debug] 드래그 시작 실패: item 또는 sourceEl 없음', { item, sourceEl });
         return;
       }
-
-      console.log('[DnD Debug] 드래그 시작:', {
-        itemId: item.id,
-        itemName: item.name,
-        itemPath: item.path,
-        itemType: item.type,
-        pointerId,
-        timestamp: new Date().toISOString(),
-      });
 
       // 커서/선택 상태 저장 + 드래그 모드 진입
       try {
@@ -333,23 +310,9 @@ export function DndProvider({ children, currentRoute, onNavigate }) {
         if (dropId) {
           // stale closure 방지를 위해 dragItemRef.current 사용
           const canDrop = canDropTo(dropId, dropType, dragItemRef.current);
-          console.log('[DnD Debug] 드롭 타겟 인식:', {
-            dropId,
-            dropType,
-            canDrop,
-            dropEl: dropEl?.tagName,
-            timestamp: new Date().toISOString(),
-          });
           if (canDrop) {
             markDragOver(dropId);
           } else {
-            console.log('[DnD Debug] 드롭 불가:', {
-              dropId,
-              dropType,
-              dragItem: dragItemRef.current
-                ? { id: dragItemRef.current.id, path: dragItemRef.current.path, type: dragItemRef.current.type }
-                : null,
-            });
             clearDragOver();
           }
         } else {
@@ -363,28 +326,13 @@ export function DndProvider({ children, currentRoute, onNavigate }) {
         const dropId = dropEl?.getAttribute?.('data-dnd-drop-id');
         const dropType = dropEl?.getAttribute?.('data-dnd-drop-type');
 
-        console.log('[DnD Debug] 드래그 종료:', {
-          dropId,
-          dropType,
-          hasDropEl: !!dropEl,
-          // stale closure 방지
-          canDrop: dropId ? canDropTo(dropId, dropType, dragItemRef.current) : false,
-          dragItem: dragItemRef.current ? { id: dragItemRef.current.id, type: dragItemRef.current.type } : null,
-          timestamp: new Date().toISOString(),
-        });
-
         // 드래그 후 클릭 억제 (특히 onClick 네비게이션이 걸린 리스트에서 중요)
         suppressClickRef.current.until = Date.now() + 450;
         suppressClickRef.current.sourceEl = sourceEl;
 
         if (dropId && canDropTo(dropId, dropType, dragItemRef.current)) {
-          console.log('[DnD Debug] 드롭 실행:', { dropId });
           dropTo(dropId);
         } else {
-          console.log('[DnD Debug] 드롭 취소:', {
-            dropId,
-            canDrop: dropId ? canDropTo(dropId, dropType, dragItemRef.current) : false,
-          });
           endDrag();
         }
 
@@ -473,40 +421,18 @@ export function DndProvider({ children, currentRoute, onNavigate }) {
   const bindMouseDragSource = useCallback(
     (item) => ({
       onPointerDown: (e) => {
-        console.log('[DnD Debug] onPointerDown 호출됨:', {
-          itemId: item?.id,
-          itemName: item?.name,
-          pointerType: e?.pointerType,
-          button: e?.button,
-          target: e?.target?.tagName,
-          currentTarget: e?.currentTarget?.tagName,
-          timestamp: new Date().toISOString(),
-        });
-
         if (!e || e.pointerType !== 'mouse') {
-          console.log('[DnD Debug] onPointerDown: 마우스가 아님', { pointerType: e?.pointerType });
           return;
         }
         if (!item) {
-          console.log('[DnD Debug] bindMouseDragSource: item 없음');
           return;
         }
         if (moveMutation.isPending) {
-          console.log('[DnD Debug] bindMouseDragSource: 이동 중');
           return;
         }
         if (typeof e.button === 'number' && e.button !== 0) {
-          console.log('[DnD Debug] onPointerDown: 좌클릭이 아님', { button: e.button });
           return; // 좌클릭만
         }
-
-        console.log('[DnD Debug] 마우스 포인터 다운 (드래그 시작 가능):', {
-          itemId: item.id,
-          itemName: item.name,
-          itemPath: item.path,
-          pointerType: e.pointerType,
-          timestamp: new Date().toISOString(),
-        });
 
         cancelMousePre();
 
@@ -522,12 +448,6 @@ export function DndProvider({ children, currentRoute, onNavigate }) {
           const dy = ev.clientY - startY;
           const distance = Math.hypot(dx, dy);
           if (distance > 4) {
-            console.log('[DnD Debug] 마우스 이동 감지, 드래그 시작:', {
-              distance,
-              dx,
-              dy,
-              itemId: item.id,
-            });
             cancelMousePre();
             // native 텍스트 드래그/선택 방지
             if (ev.cancelable) ev.preventDefault();
@@ -536,7 +456,6 @@ export function DndProvider({ children, currentRoute, onNavigate }) {
         };
         const onPreEnd = (ev) => {
           if (ev.pointerId !== pointerId) return;
-          console.log('[DnD Debug] 마우스 포인터 업 (드래그 시작 전)');
           cancelMousePre();
         };
 
@@ -566,7 +485,6 @@ export function DndProvider({ children, currentRoute, onNavigate }) {
   const bindDragSource = useCallback(
     (item) => {
       if (!item) {
-        console.log('[DnD Debug] bindDragSource: item 없음');
         return {};
       }
       const touchHandlers = bindTouchDragSource ? bindTouchDragSource(item) : {};
@@ -575,12 +493,6 @@ export function DndProvider({ children, currentRoute, onNavigate }) {
         ...touchHandlers,
         ...mouseHandlers,
       };
-      console.log('[DnD Debug] bindDragSource 반환:', {
-        itemId: item.id,
-        itemName: item.name,
-        hasOnPointerDown: !!handlers.onPointerDown,
-        handlers: Object.keys(handlers),
-      });
       return handlers;
     },
     [bindMouseDragSource, bindTouchDragSource],

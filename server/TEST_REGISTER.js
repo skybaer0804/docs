@@ -35,14 +35,13 @@ async function testRegister() {
     console.log('1. Supabase Table Editor에서 users 테이블 확인');
     console.log('2. email 컬럼이 있는지 확인');
     console.log('3. 서버 콘솔의 에러 메시지 확인');
-
   } catch (error) {
     console.error('\n❌ 에러 발생:');
     console.error('Message:', error.message);
     console.error('Code:', error.code);
     console.error('Details:', error.details);
     console.error('Hint:', error.hint);
-    
+
     if (error.code === '42P01') {
       console.error('\n⚠️  users 테이블이 존재하지 않습니다!');
       console.error('Supabase SQL Editor에서 create_users_table.sql 실행하세요.');
@@ -54,4 +53,3 @@ async function testRegister() {
 }
 
 testRegister();
-
