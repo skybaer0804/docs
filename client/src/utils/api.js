@@ -186,7 +186,13 @@ export async function fetchDocContent(path) {
   // 하지만 path 파라미터가 이미 "/docs/..."를 포함하고 있다면:
   const url = `${API_BASE}${cleanPath}`;
 
-  const response = await fetch(url);
+  const token = getToken();
+  const headers = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(url, { headers });
   if (!response.ok) {
     if (response.status === 404) return null;
     throw new Error('Failed to fetch document content');

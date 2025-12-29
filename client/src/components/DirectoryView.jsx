@@ -268,7 +268,6 @@ export function DirectoryViewPresenter({
   if (displayType === 'root') {
     const categoryKeys = Object.keys(categorized || {}).filter((key) => key !== '_files' && key !== '_meta');
     const rootFiles = categorized?._files || [];
-    console.log('[DirectoryView] categorized:', categorized, 'categoryKeys:', categoryKeys, 'rootFiles:', rootFiles);
 
     if (categoryKeys.length === 0 && rootFiles.length === 0) {
       content = (

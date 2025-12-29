@@ -109,12 +109,9 @@ exports.searchDocs = async (req, res) => {
 
     if (include_following === 'true') {
       // 1. 내가 팔로잉하는 유저 ID 목록 가져오기
-      const { data: subs } = await supabase
-        .from('subscriptions')
-        .select('following_id')
-        .eq('follower_id', userId);
-      
-      const followingIds = subs?.map(s => s.following_id) || [];
+      const { data: subs } = await supabase.from('subscriptions').select('following_id').eq('follower_id', userId);
+
+      const followingIds = subs?.map((s) => s.following_id) || [];
 
       // 2. 통합 검색 쿼리 (내 문서 전체 + 팔로잉 유저의 공개/구독자 전용 문서)
       let filterStr = `author_id.eq.${userId}`;
@@ -124,10 +121,12 @@ exports.searchDocs = async (req, res) => {
 
       query = supabase
         .from('nodes')
-        .select(`
+        .select(
+          `
           id, name, path, type, visibility_type, author_id,
           users:author_id (username)
-        `)
+        `,
+        )
         .or(filterStr)
         .ilike('name', `%${keyword}%`)
         .order('type', { ascending: true })
@@ -136,10 +135,12 @@ exports.searchDocs = async (req, res) => {
       // 내 문서만 검색
       query = supabase
         .from('nodes')
-        .select(`
+        .select(
+          `
           id, name, path, type, visibility_type, author_id,
           users:author_id (username)
-        `)
+        `,
+        )
         .eq('author_id', userId)
         .ilike('name', `%${keyword}%`)
         .order('type', { ascending: true })
@@ -176,7 +177,7 @@ exports.getUserDocs = async (req, res) => {
       if (subscription) {
         allowedVisibilities.push('subscriber_only');
       }
-      
+
       // 본인인 경우 (이 API를 본인이 쓸 일은 적겠지만 처리)
       if (viewerId === userId) {
         allowedVisibilities.push('subscriber_only', 'private');
@@ -215,11 +216,24 @@ exports.getDocByPath = async (req, res) => {
       throw error;
     }
 
-    // 권한 체크: 비공개 문서는 로그인 유저만 볼 수 있음
-    // TODO: 실제 인증 미들웨어 연동 시 주석 해제
-    // if (!doc.is_public && !req.user) {
-    //   return res.status(403).json({ error: 'Access denied' });
-    // }
+    // 권한 체크: 비공개 문서는 로그인 유저(본인)만 볼 수 있음
+    if (doc.visibility_type === 'private' && (!req.user || req.user.id !== doc.author_id)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // 구독자 전용 문서 체크
+    if (doc.visibility_type === 'subscriber_only' && (!req.user || req.user.id !== doc.author_id)) {
+      const { data: sub } = await supabase
+        .from('subscriptions')
+        .select('id')
+        .eq('follower_id', req.user?.id)
+        .eq('following_id', doc.author_id)
+        .single();
+
+      if (!sub) {
+        return res.status(403).json({ error: 'Access denied. Subscriber only.' });
+      }
+    }
 
     res.json(doc);
   } catch (err) {

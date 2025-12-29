@@ -7,12 +7,14 @@ import { RegisterPage } from './pages/RegisterPage';
 import { EditorPage } from './pages/EditorPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { SubscriptionManagementPage } from './pages/SubscriptionManagementPage';
+import { useAuth } from './contexts/AuthContext';
 
 /**
  * SPA 구조의 App 컴포넌트
  * 상태 기반 네비게이션으로 라우터 없이 동작
  */
 export function App() {
+  const { user } = useAuth();
   // 초기 경로는 URL에서 가져오거나 기본값 '/'
   const getInitialRoute = () => {
     if (typeof window !== 'undefined') {
@@ -120,7 +122,7 @@ export function App() {
 
   return (
     <ThemeProvider>
-      <LayoutContainer currentPath={currentRoute} onNavigate={handleNavigate}>
+      <LayoutContainer key={user?.id || 'guest'} currentPath={currentRoute} onNavigate={handleNavigate}>
         {renderContent()}
       </LayoutContainer>
     </ThemeProvider>

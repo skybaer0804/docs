@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const docsController = require('../controllers/docsController');
-const upload = require('multer')(); 
+const upload = require('multer')();
 const authMiddleware = require('../middleware/authMiddleware');
+const optionalAuthMiddleware = require('../middleware/optionalAuthMiddleware');
 
 // 문서 검색 (🔐 인증 필요 - 내 문서 및 선택적으로 구독 유저 문서)
 router.get('/search', authMiddleware, docsController.searchDocs);
@@ -29,6 +30,6 @@ router.delete('/:id', authMiddleware, docsController.deleteDoc);
 router.post('/move', authMiddleware, docsController.moveDoc);
 
 // 특정 문서 조회 (공개/비공개 로직은 컨트롤러 내부에서 처리)
-router.get('/*', docsController.getDocByPath);
+router.get('/*', optionalAuthMiddleware, docsController.getDocByPath);
 
 module.exports = router;
