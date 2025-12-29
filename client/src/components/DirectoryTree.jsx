@@ -383,7 +383,9 @@ function FolderItem({
   return (
     <>
       <li
-        class={level === 0 && !isCategory ? 'subcategory-item' : isCategory ? '' : 'subcategory-item nested'}
+        class={`${
+          level === 0 && !isCategory ? 'subcategory-item' : isCategory ? 'category-item' : 'subcategory-item nested'
+        }`}
         data-expanded={isSubExpanded}
       >
         <div
@@ -419,15 +421,10 @@ function FolderItem({
             </button>
           )}
         </div>
-        {!isCategory && (
-          <div class="subcategory-content">
-            {isSubExpanded && renderTree(subNode, subPath, level + 1, visited, isSubscription)}
-          </div>
-        )}
+        <div class={isCategory ? 'category-content' : 'subcategory-content'}>
+          {isSubExpanded && renderTree(subNode, subPath, isCategory ? 0 : level + 1, visited, isSubscription)}
+        </div>
       </li>
-      {isCategory && (
-        <div class="category-content">{isSubExpanded && renderTree(subNode, subPath, 0, visited, isSubscription)}</div>
-      )}
       <Popover isOpen={popoverOpen} onClose={() => setPopoverOpen(false)} anchorRef={buttonRef}>
         <FileManageList onCreateDocument={handleCreateDocument} onCreateFolder={handleCreateFolder} />
       </Popover>
