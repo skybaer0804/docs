@@ -55,7 +55,7 @@ export function LayoutPresenter({
     try {
       await signOut();
       setSettingsOpen(false);
-      onNavigate('/');
+      onNavigate('/login');
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -76,6 +76,9 @@ export function LayoutPresenter({
   };
 
   const [directoryModalOpen, setDirectoryModalOpen] = useState(false);
+
+  const effectivePath =
+    currentPath?.startsWith('/category/sub_') || currentPath?.startsWith('/docs/sub_') ? '/docs' : currentPath;
 
   const handleCreateFolder = () => {
     setSettingsOpen(false);
@@ -215,7 +218,7 @@ export function LayoutPresenter({
       <DirectoryCreateModal
         isOpen={directoryModalOpen}
         onClose={() => setDirectoryModalOpen(false)}
-        currentPath={currentPath}
+        currentPath={effectivePath}
       />
     </div>
   );

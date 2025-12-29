@@ -56,7 +56,7 @@ export function DirectoryTreePresenter({
   };
 
   // 재귀적으로 트리 렌더링 (순환 참조 방지)
-  function renderTree(node, path = '', level = 0, visited = new Set()) {
+  function renderTree(node, path = '', level = 0, visited = new Set(), isSubscription = false) {
     // 순환 참조 방지: 이미 방문한 노드는 건너뛰기
     const nodeKey = path || 'root';
     if (visited.has(nodeKey)) {
@@ -135,13 +135,14 @@ export function DirectoryTreePresenter({
                 isSubExpanded={isSubExpanded}
                 isSubcategoryActive={isSubcategoryActive}
                 onFolderClick={onFolderClick}
-                onCreateDocument={onCreateDocument}
-                onCreateFolder={onCreateFolder}
+                onCreateDocument={isSubscription ? null : onCreateDocument}
+                onCreateFolder={isSubscription ? null : onCreateFolder}
                 subNode={subNode}
                 renderTree={renderTree}
                 visited={visited}
                 bindDragSource={bindDragSource}
                 bindDropTarget={bindDropTarget}
+                isSubscription={isSubscription}
               />
             );
           })}
@@ -307,7 +308,7 @@ export function DirectoryTreePresenter({
                   {isLoading && <span className="directory-tree__loading-icon">...</span>}
                 </div>
                 {isUserExpanded && userTree && (
-                  <div className="category-content">{renderTree(userTree, `sub_${userId}`, 0, new Set())}</div>
+                  <div className="category-content">{renderTree(userTree, `sub_${userId}`, 0, new Set(), true)}</div>
                 )}
               </div>
             );
@@ -337,6 +338,7 @@ function FolderItem({
   isCategory = false,
   bindDragSource,
   bindDropTarget,
+  isSubscription = false,
 }) {
   const [hovered, setHovered] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -418,10 +420,14 @@ function FolderItem({
           )}
         </div>
         {!isCategory && (
-          <div class="subcategory-content">{isSubExpanded && renderTree(subNode, subPath, level + 1, visited)}</div>
+          <div class="subcategory-content">
+            {isSubExpanded && renderTree(subNode, subPath, level + 1, visited, isSubscription)}
+          </div>
         )}
       </li>
-      {isCategory && <div class="category-content">{isSubExpanded && renderTree(subNode, subPath, 0, visited)}</div>}
+      {isCategory && (
+        <div class="category-content">{isSubExpanded && renderTree(subNode, subPath, 0, visited, isSubscription)}</div>
+      )}
       <Popover isOpen={popoverOpen} onClose={() => setPopoverOpen(false)} anchorRef={buttonRef}>
         <FileManageList onCreateDocument={handleCreateDocument} onCreateFolder={handleCreateFolder} />
       </Popover>
