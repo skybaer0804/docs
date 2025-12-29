@@ -24,6 +24,7 @@ export function MarkdownViewerContainer({ content, file, onNavigate, onContentRe
                 route: n.path,
                 title: n.name.replace(/\.md$/, ''),
                 name: n.name,
+                author_id: n.author_id,
             }));
     }, [nodes]);
 
