@@ -26,17 +26,8 @@ export function DirectoryCreateModal({ isOpen, onClose, onSuccess, currentPath }
 
   if (!isOpen) return null;
 
-  // currentPath가 이미 /docs/로 시작하는 경로이면 그대로 사용, 아니면 변환
-  let parentPath = '/docs';
-  if (currentPath) {
-    if (currentPath.startsWith('/docs')) {
-      parentPath = currentPath; // 이미 /docs 경로면 그대로 사용
-    } else if (currentPath.startsWith('/category/')) {
-      parentPath = currentPath.replace('/category/', '/docs/');
-    } else {
-      parentPath = getParentPathFromCurrentPath(currentPath);
-    }
-  }
+  // currentPath를 기반으로 부모 경로 계산 (이미 /docs 경로 변환 및 파일명 제거 처리됨)
+  const parentPath = getParentPathFromCurrentPath(currentPath);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

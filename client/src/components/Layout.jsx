@@ -23,6 +23,7 @@ import { Popover } from './Popover';
 import { List } from './List';
 import { ListItem } from './ListItem';
 import { DirectoryCreateModal } from './DirectoryCreateModal';
+import { getParentPathFromCurrentPath } from '../utils/docManagement';
 import { route } from 'preact-router';
 import './Layout.scss';
 
@@ -71,8 +72,9 @@ export function LayoutPresenter({
 
   const handleCreateDocument = () => {
     setSettingsOpen(false);
-    // 루트 단 파일 생성 가능하도록 /docs로 설정
-    onNavigate(`/write?parent=${encodeURIComponent('/docs')}`);
+    // 현재 경로를 기반으로 부모 경로 계산하여 전달
+    const parentPath = getParentPathFromCurrentPath(effectivePath);
+    onNavigate(`/write?parent=${encodeURIComponent(parentPath)}`);
   };
 
   const [directoryModalOpen, setDirectoryModalOpen] = useState(false);
