@@ -31,11 +31,6 @@ async function createAdminUser() {
 
     // 사용자 생성
     const user = await UserModel.create(email, passwordHash);
-
-    console.log('Admin user created successfully:');
-    console.log(`  ID: ${user.id}`);
-    console.log(`  Email: ${user.email}`);
-    console.log(`  Created at: ${user.created_at}`);
   } catch (error) {
     console.error('Error creating admin user:', error);
     process.exit(1);
@@ -43,4 +38,3 @@ async function createAdminUser() {
 }
 
 createAdminUser();
-

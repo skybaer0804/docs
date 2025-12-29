@@ -283,16 +283,6 @@ exports.createDoc = async (req, res) => {
       author_id: author_id, // 필수 필드 추가 (명시적으로 설정)
     };
 
-    // 디버깅: author_id 확인
-    console.log('createDoc: Inserting node with author_id:', {
-      author_id,
-      author_id_type: typeof author_id,
-      user_id: req.user.id,
-      type,
-      name,
-      path: newPath,
-    });
-
     const { data, error } = await supabase.from('nodes').insert([insertData]).select().single();
 
     if (error) {
@@ -459,14 +449,6 @@ exports.moveDoc = async (req, res) => {
       return res.status(400).json({ error: 'Missing required field: id' });
     }
 
-    // 서버 로그: 드래그앤드롭 요청 시작
-    console.log('[DnD Server] 드래그앤드롭 요청:', {
-      itemId: id,
-      targetParentId: target_parent_id,
-      userId: author_id,
-      timestamp: new Date().toISOString(),
-    });
-
     // source node
     const { data: source, error: sourceErr } = await supabase
       .from('nodes')
@@ -520,15 +502,6 @@ exports.moveDoc = async (req, res) => {
       });
     }
 
-    // 서버 로그: 업데이트 전 정보
-    console.log('[DnD Server] 파일 이동 업데이트:', {
-      itemId: source.id,
-      itemName: source.name,
-      oldParentId: source.parent_id,
-      newParentId: targetParentId,
-      timestamp: new Date().toISOString(),
-    });
-
     // update source: parent_id만 업데이트
     const { data: updated, error: updateErr } = await supabase
       .from('nodes')
@@ -540,15 +513,6 @@ exports.moveDoc = async (req, res) => {
       .single();
 
     if (updateErr) throw updateErr;
-
-    // 서버 로그: 업데이트 성공
-    console.log('[DnD Server] 파일 이동 성공:', {
-      itemId: updated.id,
-      itemName: updated.name,
-      oldParentId: source.parent_id,
-      newParentId: updated.parent_id,
-      timestamp: new Date().toISOString(),
-    });
 
     res.json({
       id: updated.id,
