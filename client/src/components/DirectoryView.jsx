@@ -275,9 +275,11 @@ export function DirectoryViewPresenter({
         <div class="directory-view">
           <div class="directory-view__empty" style="text-align: center; padding: 60px 20px;">
             <p style="color: #666; margin-bottom: 20px;">문서가 없습니다.</p>
-            <Button variant="primary" onClick={handleCreateNew}>
-              첫 문서 작성하기
-            </Button>
+            {user && (
+              <Button variant="primary" onClick={handleCreateNew}>
+                첫 문서 작성하기
+              </Button>
+            )}
           </div>
         </div>
       );
@@ -409,7 +411,9 @@ export function DirectoryViewPresenter({
       content = (
         <div class="directory-view">
           <div class="directory-view__empty" style="text-align: center; padding: 60px 20px;">
-            <p style="color: #666; margin-bottom: 20px;">이 폴더는 비어 있습니다.</p>
+            <p style="color: #666; margin-bottom: 20px;">
+              {isSubscribedPage ? '구독한 문서가 없습니다.' : '이 폴더는 비어 있습니다.'}
+            </p>
             {!isSubscribedPage && (
               <Button variant="primary" onClick={handleCreateNew}>
                 이 폴더에 문서 작성하기

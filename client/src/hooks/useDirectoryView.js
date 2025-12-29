@@ -2,36 +2,59 @@ import { useMemo } from 'preact/hooks';
 import { buildDirectoryTree } from '../utils/treeUtils';
 import { navigationObserver } from '../observers/NavigationObserver';
 import { useDocsTreeQuery } from './useDocsTreeQuery';
+import { useQuery } from '@tanstack/react-query';
+import { fetchUserDocs } from '../utils/api';
+import { docsKeys } from '../query/queryKeys';
 
 /**
  * DirectoryView의 로직을 담당하는 Custom Hook
  * TDD 친화적: 로직을 분리하여 테스트 용이
  */
 export function useDirectoryView(currentRoute, onNavigate) {
-  const { data: allNodes = [], isLoading: loading } = useDocsTreeQuery();
+  // 내 문서 트리
+  const { data: allNodes = [], isLoading: loadingMyNodes } = useDocsTreeQuery();
+
+  // 현재 경로가 구독 페이지인지 확인
+  const isSubscribedRoute = currentRoute?.startsWith('/category/sub_') || currentRoute?.startsWith('/docs/sub_');
+  const subscribedUserId = isSubscribedRoute
+    ? currentRoute.startsWith('/category/sub_')
+      ? currentRoute.replace('/category/sub_', '').split('/')[0]
+      : currentRoute.replace('/docs/sub_', '').split('/')[0]
+    : null;
+
+  // 구독 문서 트리 (필요한 경우에만 쿼리 활성화)
+  const { data: userNodes = [], isLoading: loadingUserNodes } = useQuery({
+    queryKey: docsKeys.userTree(subscribedUserId),
+    queryFn: () => fetchUserDocs(subscribedUserId),
+    enabled: !!subscribedUserId,
+    staleTime: 60 * 1000,
+  });
+
+  const loading = loadingMyNodes || (!!subscribedUserId && loadingUserNodes);
+
+  // 현재 컨텍스트에 맞는 노드 목록 결정
+  const nodesToUse = isSubscribedRoute ? userNodes : allNodes;
 
   const { categorized, files } = useMemo(() => {
-    console.log('[useDirectoryView] allNodes:', allNodes, 'length:', allNodes.length);
-    if (allNodes.length === 0) {
-      console.log('[useDirectoryView] No nodes found, returning empty');
+    if (!nodesToUse || nodesToUse.length === 0) {
       return { categorized: {}, files: [] };
     }
 
-    const tree = buildDirectoryTree(allNodes);
-    console.log('[useDirectoryView] buildDirectoryTree result:', tree);
-    const fileList = allNodes
+    const tree = buildDirectoryTree(nodesToUse);
+    const fileList = nodesToUse
       .filter((n) => n.type === 'FILE')
       .map((n) => ({
         path: n.path,
         route: n.path,
-        title: n.name.replace(/\.md$/, ''),
+        title: n.name.replace(/\.(md|template)$/i, ''),
         name: n.name,
+        ext: n.name.includes('.') ? `.${n.name.split('.').pop()}` : '',
         id: n.id,
         author_id: n.author_id,
       }));
 
     return { categorized: tree, files: fileList };
-  }, [allNodes]);
+  }, [nodesToUse]);
 
   const handleFolderClick = (path) => {
     // 폴더 뷰를 보여주기 위해 특별한 경로로 이동
@@ -76,12 +99,24 @@ export function useDirectoryView(currentRoute, onNavigate) {
       type = 'root';
     } else if (currentRoute.startsWith('/category/')) {
       // 무제한 중첩 경로 파싱
-      const pathParts = currentRoute
+      let pathParts = currentRoute
         .replace('/category/', '')
         .split('/')
         .filter((p) => p);
-      if (pathParts.length > 0) {
-        const node = getNodeByPath(categorized, pathParts);
+
+      // 구독 페이지인 경우 첫 번째 파트(sub_USERID)는 트리 탐색에서 제외
+      const searchParts = isSubscribedRoute ? pathParts.slice(1) : pathParts;
+
+      if (isSubscribedRoute && searchParts.length === 0) {
+        // 구독 페이지의 루트인 경우
+        type = 'directory';
+        data = {
+          path: pathParts[0],
+          pathParts: pathParts,
+          node: categorized, // buildDirectoryTree가 이미 최상위 노드들을 반환함
+        };
+      } else {
+        const node = getNodeByPath(categorized, searchParts);
         if (node) {
           type = 'directory';
           data = {
@@ -104,8 +139,18 @@ export function useDirectoryView(currentRoute, onNavigate) {
           directoryPath = parts.slice(0, -1);
         }
 
-        if (directoryPath.length > 0) {
-          const node = getNodeByPath(categorized, directoryPath);
+        // 구독 파일인 경우 sub_USERID를 포함한 전체 경로로 탐색 파트 구성
+        const searchParts = isSubscribedRoute ? directoryPath.slice(1) : directoryPath;
+
+        if (isSubscribedRoute && searchParts.length === 0) {
+          type = 'directory';
+          data = {
+            path: directoryPath[0],
+            pathParts: directoryPath,
+            node: categorized,
+          };
+        } else if (searchParts.length > 0) {
+          const node = getNodeByPath(categorized, searchParts);
           if (node) {
             type = 'directory';
             data = {
@@ -114,12 +159,15 @@ export function useDirectoryView(currentRoute, onNavigate) {
               node: node,
             };
           }
+        } else {
+          // 루트 레벨 파일인 경우
+          type = 'root';
         }
       }
     }
 
     return { displayType: type, displayData: data };
-  }, [currentRoute, categorized, files, loading]);
+  }, [currentRoute, categorized, files, loading, isSubscribedRoute]);
 
   return {
     categorized,
