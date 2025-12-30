@@ -3,6 +3,7 @@ export const docsKeys = {
   tree: () => [...docsKeys.all, 'tree'],
   userTree: (userId) => [...docsKeys.all, 'tree', 'user', userId],
   content: (path) => [...docsKeys.all, 'content', path],
+  detail: (id) => [...docsKeys.all, 'detail', id],
 };
 
 export const authKeys = {

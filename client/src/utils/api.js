@@ -159,7 +159,29 @@ export async function fetchUserDocs(userId) {
 }
 
 /**
+ * ID 기반으로 문서 내용을 가져옵니다.
+ * @param {string} id - 문서 ID (UUID)
+ * @returns {Promise<Object>} 문서 객체 (content 포함)
+ */
+export async function fetchDocById(id) {
+  const url = `${API_BASE}/id/${id}`;
+  const token = getToken();
+  const headers = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(url, { headers });
+  if (!response.ok) {
+    if (response.status === 404) return null;
+    throw new Error('Failed to fetch document content by ID');
+  }
+  return response.json();
+}
+
+/**
  * 특정 경로의 문서 내용을 가져옵니다.
+ * @deprecated ID 기반 조회(fetchDocById)를 사용하세요.
  * @param {string} path - 문서 경로 (예: /docs/guide)
  * @returns {Promise<Object>} 문서 객체 (content 포함)
  */

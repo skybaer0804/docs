@@ -192,15 +192,9 @@ export function DndProvider({ children, currentRoute, onNavigate }) {
         // 플라이 애니메이션
         runDropSuccessEffect(targetParentId);
 
-        // 현재 경로 자동 매핑 (이동 시 URL 연동)
-        const nextRoute = mapRouteAfterMove({
-          currentRoute,
-          oldDocsPath: currentItem.path,
-          newDocsPath: result.path,
-        });
-        if (nextRoute && onNavigate) {
-          onNavigate(nextRoute, { replace: true });
-        }
+        // ID 기반 라우팅에서는 이동 후에도 URL(ID)이 바뀌지 않으므로 
+        // 별도의 route mapping이 필요 없습니다. 
+        // 단, 트리 캐시 갱신은 useMoveDocMutation의 onSuccess에서 처리됩니다.
 
         showSuccess('파일 위치가 변경되었습니다.');
       } catch (e) {

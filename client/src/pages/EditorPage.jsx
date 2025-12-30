@@ -14,31 +14,27 @@ import './EditorPage.scss';
  * 문서 작성/수정 페이지
  * props:
  *  - mode: 'create' | 'edit'
- *  - path: 수정 시 문서 경로 (URL)
+ *  - id: 수정 시 문서 ID (UUID)
+ *  - parentId: 생성 시 부모 폴더 ID
  */
-export function EditorPage({ mode = 'create', path, onNavigate }) {
+export function EditorPage({ mode = 'create', id, parentId: propParentId, onNavigate }) {
   const { user, loading: authLoading } = useAuth();
   const { showSuccess, showError } = useToast();
   const fileInputRef = useRef(null);
 
-  // URL 쿼리 파라미터에서 parent 경로 가져오기
-  const getParentPathFromQuery = () => {
-    if (typeof window === 'undefined') return '/docs';
+  // URL 쿼리 파라미터에서 parent_id 가져오기
+  const getParentIdFromQuery = () => {
+    if (typeof window === 'undefined') return propParentId || null;
     const params = new URLSearchParams(window.location.search);
-    const parent = params.get('parent');
-    if (parent) {
-      return decodeURIComponent(parent);
-    }
-    // 기본값: 항상 /docs (현재 문서 경로가 적용되지 않도록)
-    return '/docs';
+    return params.get('parent_id') || propParentId || null;
   };
 
   // 폼 상태
   const [title, setTitle] = useState('');
-  const [parentPath, setParentPath] = useState(getParentPathFromQuery());
+  const [parentId, setParentId] = useState(getParentIdFromQuery());
   const [content, setContent] = useState('# 제목\n\n내용을 입력하세요.');
   const [visibilityType, setVisibilityType] = useState('public');
-  const [docId, setDocId] = useState(null);
+  const [docId, setDocId] = useState(id || null);
 
   const [error, setError] = useState('');
   const [locationModalOpen, setLocationModalOpen] = useState(false);
@@ -58,7 +54,6 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
       const text = event.target?.result;
       if (typeof text === 'string') {
         setContent(text);
-        // 파일명에서 확장자 제거하여 제목으로 제안
         const fileName = file.name.replace(/\.md$/i, '');
         if (!title) setTitle(fileName);
         showSuccess('파일 내용을 불러왔습니다.');
@@ -66,8 +61,6 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
     };
     reader.onerror = () => showError('파일을 읽는 중 오류가 발생했습니다.');
     reader.readAsText(file);
-
-    // 같은 파일 다시 선택 가능하도록 초기화
     e.target.value = '';
   };
 
@@ -75,31 +68,22 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
     fileInputRef.current?.click();
   };
 
-  // 파일 타입 확인 (쿼리 파라미터)
-  const isFileType = () => {
-    if (typeof window === 'undefined') return false;
-    const params = new URLSearchParams(window.location.search);
-    return params.get('type') === 'file';
-  };
-
-  // 생성 모드일 때 URL 쿼리 파라미터에서 parent 경로 읽기 및 초기화
+  // 생성 모드일 때 초기화
   useEffect(() => {
     if (mode === 'create') {
-      const newParentPath = getParentPathFromQuery();
-      setParentPath(newParentPath);
-      // 생성 모드일 때 폼 초기화
+      setParentId(getParentIdFromQuery());
       setTitle('');
       setContent('# 제목\n\n내용을 입력하세요.');
       setVisibilityType('public');
       setDocId(null);
       setError('');
     }
-  }, [mode]);
+  }, [mode, propParentId]);
 
-  const isEditMode = mode === 'edit' && !!path;
-  const { data: doc, isLoading: docLoading, error: docError } = useDocContentQuery(path || '', { enabled: isEditMode });
+  const isEditMode = mode === 'edit' && !!id;
+  const { data: doc, isLoading: docLoading, error: docError } = useDocContentQuery(id || '', { enabled: isEditMode });
 
-  // 수정 모드일 때 데이터 로드 (Query 결과를 폼 상태로 반영)
+  // 수정 모드일 때 데이터 로드
   useEffect(() => {
     if (!isEditMode) return;
 
@@ -115,13 +99,10 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
 
     if (doc) {
       setDocId(doc.id);
-      setTitle((doc.name || '').replace('.md', ''));
+      setTitle((doc.name || '').replace(/\.md$/, ''));
       setContent(doc.content || '');
       setVisibilityType(doc.visibility_type || 'public');
-      // 부모 경로는 path에서 추출
-      const parts = (doc.path || '').split('/');
-      parts.pop(); // 파일명 제거
-      setParentPath(parts.join('/'));
+      setParentId(doc.parent_id);
     }
   }, [isEditMode, doc, docError]);
 
@@ -129,13 +110,11 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
   const updateDocMutation = useUpdateDocMutation();
   const deleteDocMutation = useDeleteDocMutation();
 
-  const loading =
-    docLoading || createDocMutation.isPending || updateDocMutation.isPending || deleteDocMutation.isPending;
+  const loading = docLoading || createDocMutation.isPending || updateDocMutation.isPending || deleteDocMutation.isPending;
 
-  // 인증 체크
   if (authLoading) return <div>Loading auth...</div>;
   if (!user) {
-    return <div className="editor-error">권한이 없습니다. 관리자만 접근 가능합니다.</div>;
+    return <div className="editor-error">권한이 없습니다. 로그인 후 이용해주세요.</div>;
   }
 
   const handleSubmit = async (e) => {
@@ -147,43 +126,41 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
         const name = `${title}.md`;
         const result = await createDocMutation.mutateAsync({
           type: 'FILE',
-          parent_path: parentPath,
+          parent_id: parentId,
           name,
           content,
           visibility_type: visibilityType,
         });
 
         showSuccess('문서가 생성되었습니다.');
-        const newPath = `${parentPath}/${name}`.replace('//', '/');
+        const newRoute = `/doc/${result.id}`;
 
-        // 트리 업데이트를 위한 이벤트 발생
-        navigationObserver.notify(newPath, { type: 'file', action: 'create', file: result });
+        navigationObserver.notify(newRoute, { type: 'file', action: 'create', file: result });
 
         if (onNavigate) {
-          onNavigate(newPath);
+          onNavigate(newRoute);
         } else {
-          route(newPath);
+          route(newRoute);
         }
       } else {
         const result = await updateDocMutation.mutateAsync({
           id: docId,
-          path,
           data: {
             content,
             visibility_type: visibilityType,
-            name: `${title}.md`, // 제목 수정 시 이름도 변경
+            name: `${title}.md`,
           },
         });
 
         showSuccess('문서가 수정되었습니다.');
+        const currentRoute = `/doc/${docId}`;
 
-        // 트리 업데이트를 위한 이벤트 발생
-        navigationObserver.notify(path, { type: 'file', action: 'update', file: result });
+        navigationObserver.notify(currentRoute, { type: 'file', action: 'update', file: result });
 
         if (onNavigate) {
-          onNavigate(path);
+          onNavigate(currentRoute);
         } else {
-          route(path);
+          route(currentRoute);
         }
       }
     } catch (err) {
@@ -195,8 +172,8 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
 
   const handleCancel = () => {
     if (onNavigate) {
-      if (mode === 'edit' && path) {
-        onNavigate(path);
+      if (mode === 'edit' && docId) {
+        onNavigate(`/doc/${docId}`);
       } else {
         onNavigate('/');
       }
@@ -205,31 +182,18 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
     }
   };
 
-  const handleLocationSelect = (selectedPath) => {
-    setParentPath(selectedPath);
-  };
-
   const handleDelete = async () => {
     if (!docId) return;
-
-    if (!confirm('정말 이 문서를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
-      return;
-    }
+    if (!confirm('정말 이 문서를 삭제하시겠습니까?')) return;
 
     setError('');
-
     try {
-      await deleteDocMutation.mutateAsync({ id: docId, path });
+      await deleteDocMutation.mutateAsync({ id: docId });
       showSuccess('문서가 삭제되었습니다.');
+      navigationObserver.notify('/', { type: 'file', action: 'delete' });
 
-      // 트리 업데이트를 위한 이벤트 발생
-      navigationObserver.notify(path, { type: 'file', action: 'delete' });
-
-      if (onNavigate) {
-        onNavigate('/');
-      } else {
-        route('/');
-      }
+      if (onNavigate) onNavigate('/');
+      else route('/');
     } catch (err) {
       console.error(err);
       setError(err.message);
@@ -263,9 +227,8 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
               value={title}
               onInput={(e) => setTitle(e.target.value)}
               required
-              placeholder="예: guide"
+              placeholder="제목을 입력하세요"
             />
-            <span className="helper">문서를 직접 작성하거나 파일을 첨부하면 .md 파일로 저장됩니다.</span>
           </div>
         </div>
 
@@ -315,16 +278,6 @@ export function EditorPage({ mode = 'create', path, onNavigate }) {
           </div>
         </div>
       </form>
-
-      {/* 파일 위치 선택 모달 (현재는 숨겨진 입력란으로 인해 호출되지 않음) */}
-      {mode === 'create' && locationModalOpen && (
-        <FileLocationModal
-          isOpen={locationModalOpen}
-          onClose={() => setLocationModalOpen(false)}
-          onSelect={handleLocationSelect}
-          currentPath={parentPath}
-        />
-      )}
     </div>
   );
 }

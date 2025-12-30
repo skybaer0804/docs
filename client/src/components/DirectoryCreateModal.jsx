@@ -15,9 +15,9 @@ import './DirectoryCreateModal.scss';
  * @param {boolean} props.isOpen - 모달 열림 여부
  * @param {Function} props.onClose - 모달 닫기 핸들러
  * @param {Function} props.onSuccess - 생성 성공 핸들러 (생성된 폴더 정보 전달)
- * @param {string} props.currentPath - 현재 경로 (기본값: 현재 경로)
+ * @param {string} props.parentId - 부모 폴더 ID
  */
-export function DirectoryCreateModal({ isOpen, onClose, onSuccess, currentPath }) {
+export function DirectoryCreateModal({ isOpen, onClose, onSuccess, parentId }) {
   const { showSuccess, showError } = useToast();
   const [folderName, setFolderName] = useState('');
   const [visibilityType, setVisibilityType] = useState('public');
@@ -25,9 +25,6 @@ export function DirectoryCreateModal({ isOpen, onClose, onSuccess, currentPath }
   const loading = createFolderMutation.isPending;
 
   if (!isOpen) return null;
-
-  // currentPath를 기반으로 부모 경로 계산 (이미 /docs 경로 변환 및 파일명 제거 처리됨)
-  const parentPath = getParentPathFromCurrentPath(currentPath);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -41,18 +38,17 @@ export function DirectoryCreateModal({ isOpen, onClose, onSuccess, currentPath }
       const name = folderName.trim();
       const result = await createFolderMutation.mutateAsync({
         name,
-        parentPath,
+        parent_id: parentId,
         visibility_type: visibilityType,
       });
 
       showSuccess('폴더가 생성되었습니다.');
       setFolderName('');
 
-      const newPath = `${parentPath}/${name}`.replace('//', '/');
-      navigationObserver.notify(newPath, { type: 'directory', action: 'create', folder: result });
+      navigationObserver.notify(`/folder/${result.id}`, { type: 'directory', action: 'create', folder: result });
 
       if (onSuccess) {
-        onSuccess({ ...result, path: newPath });
+        onSuccess(result);
       }
 
       onClose();
@@ -111,7 +107,6 @@ export function DirectoryCreateModal({ isOpen, onClose, onSuccess, currentPath }
             <option value="subscriber_only">👥 구독자 공개</option>
             <option value="private">🔒 나만 보기</option>
           </select>
-          <span className="directory-create-modal__helper">현재 디렉토리: {parentPath}</span>
         </div>
       </form>
     </Modal>

@@ -1,0 +1,55 @@
+@use '../style.scss' as *;
+
+.context-menu {
+  position: fixed;
+  z-index: 10000;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 160px;
+  padding: 4px;
+  animation: contextMenuFadeIn 0.1s ease-out;
+
+  .list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .list-item {
+    &__button {
+      padding: 8px 12px;
+      font-size: 0.875rem;
+      border-radius: 6px;
+      
+      &:hover {
+        background-color: var(--hover-bg-color);
+      }
+    }
+    
+    &__icon {
+      color: var(--text-muted-color);
+    }
+  }
+}
+
+@keyframes contextMenuFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// 다크모드 대응
+body[data-theme='dark'] {
+  .context-menu {
+    background-color: var(--card-bg-dark, #1e1e1e);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  }
+}
+

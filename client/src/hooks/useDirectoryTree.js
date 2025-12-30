@@ -12,23 +12,20 @@ import { useAuth } from '../contexts/AuthContext';
  */
 export function useDirectoryTree(currentPath, onNavigate) {
   const [expandedPaths, setExpandedPaths] = useState({});
-  const [followingTrees, setFollowingTrees] = useState({}); // userId -> tree
-  const [loadingTrees, setLoadingTrees] = useState({}); // userId -> boolean
+  const [followingTrees, setFollowingTrees] = useState({});
+  const [loadingTrees, setLoadingTrees] = useState({});
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const lastPathRef = useRef('');
 
-  // 유저 변경 시 팔로잉 트리 캐시 초기화
   useEffect(() => {
     setFollowingTrees({});
     setLoadingTrees({});
   }, [user?.id]);
 
-  // 내 문서 트리
   const { data: nodes = [], isLoading: loading } = useDocsTreeQuery();
   const categorized = useMemo(() => buildDirectoryTree(nodes), [nodes]);
 
-  // 내가 팔로잉하는 유저 리스트 (TanStack Query 적용하여 실시간 동기화 지원)
   const { data: followingUsers = [] } = useQuery({
     queryKey: subKeys.list(user?.id, 'following'),
     queryFn: () => fetchSubscriptionList(user.id, 'following'),
@@ -36,11 +33,9 @@ export function useDirectoryTree(currentPath, onNavigate) {
     staleTime: 30 * 1000,
   });
 
-  // 특정 유저의 트리 로드 (Lazy Load)
   const loadUserTree = useCallback(
     async (targetUserId) => {
       if (followingTrees[targetUserId] || loadingTrees[targetUserId]) return;
-
       setLoadingTrees((prev) => ({ ...prev, [targetUserId]: true }));
       try {
         const userNodes = await fetchUserDocs(targetUserId);
@@ -55,32 +50,16 @@ export function useDirectoryTree(currentPath, onNavigate) {
     [followingTrees, loadingTrees],
   );
 
-  // 문서 변경 이벤트 감지하여 트리 업데이트
   useEffect(() => {
     let debounceTimer = null;
-    let isReloading = false;
-
-    const handleDocumentChange = ({ action, type, path }) => {
-      if (
-        (type === 'file' || type === 'directory') &&
-        (action === 'create' || action === 'update' || action === 'delete')
-      ) {
-        if (isReloading) return;
-
+    const handleDocumentChange = ({ action, type }) => {
+      if ((type === 'file' || type === 'directory') && (action === 'create' || action === 'update' || action === 'delete')) {
         if (debounceTimer) clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(async () => {
-          isReloading = true;
-          try {
-            await queryClient.invalidateQueries({ queryKey: docsKeys.tree() });
-            // 구독 관련 정보도 갱신이 필요할 수 있으나, 여기서는 필요시 추가
-          } finally {
-            isReloading = false;
-            debounceTimer = null;
-          }
+        debounceTimer = setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: docsKeys.tree() });
         }, 300);
       }
     };
-
     const unsubscribe = navigationObserver.subscribe(handleDocumentChange);
     return () => {
       unsubscribe();
@@ -88,69 +67,45 @@ export function useDirectoryTree(currentPath, onNavigate) {
     };
   }, [queryClient]);
 
-  // currentPath 변경 시 자동으로 부모 경로들을 펼치기
+  // 현재 경로 변경 시 트리 자동 확장 (ID 기반)
   useEffect(() => {
-    if (!currentPath || currentPath === lastPathRef.current || Object.keys(categorized).length === 0) return;
+    if (!currentPath || currentPath === lastPathRef.current || nodes.length === 0) return;
     lastPathRef.current = currentPath;
 
-    let parts = [];
+    const isDoc = currentPath.startsWith('/doc/');
+    const isFolder = currentPath.startsWith('/folder/');
+    const id = (isDoc || isFolder) ? currentPath.split('/').pop() : null;
 
-    if (currentPath.startsWith('/category/')) {
-      parts = currentPath.replace('/category/', '').split('/').filter(Boolean);
-    } else {
-      parts = currentPath.split('/').filter(Boolean);
-      if (parts[0] === 'docs') {
-        parts = parts.slice(1);
-      }
-      if (parts.length > 0) {
-        const lastPart = parts[parts.length - 1];
-        if (lastPart.includes('.') && !lastPart.startsWith('.')) {
-          parts = parts.slice(0, -1);
-        }
-      }
+    if (!id) return;
+
+    const newExpanded = { ...expandedPaths };
+    let currentNode = nodes.find(n => n.id === id);
+    
+    while (currentNode && currentNode.parent_id) {
+      newExpanded[currentNode.parent_id] = true;
+      currentNode = nodes.find(n => n.id === currentNode.parent_id);
     }
 
-    const newExpanded = {};
-    let accumulated = '';
+    setExpandedPaths(newExpanded);
+  }, [currentPath, nodes]);
 
-    parts.forEach((part, index) => {
-      const key = index === 0 ? part : `${accumulated}/${part}`;
-      accumulated = key;
-      newExpanded[key] = true;
-    });
-
-    setExpandedPaths((prev) => ({ ...prev, ...newExpanded }));
-  }, [currentPath, categorized]);
-
-  const handleFolderClick = (path) => {
-    setExpandedPaths((prev) => ({
-      ...prev,
-      [path]: !prev[path],
-    }));
-
-    const categoryRoute = `/category/${path}`;
-    if (onNavigate) {
-      onNavigate(categoryRoute);
-    }
-    navigationObserver.notify(categoryRoute, { type: 'folder' });
+  const handleFolderClick = (id) => {
+    setExpandedPaths((prev) => ({ ...prev, [id]: !prev[id] }));
+    const folderRoute = `/folder/${id}`;
+    if (onNavigate) onNavigate(folderRoute);
+    navigationObserver.notify(folderRoute, { type: 'folder', id });
   };
 
   const handleClick = (file) => {
-    if (onNavigate) {
-      onNavigate(file.route);
-    }
+    if (onNavigate) onNavigate(file.route);
     navigationObserver.notify(file.route, { type: 'file', file });
   };
 
   const handleUserClick = (targetUserId) => {
-    const path = `sub_${targetUserId}`;
-    const isExpanding = !expandedPaths[path];
-
-    setExpandedPaths((prev) => ({ ...prev, [path]: !prev[path] }));
-
-    if (isExpanding) {
-      loadUserTree(targetUserId);
-    }
+    const key = `sub_${targetUserId}`;
+    const isExpanding = !expandedPaths[key];
+    setExpandedPaths((prev) => ({ ...prev, [key]: !prev[key] }));
+    if (isExpanding) loadUserTree(targetUserId);
   };
 
   return {
@@ -162,6 +117,6 @@ export function useDirectoryTree(currentPath, onNavigate) {
     handleFolderClick,
     handleUserClick,
     handleClick,
-    loading: loading,
+    loading,
   };
 }

@@ -4,12 +4,13 @@ import { TemplateViewer } from '../components/TemplateViewer';
 import { DirectoryView } from '../components/DirectoryView';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { NotificationPermissionBanner } from '../components/NotificationPermissionBanner';
+import { ContextMenu } from '../components/ContextMenu';
+import { useContextMenu } from '../hooks/useContextMenu';
 import './DocPage.scss';
 
 /**
  * DocPage Presenter 컴포넌트
  * 순수 UI 렌더링만 담당 (Props 기반)
- * TDD 친화적: Props만으로 렌더링하므로 테스트 용이
  */
 export function DocPagePresenter({
     content,
@@ -29,8 +30,11 @@ export function DocPagePresenter({
     onContentRef,
     notificationPermission,
     onRequestNotificationPermission,
+    onCreateDocument,
+    onCreateFolder,
 }) {
     const [bannerDismissed, setBannerDismissed] = useState(false);
+    const { contextMenu, handleContextMenu, closeContextMenu } = useContextMenu();
     
     // localStorage에서 배너 닫기 상태 확인
     useEffect(() => {
@@ -148,7 +152,10 @@ export function DocPagePresenter({
 
     return (
         <>
-            <div class="slide-container">
+            <div 
+                class="slide-container"
+                onContextMenu={(e) => handleContextMenu(e, currentFile?.id || null)}
+            >
                 {renderParentPage()}
                 {renderCurrentPage()}
             </div>
@@ -159,6 +166,12 @@ export function DocPagePresenter({
                     onDismiss={handleDismissBanner}
                 />
             )}
+            <ContextMenu 
+                {...contextMenu} 
+                onClose={closeContextMenu}
+                onCreateDocument={onCreateDocument}
+                onCreateFolder={onCreateFolder}
+            />
         </>
     );
 }

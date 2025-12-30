@@ -22,24 +22,24 @@ export function DirectoryTreeContainer({ currentPath, onNavigate }) {
     loading,
   } = useDirectoryTree(currentPath, onNavigate);
   const [directoryModalOpen, setDirectoryModalOpen] = useState(false);
-  const [directoryModalPath, setDirectoryModalPath] = useState('/docs');
+  const [directoryModalParentId, setDirectoryModalParentId] = useState(null);
 
-  const handleCreateDocument = async (parentPath) => {
+  const handleCreateDocument = async (parentId) => {
+    const url = parentId ? `/write?parent_id=${parentId}` : '/write';
     if (onNavigate) {
-      onNavigate(`/write?parent=${encodeURIComponent(parentPath)}`);
+      onNavigate(url);
     } else {
-      route(`/write?parent=${encodeURIComponent(parentPath)}`);
+      route(url);
     }
   };
 
-  const handleCreateFolder = (parentPath) => {
-    setDirectoryModalPath(parentPath);
+  const handleCreateFolder = (parentId) => {
+    setDirectoryModalParentId(parentId);
     setDirectoryModalOpen(true);
   };
 
   const handleFolderCreated = (folder) => {
-    // Toast는 DirectoryCreateModal에서 이미 표시하므로 중복 제거
-    // navigationObserver 이벤트는 createFolder 함수에서 이미 발생하므로 여기서는 추가 작업 불필요
+    // ...
   };
 
   return (
@@ -63,7 +63,7 @@ export function DirectoryTreeContainer({ currentPath, onNavigate }) {
         isOpen={directoryModalOpen}
         onClose={() => setDirectoryModalOpen(false)}
         onSuccess={handleFolderCreated}
-        currentPath={directoryModalPath}
+        parentId={directoryModalParentId}
       />
     </>
   );

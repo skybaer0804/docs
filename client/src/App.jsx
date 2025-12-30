@@ -102,22 +102,31 @@ export function App() {
 
     // 문서 작성/수정 페이지
     if (currentRoute.startsWith('/write')) {
-      return <EditorPage mode="create" onNavigate={handleNavigate} />;
+      const urlParams = new URLSearchParams(window.location.search);
+      const parentId = urlParams.get('parent_id');
+      return <EditorPage mode="create" parentId={parentId} onNavigate={handleNavigate} />;
     }
 
     if (currentRoute.startsWith('/edit')) {
-      // /edit/docs/... 형식에서 실제 경로 추출
-      const path = currentRoute.replace('/edit', '');
-      return <EditorPage mode="edit" path={path} onNavigate={handleNavigate} />;
+      // /edit/:id 형식
+      const id = currentRoute.split('/').pop();
+      return <EditorPage mode="edit" id={id} onNavigate={handleNavigate} />;
+    }
+
+    if (currentRoute.startsWith('/doc/')) {
+      const id = currentRoute.split('/').pop();
+      return <DocPageContainer key={id} currentRoute={currentRoute} id={id} onNavigate={handleNavigate} />;
+    }
+
+    if (currentRoute.startsWith('/folder/')) {
+      const id = currentRoute.split('/').pop();
+      return <DocPageContainer key={id} currentRoute={currentRoute} id={id} onNavigate={handleNavigate} />;
     }
 
     // 홈 페이지인 경우
     if (currentRoute === '/') {
       return <DocPageContainer currentRoute="/" onNavigate={handleNavigate} />;
     }
-
-    // 모든 경로를 DocPageContainer로 처리
-    return <DocPageContainer currentRoute={currentRoute} onNavigate={handleNavigate} />;
   };
 
   return (

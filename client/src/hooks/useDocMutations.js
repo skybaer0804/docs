@@ -111,10 +111,10 @@ export function useCreateFolderMutation(options = {}) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ name, parentPath, visibility_type = 'public' }) =>
+    mutationFn: ({ name, parent_id, visibility_type = 'public' }) =>
       createDoc({
         type: 'DIRECTORY',
-        parent_path: parentPath,
+        parent_id,
         name,
         content: null,
         visibility_type,
