@@ -10,7 +10,8 @@ export function useMarkdownContent(url) {
   // URL에서 ID 추출 (/doc/:id 또는 /folder/:id)
   const isDocRoute = routePath.startsWith('/doc/');
   const isFolderRoute = routePath.startsWith('/folder/');
-  const id = (isDocRoute || isFolderRoute) ? routePath.split('/').pop() : null;
+  const urlPath = routePath.split('?')[0];
+  const id = (isDocRoute || isFolderRoute) ? urlPath.split('/').pop() : null;
 
   const isRootRoute = routePath === '/';
 

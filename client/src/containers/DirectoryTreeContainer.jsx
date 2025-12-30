@@ -3,6 +3,7 @@ import { DirectoryTreePresenter } from '../components/DirectoryTree';
 import { useState } from 'preact/hooks';
 import { DirectoryCreateModal } from '../components/DirectoryCreateModal';
 import { route } from 'preact-router';
+import { downloadFile } from '../utils/downloadUtils';
 
 /**
  * DirectoryTree Container 컴포넌트
@@ -42,6 +43,21 @@ export function DirectoryTreeContainer({ currentPath, onNavigate }) {
     // ...
   };
 
+  const handleEditDocument = (id) => {
+    const url = `/edit/${id}`;
+    if (onNavigate) {
+      onNavigate(url);
+    } else {
+      route(url);
+    }
+  };
+
+  const handleDownloadDocument = async (file) => {
+    if (!file?.id) return;
+    const fileName = file.title.endsWith('.md') ? file.title : `${file.title}.md`;
+    await downloadFile(`/api/docs/id/${file.id}`, fileName);
+  };
+
   return (
     <>
       <DirectoryTreePresenter
@@ -57,6 +73,8 @@ export function DirectoryTreeContainer({ currentPath, onNavigate }) {
         onNavigate={onNavigate}
         onCreateDocument={handleCreateDocument}
         onCreateFolder={handleCreateFolder}
+        onEditDocument={handleEditDocument}
+        onDownloadDocument={handleDownloadDocument}
         loading={loading}
       />
       <DirectoryCreateModal

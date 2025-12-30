@@ -8,6 +8,16 @@ import { docsKeys } from '../query/queryKeys';
  * @param {Object} options - react-query 옵션
  */
 export function useDocContentQuery(identifier, options = {}) {
+  // identifier가 null이거나 빈 문자열인 경우 처리
+  if (!identifier) {
+    return useQuery({
+      queryKey: docsKeys.content('root'),
+      queryFn: () => null,
+      enabled: false,
+      ...options,
+    });
+  }
+
   // identifier가 UUID 형식인지 확인 (간단한 체크)
   const isId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(identifier);
 

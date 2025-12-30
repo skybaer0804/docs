@@ -1,17 +1,37 @@
 import { DirectoryTreeContainer } from '../containers/DirectoryTreeContainer';
 import { useState, useRef } from 'preact/hooks';
-import { IconPlus, IconLoader2, IconUserPlus } from '@tabler/icons-preact';
+import {
+  IconPlus,
+  IconLoader2,
+  IconUserPlus,
+  IconChevronRight,
+  IconChevronDown,
+  IconDots,
+  IconEdit,
+  IconDownload,
+  IconPencil,
+  IconTrash,
+  IconFilePlus,
+  IconFolderPlus,
+  IconCheck,
+} from '@tabler/icons-preact';
 import { Popover } from './Popover';
-import { FileManageList } from './FileManageList';
+import { List } from './List';
+import { ListItem } from './ListItem';
 import { useDnd } from '../contexts/DndContext';
 import { useAuth } from '../contexts/AuthContext';
 import { ContextMenu } from './ContextMenu';
 import { useContextMenu } from '../hooks/useContextMenu';
+import { Modal } from './Modal';
+import { Button } from './Button';
+import { ConfirmDialog } from './ConfirmDialog';
+import { useDeleteDocMutation, useUpdateDocMutation } from '../hooks/useDocMutations';
+import { useToast } from '../contexts/ToastContext';
+import { navigationObserver } from '../observers/NavigationObserver';
 import './DirectoryTree.scss';
 
 /**
  * DirectoryTree Presenter 컴포넌트
- * 순수 UI 렌더링만 담당 (Props 기반)
  */
 export function DirectoryTreePresenter({
   categorized,
@@ -26,11 +46,79 @@ export function DirectoryTreePresenter({
   onNavigate,
   onCreateDocument,
   onCreateFolder,
+  onEditDocument,
+  onDownloadDocument,
   loading = false,
 }) {
   const { user } = useAuth();
   const dnd = useDnd();
   const { contextMenu, handleContextMenu, closeContextMenu } = useContextMenu();
+  const { showSuccess, showError } = useToast();
+  const updateDocMutation = useUpdateDocMutation();
+  const deleteDocMutation = useDeleteDocMutation();
+
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameValue, setRenameValue] = useState('');
+  const [renameTarget, setRenameTarget] = useState(null); // { id, title, type }
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null); // { id, type }
+
+  const handleRenameClick = (id, title, type) => {
+    setRenameTarget({ id, title, type });
+    setRenameValue(title);
+    setRenameOpen(true);
+  };
+
+  const handleDeleteClick = (id, type) => {
+    setDeleteTarget({ id, type });
+    setConfirmOpen(true);
+  };
+
+  const handleRenameConfirm = async (e) => {
+    if (e) e.preventDefault();
+    if (!renameValue.trim() || !renameTarget) return;
+
+    try {
+      const name = renameTarget.type === 'file' ? `${renameValue.trim()}.md` : renameValue.trim();
+      const result = await updateDocMutation.mutateAsync({
+        id: renameTarget.id,
+        data: { name },
+      });
+      showSuccess('이름이 변경되었습니다.');
+      navigationObserver.notify(result.route || `/doc/${result.id}`, {
+        type: renameTarget.type === 'file' ? 'file' : 'directory',
+        action: 'update',
+        file: result,
+      });
+      setRenameOpen(false);
+    } catch (err) {
+      showError(err.message || '이름 변경에 실패했습니다.');
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await deleteDocMutation.mutateAsync({ id: deleteTarget.id });
+      showSuccess('삭제되었습니다.');
+      navigationObserver.notify('/', {
+        type: deleteTarget.type === 'file' ? 'file' : 'directory',
+        action: 'delete',
+      });
+      if (currentPath?.includes(deleteTarget.id) && onNavigate) {
+        onNavigate('/');
+      }
+    } catch (e) {
+      showError(e?.message || '삭제에 실패했습니다.');
+    } finally {
+      setConfirmOpen(false);
+    }
+  };
+
+  const handleRenameCancel = () => {
+    setRenameOpen(false);
+    setRenameTarget(null);
+  };
 
   const bindDragSource = (item) => ({
     ...(dnd.bindDragSource ? dnd.bindDragSource(item) : {}),
@@ -62,25 +150,27 @@ export function DirectoryTreePresenter({
       const keys = Object.keys(node).filter((key) => key !== '_files' && key !== '_meta');
       const files = node._files || [];
 
+      if (keys.length === 0 && files.length === 0) return null;
+
       return (
         <ul class={level === 0 ? 'file-list' : 'sub-file-list'}>
           {files.map((file) => (
-            <li
+            <FileItem
               key={file.id}
-              class={`file-item ${currentPath === file.route ? 'active' : ''} ${
-                dnd.dragItem?.id === file.id ? 'file-item--dragging' : ''
-              }`}
-              onClick={() => onFileClick(file)}
-              onContextMenu={(e) => !isSubscription && handleContextMenu(e, file.parent_id)}
-              data-dnd-item-id={file.id}
-              data-dnd-item-type="FILE"
-              data-dnd-item-name={file.title}
-              data-dnd-item-author-id={file.author_id}
-              {...(!isSubscription ? bindDragSource(file) : {})}
-            >
-              <span class="file-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
-              <span class="file-name">{file.title}</span>
-            </li>
+              file={file}
+              currentPath={currentPath}
+              onFileClick={onFileClick}
+              onEditDocument={onEditDocument}
+              onDownloadDocument={onDownloadDocument}
+              onRenameDocument={handleRenameClick}
+              onDeleteDocument={handleDeleteClick}
+              onNavigate={onNavigate}
+              isSubscription={isSubscription}
+              bindDragSource={bindDragSource}
+              handleContextMenu={handleContextMenu}
+              contextMenu={contextMenu}
+              dnd={dnd}
+            />
           ))}
 
           {keys.map((key) => {
@@ -100,8 +190,12 @@ export function DirectoryTreePresenter({
                 isSubExpanded={isSubExpanded}
                 isSubcategoryActive={isSubcategoryActive}
                 onFolderClick={onFolderClick}
+                onNavigate={onNavigate}
+                currentRoute={currentPath}
                 onCreateDocument={isSubscription ? null : onCreateDocument}
                 onCreateFolder={isSubscription ? null : onCreateFolder}
+                onRenameFolder={handleRenameClick}
+                onDeleteFolder={handleDeleteClick}
                 subNode={subNode}
                 renderTree={renderTree}
                 visited={visited}
@@ -109,6 +203,7 @@ export function DirectoryTreePresenter({
                 bindDropTarget={bindDropTarget}
                 isSubscription={isSubscription}
                 onContextMenu={handleContextMenu}
+                contextMenu={contextMenu}
               />
             );
           })}
@@ -137,7 +232,6 @@ export function DirectoryTreePresenter({
     );
   }
 
-  const rootId = null;
   const rootFiles = categorized?._files || [];
   const categoryKeys = Object.keys(categorized).filter((key) => key !== '_files' && key !== '_meta');
 
@@ -164,22 +258,21 @@ export function DirectoryTreePresenter({
           <>
             <ul class="file-list root-file-list">
               {rootFiles.map((file) => (
-                <li
+                <FileItem
                   key={file.id}
-                  class={`file-item ${currentPath === file.route ? 'active' : ''} ${
-                    dnd.dragItem?.id === file.id ? 'file-item--dragging' : ''
-                  }`}
-                  onClick={() => onFileClick(file)}
-                  onContextMenu={(e) => handleContextMenu(e, null)}
-                  data-dnd-item-id={file.id}
-                  data-dnd-item-type="FILE"
-                  data-dnd-item-name={file.title}
-                  data-dnd-item-author-id={file.author_id}
-                  {...bindDragSource(file)}
-                >
-                  <span class="file-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
-                  <span class="file-name">{file.title}</span>
-                </li>
+                  file={file}
+                  currentPath={currentPath}
+                  onFileClick={onFileClick}
+                  onEditDocument={onEditDocument}
+                  onDownloadDocument={onDownloadDocument}
+                  onRenameDocument={handleRenameClick}
+                  onDeleteDocument={handleDeleteClick}
+                  onNavigate={onNavigate}
+                  bindDragSource={bindDragSource}
+                  handleContextMenu={handleContextMenu}
+                  contextMenu={contextMenu}
+                  dnd={dnd}
+                />
               ))}
             </ul>
 
@@ -197,8 +290,12 @@ export function DirectoryTreePresenter({
                   isSubExpanded={isExpanded}
                   isSubcategoryActive={currentPath === `/folder/${categoryId}`}
                   onFolderClick={onFolderClick}
+                  onNavigate={onNavigate}
+                  currentRoute={currentPath}
                   onCreateDocument={onCreateDocument}
                   onCreateFolder={onCreateFolder}
+                  onRenameFolder={handleRenameClick}
+                  onDeleteFolder={handleDeleteClick}
                   subNode={categoryData}
                   renderTree={renderTree}
                   visited={new Set()}
@@ -206,6 +303,7 @@ export function DirectoryTreePresenter({
                   bindDragSource={bindDragSource}
                   bindDropTarget={bindDropTarget}
                   onContextMenu={handleContextMenu}
+                  contextMenu={contextMenu}
                 />
               );
             })}
@@ -240,8 +338,153 @@ export function DirectoryTreePresenter({
         onClose={closeContextMenu}
         onCreateDocument={onCreateDocument}
         onCreateFolder={onCreateFolder}
+        onEditDocument={onEditDocument}
+        onDownloadDocument={onDownloadDocument}
+        onRenameDocument={(id, title) => handleRenameClick(id, title, 'file')}
+        onDeleteDocument={(id) => handleDeleteClick(id, 'file')}
+        onRenameFolder={(id, name) => handleRenameClick(id, name, 'folder')}
+        onDeleteFolder={(id) => handleDeleteClick(id, 'folder')}
+      />
+
+      <Modal
+        isOpen={renameOpen}
+        onClose={handleRenameCancel}
+        title="제목 수정"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleRenameCancel}
+              disabled={updateDocMutation.isPending}
+            >
+              취소
+            </Button>
+            <Button type="submit" form="directory-rename-form" variant="primary" loading={updateDocMutation.isPending}>
+              <IconCheck size={16} />
+              수정
+            </Button>
+          </>
+        }
+      >
+        <div className="directory-create-modal">
+          <form id="directory-rename-form" onSubmit={handleRenameConfirm} className="directory-create-modal__form">
+            <div className="directory-create-modal__form-group">
+              <label htmlFor="renameValue">새 이름</label>
+              <input
+                id="renameValue"
+                type="text"
+                value={renameValue}
+                onInput={(e) => setRenameValue(e.target.value)}
+                required
+                autoFocus
+                className="directory-create-modal__input"
+              />
+            </div>
+          </form>
+        </div>
+      </Modal>
+
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        title="삭제 확인"
+        message="정말 삭제하시겠습니까?"
+        onConfirm={handleConfirmDelete}
+        onClose={() => setConfirmOpen(false)}
       />
     </div>
+  );
+}
+
+function FileItem({
+  file,
+  currentPath,
+  onFileClick,
+  onEditDocument,
+  onDownloadDocument,
+  onRenameDocument,
+  onDeleteDocument,
+  onNavigate,
+  isSubscription,
+  bindDragSource,
+  handleContextMenu,
+  contextMenu,
+  dnd,
+}) {
+  const [hovered, setHovered] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const buttonRef = useRef(null);
+
+  const handleDotsClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setPopoverOpen(!popoverOpen);
+  };
+
+  const handleRenameClick = () => {
+    onRenameDocument(file.id, file.title, 'file');
+    setPopoverOpen(false);
+  };
+
+  const handleDeleteClick = () => {
+    onDeleteDocument(file.id, 'file');
+    setPopoverOpen(false);
+  };
+
+  const handleListItemClick = (callback) => (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    callback();
+    setPopoverOpen(false);
+  };
+
+  return (
+    <>
+      <li
+        key={file.id}
+        class={`file-item ${currentPath === file.route ? 'active' : ''} ${
+          dnd.dragItem?.id === file.id ? 'file-item--dragging' : ''
+        } ${contextMenu.isOpen && contextMenu.targetId === file.id ? 'right-clicked' : ''}`}
+        onClick={() => onFileClick(file)}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onContextMenu={(e) => !isSubscription && handleContextMenu(e, file.id, 'file', file)}
+        data-dnd-item-id={file.id}
+        data-dnd-item-type="FILE"
+        data-dnd-item-name={file.title}
+        data-dnd-item-author-id={file.author_id}
+        {...(!isSubscription ? bindDragSource(file) : {})}
+      >
+        <span class="file-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
+        <span class="file-name">{file.title}</span>
+        {hovered && !isSubscription && (
+          <button ref={buttonRef} class="folder-item__add-button" onClick={handleDotsClick}>
+            <IconDots size={16} />
+          </button>
+        )}
+      </li>
+
+      <Popover isOpen={popoverOpen} onClose={() => setPopoverOpen(false)} anchorRef={buttonRef}>
+        <List>
+          <ListItem icon={<IconEdit size={18} />} onClick={handleListItemClick(() => onEditDocument(file.id))}>
+            편집
+          </ListItem>
+          <ListItem icon={<IconDownload size={18} />} onClick={handleListItemClick(() => onDownloadDocument(file))}>
+            다운로드
+          </ListItem>
+          <ListItem icon={<IconPencil size={18} />} onClick={handleListItemClick(handleRenameClick)}>
+            제목 수정
+          </ListItem>
+          <ListItem
+            className="list-item--danger"
+            icon={<IconTrash size={18} />}
+            onClick={handleListItemClick(handleDeleteClick)}
+          >
+            삭제
+          </ListItem>
+        </List>
+      </Popover>
+    </>
   );
 }
 
@@ -253,8 +496,12 @@ function FolderItem({
   isSubExpanded,
   isSubcategoryActive,
   onFolderClick,
+  onNavigate,
+  currentRoute,
   onCreateDocument,
   onCreateFolder,
+  onRenameFolder,
+  onDeleteFolder,
   subNode,
   renderTree,
   visited,
@@ -263,6 +510,7 @@ function FolderItem({
   bindDropTarget,
   isSubscription = false,
   onContextMenu,
+  contextMenu,
 }) {
   const [hovered, setHovered] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -271,15 +519,20 @@ function FolderItem({
   const meta = subNode?._meta;
   const drop = bindDropTarget ? bindDropTarget(subId, 'DIRECTORY') : { dndHeaderClassName: '' };
 
+  const keys = Object.keys(subNode || {}).filter((key) => key !== '_files' && key !== '_meta');
+  const files = subNode?._files || [];
+  const isEmpty = keys.length === 0 && files.length === 0;
+
   const handleFolderClick = (e) => {
     if (!e.target.closest('.folder-item__add-button')) {
       onFolderClick(subId, subPath);
     }
   };
 
-  const handleAddClick = (e) => {
+  const handleDotsClick = (e) => {
+    e.preventDefault();
     e.stopPropagation();
-    setPopoverOpen(true);
+    setPopoverOpen(!popoverOpen);
   };
 
   const handleCreateDocument = () => {
@@ -292,9 +545,30 @@ function FolderItem({
     if (onCreateFolder) onCreateFolder(subId);
   };
 
+  const handleRenameClick = () => {
+    onRenameFolder(subId, keyName, 'folder');
+    setPopoverOpen(false);
+  };
+
+  const handleDeleteClick = () => {
+    onDeleteFolder(subId, 'folder');
+    setPopoverOpen(false);
+  };
+
+  const handleListItemClick = (callback) => (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    callback();
+    setPopoverOpen(false);
+  };
+
+  const isRightClicked = contextMenu && contextMenu.isOpen && contextMenu.targetId === subId;
+
   const headerClass = isCategory
-    ? `category-header ${isSubcategoryActive ? 'active' : ''}`
-    : `subcategory-header ${isSubcategoryActive ? 'active' : ''} ${level > 0 ? 'nested' : ''}`;
+    ? `category-header ${isSubcategoryActive ? 'active' : ''} ${isRightClicked ? 'right-clicked' : ''}`
+    : `subcategory-header ${isSubcategoryActive ? 'active' : ''} ${level > 0 ? 'nested' : ''} ${
+        isRightClicked ? 'right-clicked' : ''
+      }`;
 
   const dndAttributes = !isSubscription
     ? {
@@ -318,23 +592,48 @@ function FolderItem({
           onClick={handleFolderClick}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
-          onContextMenu={(e) => !isSubscription && onContextMenu(e, subId)}
+          onContextMenu={(e) => !isSubscription && onContextMenu(e, subId, 'folder', { id: subId, name: keyName })}
           {...dndAttributes}
         >
           <span class="folder-icon">📁</span>
           <span class={isCategory ? 'category-title' : 'subcategory-title'}>{keyName}</span>
-          {hovered && (onCreateDocument || onCreateFolder) && (
-            <button ref={buttonRef} class="folder-item__add-button" onClick={handleAddClick}>
-              <IconPlus size={16} />
+          {!isSubscription && hovered ? (
+            <button ref={buttonRef} class="folder-item__add-button" onClick={handleDotsClick}>
+              <IconDots size={16} />
             </button>
+          ) : (
+            !isEmpty && (
+              <span className="folder-item__chevron">
+                {isSubExpanded ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
+              </span>
+            )
           )}
         </div>
-        <div class={isCategory ? 'category-content' : 'subcategory-content'}>
-          {isSubExpanded && renderTree(subNode, subPath, isCategory ? 0 : level + 1, visited, isSubscription)}
-        </div>
+        {!isEmpty && (
+          <div class={isCategory ? 'category-content' : 'subcategory-content'}>
+            {isSubExpanded && renderTree(subNode, subPath, isCategory ? 0 : level + 1, visited, isSubscription)}
+          </div>
+        )}
       </li>
       <Popover isOpen={popoverOpen} onClose={() => setPopoverOpen(false)} anchorRef={buttonRef}>
-        <FileManageList onCreateDocument={handleCreateDocument} onCreateFolder={handleCreateFolder} />
+        <List>
+          <ListItem icon={<IconFilePlus size={18} />} onClick={handleListItemClick(handleCreateDocument)}>
+            하위문서 생성
+          </ListItem>
+          <ListItem icon={<IconFolderPlus size={18} />} onClick={handleListItemClick(handleCreateFolder)}>
+            하위폴더 생성
+          </ListItem>
+          <ListItem icon={<IconPencil size={18} />} onClick={handleListItemClick(handleRenameClick)}>
+            제목 수정
+          </ListItem>
+          <ListItem
+            className="list-item--danger"
+            icon={<IconTrash size={18} />}
+            onClick={handleListItemClick(handleDeleteClick)}
+          >
+            삭제
+          </ListItem>
+        </List>
       </Popover>
     </>
   );

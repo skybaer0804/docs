@@ -39,6 +39,9 @@ export function useUpdateDocMutation(options = {}) {
     mutationFn: (variables) => updateDoc(variables.id, variables.data),
     onSuccess: async (data, variables, context) => {
       await queryClient.invalidateQueries({ queryKey: docsKeys.tree() });
+      if (variables.id) {
+        await queryClient.invalidateQueries({ queryKey: docsKeys.detail(variables.id) });
+      }
 
       // 수정된 문서가 응답에 path를 포함하면, content 캐시를 최신으로 갱신
       const updatedPath = safeString(variables?.path) || safeString(data?.path) || safeString(variables?.data?.path);

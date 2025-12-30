@@ -5,10 +5,12 @@ export function useContextMenu() {
     x: 0,
     y: 0,
     isOpen: false,
-    targetId: null
+    targetId: null,
+    type: null,
+    data: null
   });
 
-  const handleContextMenu = useCallback((e, targetId = null) => {
+  const handleContextMenu = useCallback((e, targetId = null, type = null, data = null) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -16,7 +18,9 @@ export function useContextMenu() {
       x: e.clientX,
       y: e.clientY,
       isOpen: true,
-      targetId
+      targetId,
+      type,
+      data
     });
   }, []);
 

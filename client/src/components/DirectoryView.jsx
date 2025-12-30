@@ -1,6 +1,6 @@
 import { DirectoryViewContainer } from '../containers/DirectoryViewContainer';
 import { useRef, useState, useEffect, useCallback } from 'preact/hooks';
-import { IconDotsVertical, IconTrash, IconPencil, IconCheck } from '@tabler/icons-preact';
+import { IconDots, IconTrash, IconPencil, IconCheck, IconFilePlus, IconFolderPlus, IconEdit, IconDownload } from '@tabler/icons-preact';
 import { Popover } from './Popover';
 import { List } from './List';
 import { ListItem } from './ListItem';
@@ -25,6 +25,10 @@ export function DirectoryViewPresenter({
   onNavigate,
   onFolderClick,
   onFileClick,
+  onCreateDocument,
+  onCreateFolder,
+  onEditDocument,
+  onDownloadDocument,
 }) {
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
@@ -161,10 +165,11 @@ export function DirectoryViewPresenter({
               type: isFolder ? 'folder' : 'file', 
               id, 
               author_id: authorId, 
-              label: isFolder ? name : meta.title 
+              label: isFolder ? name : meta.title,
+              raw: nodeOrFile
             })}
           >
-            <IconDotsVertical size={18} />
+            <IconDots size={18} />
           </button>
         )}
       </div>
@@ -205,6 +210,37 @@ export function DirectoryViewPresenter({
       {content}
       <Popover isOpen={menuOpen} onClose={closeMenu} anchorRef={menuButtonRef}>
         <List>
+          {menuTarget?.type === 'folder' ? (
+            <>
+              <ListItem 
+                icon={<IconFilePlus size={18} />} 
+                onClick={() => { onCreateDocument(menuTarget.id); closeMenu(); }}
+              >
+                하위문서 생성
+              </ListItem>
+              <ListItem 
+                icon={<IconFolderPlus size={18} />} 
+                onClick={() => { onCreateFolder(menuTarget.id); closeMenu(); }}
+              >
+                하위폴더 생성
+              </ListItem>
+            </>
+          ) : (
+            <>
+              <ListItem 
+                icon={<IconEdit size={18} />} 
+                onClick={() => { onEditDocument(menuTarget.id); closeMenu(); }}
+              >
+                편집
+              </ListItem>
+              <ListItem 
+                icon={<IconDownload size={18} />} 
+                onClick={() => { onDownloadDocument(menuTarget.raw); closeMenu(); }}
+              >
+                다운로드
+              </ListItem>
+            </>
+          )}
           <ListItem icon={<IconPencil size={18} />} onClick={() => { setRenameTarget(menuTarget); setRenameValue(menuTarget.label); setRenameOpen(true); closeMenu(); }}>
             제목 수정
           </ListItem>
@@ -214,21 +250,52 @@ export function DirectoryViewPresenter({
         </List>
       </Popover>
 
-      <Modal isOpen={renameOpen} onClose={() => setRenameOpen(false)} title="제목 수정">
-        <form onSubmit={handleRenameConfirm} className="directory-create-modal__form">
-          <input
-            type="text"
-            value={renameValue}
-            onInput={(e) => setRenameValue(e.target.value)}
-            required
-            autoFocus
-            className="directory-create-modal__input"
-          />
-          <div className="directory-create-modal__footer">
-            <Button type="button" variant="secondary" onClick={() => setRenameOpen(false)}>취소</Button>
-            <Button type="submit" variant="primary" loading={updateDocMutation.isPending}>수정</Button>
-          </div>
-        </form>
+      <Modal
+        isOpen={renameOpen}
+        onClose={() => setRenameOpen(false)}
+        title="제목 수정"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setRenameOpen(false)}
+              disabled={updateDocMutation.isPending}
+            >
+              취소
+            </Button>
+            <Button
+              type="submit"
+              form="directory-rename-form-view"
+              variant="primary"
+              loading={updateDocMutation.isPending}
+            >
+              <IconCheck size={16} />
+              수정
+            </Button>
+          </>
+        }
+      >
+        <div className="directory-create-modal">
+          <form
+            id="directory-rename-form-view"
+            onSubmit={handleRenameConfirm}
+            className="directory-create-modal__form"
+          >
+            <div className="directory-create-modal__form-group">
+              <label htmlFor="renameValueView">새 이름</label>
+              <input
+                id="renameValueView"
+                type="text"
+                value={renameValue}
+                onInput={(e) => setRenameValue(e.target.value)}
+                required
+                autoFocus
+                className="directory-create-modal__input"
+              />
+            </div>
+          </form>
+        </div>
       </Modal>
 
       <ConfirmDialog

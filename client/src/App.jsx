@@ -108,18 +108,21 @@ export function App() {
     }
 
     if (currentRoute.startsWith('/edit')) {
-      // /edit/:id 형식
-      const id = currentRoute.split('/').pop();
+      // /edit/:id 형식 (쿼리 파라미터 제외하고 ID만 추출)
+      const urlPath = currentRoute.split('?')[0];
+      const id = urlPath.split('/').pop();
       return <EditorPage mode="edit" id={id} onNavigate={handleNavigate} />;
     }
 
     if (currentRoute.startsWith('/doc/')) {
-      const id = currentRoute.split('/').pop();
+      const urlPath = currentRoute.split('?')[0];
+      const id = urlPath.split('/').pop();
       return <DocPageContainer key={id} currentRoute={currentRoute} id={id} onNavigate={handleNavigate} />;
     }
 
     if (currentRoute.startsWith('/folder/')) {
-      const id = currentRoute.split('/').pop();
+      const urlPath = currentRoute.split('?')[0];
+      const id = urlPath.split('/').pop();
       return <DocPageContainer key={id} currentRoute={currentRoute} id={id} onNavigate={handleNavigate} />;
     }
 
