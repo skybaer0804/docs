@@ -24,6 +24,14 @@ app.use('/api/subscriptions', require('./routes/subscriptionRoutes'));
 // SPA Fallback
 // API 요청이 아닌 모든 GET 요청은 index.html을 반환하여 리액트 라우팅을 지원합니다.
 app.get('*', (req, res) => {
+  // 요청 경로에 확장자가 있는 경우(예: .js, .css) index.html을 보내지 않고 404를 반환합니다.
+  // 이는 존재하지 않는 에셋에 대해 HTML을 반환하여 발생하는 MIME type 에러를 방지합니다.
+  if (req.path.includes('.') && !req.path.endsWith('.html')) {
+    return res.status(404).send('Not found');
+  }
+
+  // index.html은 항상 최신 상태를 유지하도록 캐시를 비활성화합니다.
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, '../../client/dist/index.html'));
 });
 

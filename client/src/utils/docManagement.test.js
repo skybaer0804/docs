@@ -35,3 +35,4 @@ describe('getParentPathFromCurrentPath', () => {
     expect(getParentPathFromCurrentPath('/category/root-file.md')).toBe('/docs');
   });
 });
+
