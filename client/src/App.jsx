@@ -8,6 +8,8 @@ import { EditorPage } from './pages/EditorPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { SubscriptionManagementPage } from './pages/SubscriptionManagementPage';
 import { useAuth } from './contexts/AuthContext';
+import { getRecentDocs } from './utils/readingHistory';
+import { usePWAUpdate } from './hooks/usePWAUpdate';
 
 /**
  * SPA 구조의 App 컴포넌트
@@ -15,10 +17,24 @@ import { useAuth } from './contexts/AuthContext';
  */
 export function App() {
   const { user } = useAuth();
+  // PWA 업데이트 감지
+  usePWAUpdate();
+
   // 초기 경로는 URL에서 가져오거나 기본값 '/'
   const getInitialRoute = () => {
     if (typeof window !== 'undefined') {
       const path = window.location.pathname;
+
+      // PWA 단축어 처리 (/recent/0, /recent/1, /recent/2)
+      if (path.startsWith('/recent/')) {
+        const index = parseInt(path.split('/').pop(), 10);
+        const recentDocs = getRecentDocs(3);
+        if (recentDocs[index] && recentDocs[index].path) {
+          return recentDocs[index].path;
+        }
+        return '/';
+      }
+
       return path === '/' ? '/' : path;
     }
     return '/';

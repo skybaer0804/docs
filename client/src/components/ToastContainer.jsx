@@ -16,6 +16,7 @@ export function ToastContainer({ toasts, onClose }) {
           isOpen={toast.isOpen}
           onClose={() => onClose(toast.id)}
           duration={toast.duration}
+          action={toast.action}
         />
       ))}
     </div>

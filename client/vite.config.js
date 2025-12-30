@@ -19,7 +19,7 @@ export default defineConfig({
   plugins: [
     preact(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['favicon.svg', 'apple-touch-icon.svg', 'icon.svg'],
       manifest: {
         name: 'Nodnjs Documentation',
@@ -43,6 +43,29 @@ export default defineConfig({
             sizes: '512x512',
             type: 'image/svg+xml',
             purpose: 'any maskable',
+          },
+        ],
+        shortcuts: [
+          {
+            name: '최근 읽은 문서 1',
+            short_name: '최근 1',
+            description: '최근에 읽은 첫 번째 문서로 이동',
+            url: '/recent/0',
+            icons: [{ src: '/assets/icon-192x192.svg', sizes: '192x192' }],
+          },
+          {
+            name: '최근 읽은 문서 2',
+            short_name: '최근 2',
+            description: '최근에 읽은 두 번째 문서로 이동',
+            url: '/recent/1',
+            icons: [{ src: '/assets/icon-192x192.svg', sizes: '192x192' }],
+          },
+          {
+            name: '최근 읽은 문서 3',
+            short_name: '최근 3',
+            description: '최근에 읽은 세 번째 문서로 이동',
+            url: '/recent/2',
+            icons: [{ src: '/assets/icon-192x192.svg', sizes: '192x192' }],
           },
         ],
       },
