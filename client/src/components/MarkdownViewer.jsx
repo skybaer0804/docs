@@ -14,7 +14,7 @@ export function MarkdownViewerPresenter({ html, file, contentRef, onDownload, on
         {user && file && user.id === file.author_id && (
           <button
             class="markdown-viewer__action-btn"
-            onClick={() => onEdit && onEdit(file.path)}
+            onClick={() => onEdit && onEdit(file.id)}
             aria-label="문서 수정"
             title="문서 수정"
           >

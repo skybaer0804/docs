@@ -1,16 +1,37 @@
 import { DirectoryTreeContainer } from '../containers/DirectoryTreeContainer';
 import { useState, useRef } from 'preact/hooks';
-import { IconPlus, IconLoader2, IconUserPlus } from '@tabler/icons-preact';
+import {
+  IconPlus,
+  IconLoader2,
+  IconUserPlus,
+  IconChevronRight,
+  IconChevronDown,
+  IconDots,
+  IconEdit,
+  IconDownload,
+  IconPencil,
+  IconTrash,
+  IconFilePlus,
+  IconFolderPlus,
+  IconCheck,
+} from '@tabler/icons-preact';
 import { Popover } from './Popover';
-import { FileManageList } from './FileManageList';
+import { List } from './List';
+import { ListItem } from './ListItem';
 import { useDnd } from '../contexts/DndContext';
 import { useAuth } from '../contexts/AuthContext';
+import { ContextMenu } from './ContextMenu';
+import { useContextMenu } from '../hooks/useContextMenu';
+import { Modal } from './Modal';
+import { Button } from './Button';
+import { ConfirmDialog } from './ConfirmDialog';
+import { useDeleteDocMutation, useUpdateDocMutation } from '../hooks/useDocMutations';
+import { useToast } from '../contexts/ToastContext';
+import { navigationObserver } from '../observers/NavigationObserver';
 import './DirectoryTree.scss';
 
 /**
  * DirectoryTree Presenter 컴포넌트
- * 순수 UI 렌더링만 담당 (Props 기반)
- * TDD 친화적: Props만으로 렌더링하므로 테스트 용이
  */
 export function DirectoryTreePresenter({
   categorized,
@@ -25,21 +46,86 @@ export function DirectoryTreePresenter({
   onNavigate,
   onCreateDocument,
   onCreateFolder,
+  onEditDocument,
+  onDownloadDocument,
   loading = false,
 }) {
   const { user } = useAuth();
   const dnd = useDnd();
+  const { contextMenu, handleContextMenu, closeContextMenu } = useContextMenu();
+  const { showSuccess, showError } = useToast();
+  const updateDocMutation = useUpdateDocMutation();
+  const deleteDocMutation = useDeleteDocMutation();
+
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameValue, setRenameValue] = useState('');
+  const [renameTarget, setRenameTarget] = useState(null); // { id, title, type }
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null); // { id, type }
+
+  const handleRenameClick = (id, title, type) => {
+    setRenameTarget({ id, title, type });
+    setRenameValue(title);
+    setRenameOpen(true);
+  };
+
+  const handleDeleteClick = (id, type) => {
+    setDeleteTarget({ id, type });
+    setConfirmOpen(true);
+  };
+
+  const handleRenameConfirm = async (e) => {
+    if (e) e.preventDefault();
+    if (!renameValue.trim() || !renameTarget) return;
+
+    try {
+      const name = renameTarget.type === 'file' ? `${renameValue.trim()}.md` : renameValue.trim();
+      const result = await updateDocMutation.mutateAsync({
+        id: renameTarget.id,
+        data: { name },
+      });
+      showSuccess('이름이 변경되었습니다.');
+      navigationObserver.notify(result.route || `/doc/${result.id}`, {
+        type: renameTarget.type === 'file' ? 'file' : 'directory',
+        action: 'update',
+        file: result,
+      });
+      setRenameOpen(false);
+    } catch (err) {
+      showError(err.message || '이름 변경에 실패했습니다.');
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await deleteDocMutation.mutateAsync({ id: deleteTarget.id });
+      showSuccess('삭제되었습니다.');
+      navigationObserver.notify('/', {
+        type: deleteTarget.type === 'file' ? 'file' : 'directory',
+        action: 'delete',
+      });
+      if (currentPath?.includes(deleteTarget.id) && onNavigate) {
+        onNavigate('/');
+      }
+    } catch (e) {
+      showError(e?.message || '삭제에 실패했습니다.');
+    } finally {
+      setConfirmOpen(false);
+    }
+  };
+
+  const handleRenameCancel = () => {
+    setRenameOpen(false);
+    setRenameTarget(null);
+  };
 
   const bindDragSource = (item) => ({
     ...(dnd.bindDragSource ? dnd.bindDragSource(item) : {}),
   });
 
   const bindDropTarget = (targetFolderId, targetFolderType) => {
-    // targetFolderId가 null이면 실제 null로 비교 (루트 대응)
     const normalizedTargetId = targetFolderId === 'null' ? null : targetFolderId;
-
-    // stale closure 방지를 위해 Ref 사용 가능하면 사용, 아니면 state 사용
-    // DirectoryTree는 매번 렌더링되므로 state 기반 canDropTo도 동작함
     const canDrop = dnd.canDropTo(targetFolderId, targetFolderType);
     const isOver = dnd.dragOverId === normalizedTargetId;
     const isSuccess = dnd.dropSuccessId === normalizedTargetId;
@@ -55,118 +141,84 @@ export function DirectoryTreePresenter({
     };
   };
 
-  // 재귀적으로 트리 렌더링 (순환 참조 방지)
   function renderTree(node, path = '', level = 0, visited = new Set(), isSubscription = false) {
-    // 순환 참조 방지: 이미 방문한 노드는 건너뛰기
     const nodeKey = path || 'root';
-    if (visited.has(nodeKey)) {
-      console.warn('Circular reference detected in directory tree:', path);
-      return null;
-    }
+    if (visited.has(nodeKey)) return null;
     visited.add(nodeKey);
 
     try {
-      // 정렬 제거: 원본 순서 유지 (대소문자, 한글 그대로 표시)
       const keys = Object.keys(node).filter((key) => key !== '_files' && key !== '_meta');
       const files = node._files || [];
 
-      if (keys.length === 0 && files.length === 0) {
-        visited.delete(nodeKey);
-        return null;
-      }
+      if (keys.length === 0 && files.length === 0) return null;
 
-      const result = (
+      return (
         <ul class={level === 0 ? 'file-list' : 'sub-file-list'}>
-          {/* 파일들 */}
-          {files.map((file) => {
-            // 파일의 부모 경로를 드롭 타겟으로 설정
+          {files.map((file) => (
+            <FileItem
+              key={file.id}
+              file={file}
+              currentPath={currentPath}
+              onFileClick={onFileClick}
+              onEditDocument={onEditDocument}
+              onDownloadDocument={onDownloadDocument}
+              onRenameDocument={handleRenameClick}
+              onDeleteDocument={handleDeleteClick}
+              onNavigate={onNavigate}
+              isSubscription={isSubscription}
+              bindDragSource={bindDragSource}
+              handleContextMenu={handleContextMenu}
+              contextMenu={contextMenu}
+              dnd={dnd}
+            />
+          ))}
 
-            return (
-              <li
-                key={file.path}
-                class={`file-item ${currentPath === file.route ? 'active' : ''} ${
-                  dnd.dragItem?.id === file.id ? 'file-item--dragging' : ''
-                }`}
-                onClick={() => onFileClick(file)}
-                title={file.path}
-                data-dnd-item-id={file.id}
-                data-dnd-item-type="FILE"
-                data-dnd-item-path={file.path}
-                data-dnd-item-name={file.name || file.title}
-                data-dnd-item-author-id={file.author_id}
-              >
-                <span class="file-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
-                <span class="file-name">{file.title}</span>
-              </li>
-            );
-          })}
-
-          {/* 하위 디렉토리들 */}
           {keys.map((key) => {
-            const subPath = path ? `${path}/${key}` : key;
             const subNode = node[key];
-
-            // subNode가 유효한지 확인
-            if (!subNode || typeof subNode !== 'object') {
-              return null;
-            }
-
-            // NOTE:
-            // - DB(nodes) 기반에선 "빈 폴더"도 존재할 수 있음
-            // - 기존 hasContent 로직은 빈 폴더를 Sidebar에서 숨겨버려 폴더 생성 직후 안 보이는 문제가 있었음
-            // - _meta(폴더 메타)가 있으면 빈 폴더라도 렌더링하도록 허용
-            const hasRenderableFolderMeta = Boolean(subNode?._meta);
-            const hasFiles = (subNode._files?.length || 0) > 0;
-            const hasSubFolders = Object.keys(subNode).filter((k) => k !== '_files' && k !== '_meta').length > 0;
-
-            if (!hasRenderableFolderMeta && !hasFiles && !hasSubFolders) return null;
-
-            const isSubExpanded = expandedPaths[subPath] === true; // 기본값 false
-
-            const subcategoryRoute = `/category/${subPath}`;
-            const isSubcategoryActive = currentPath === subcategoryRoute;
+            const subId = subNode._meta?.id;
+            const subPathStr = path ? `${path}/${key}` : key;
+            const isSubExpanded = expandedPaths[subId] === true;
+            const isSubcategoryActive = currentPath === `/folder/${subId}`;
 
             return (
               <FolderItem
-                key={key}
+                key={subId}
                 level={level}
-                subPath={subPath}
+                subId={subId}
+                subPath={subPathStr}
                 keyName={key}
                 isSubExpanded={isSubExpanded}
                 isSubcategoryActive={isSubcategoryActive}
                 onFolderClick={onFolderClick}
+                onNavigate={onNavigate}
+                currentRoute={currentPath}
                 onCreateDocument={isSubscription ? null : onCreateDocument}
                 onCreateFolder={isSubscription ? null : onCreateFolder}
+                onRenameFolder={handleRenameClick}
+                onDeleteFolder={handleDeleteClick}
                 subNode={subNode}
                 renderTree={renderTree}
                 visited={visited}
                 bindDragSource={bindDragSource}
                 bindDropTarget={bindDropTarget}
                 isSubscription={isSubscription}
+                onContextMenu={handleContextMenu}
+                contextMenu={contextMenu}
               />
             );
           })}
         </ul>
       );
-
+    } finally {
       visited.delete(nodeKey);
-      return result;
-    } catch (error) {
-      visited.delete(nodeKey);
-      console.error('Error rendering tree node:', path, error);
-      return null;
     }
   }
 
   const handleCreateMyPage = () => {
-    if (!user) {
-      onNavigate('/register');
-    } else {
-      onNavigate(`/write?parent=${encodeURIComponent('/docs')}`);
-    }
+    if (!user) onNavigate('/login');
+    else onNavigate('/write');
   };
 
-  // 비회원용 사이드바 뷰 (회원 가입 유도)
   if (!user) {
     return (
       <div className="directory-tree">
@@ -180,29 +232,16 @@ export function DirectoryTreePresenter({
     );
   }
 
-  // 루트 레벨(/docs) 드롭 타겟 설정 - null은 루트를 의미
-  const rootId = null;
-  const rootType = 'DIRECTORY';
-  const canDropToRoot = dnd.canDropTo(rootId, rootType);
-  const isDragOverRoot = dnd.dragOverId === rootId;
-  const isDropSuccessRoot = dnd.dropSuccessId === rootId;
-
   const rootFiles = categorized?._files || [];
   const categoryKeys = Object.keys(categorized).filter((key) => key !== '_files' && key !== '_meta');
 
   return (
     <div
-      class={`directory-tree ${isDragOverRoot && dnd.isDragging ? 'directory-tree--drag-over-root' : ''}`}
-      data-dnd-drop-id={rootId === null ? 'null' : rootId}
-      data-dnd-drop-type={rootType}
+      class="directory-tree"
+      onContextMenu={(e) => handleContextMenu(e, null)}
+      data-dnd-drop-id="null"
+      data-dnd-drop-type="DIRECTORY"
     >
-      {dnd.isDragging && (
-        <div class="directory-tree__dnd-hint" role="note">
-          폴더나 파일에 드롭할 수 있어요. 브레드크럼의 경로에도 드롭 가능합니다.
-        </div>
-      )}
-
-      {/* 내 페이지 섹션 */}
       <div className="directory-tree__section">
         <div className="directory-tree__section-header">
           <h3 className="directory-tree__section-title">내 페이지</h3>
@@ -217,121 +256,252 @@ export function DirectoryTreePresenter({
           </div>
         ) : (
           <>
-            {rootFiles.length > 0 && (
-              <ul class="file-list root-file-list">
-                {rootFiles.map((file) => (
-                  <li
-                    key={file.path}
-                    class={`file-item ${currentPath === file.route ? 'active' : ''} ${
-                      dnd.dragItem?.id === file.id ? 'file-item--dragging' : ''
-                    }`}
-                    onClick={() => onFileClick(file)}
-                    title={file.path}
-                    data-dnd-item-id={file.id}
-                    data-dnd-item-type="FILE"
-                    data-dnd-item-path={file.path}
-                    data-dnd-item-name={file.name || file.title}
-                    data-dnd-item-author-id={file.author_id}
-                    {...(dnd.bindDragSource ? dnd.bindDragSource(file) : {})}
-                  >
-                    <span class="file-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
-                    <span class="file-name">{file.title}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <ul class="file-list root-file-list">
+              {rootFiles.map((file) => (
+                <FileItem
+                  key={file.id}
+                  file={file}
+                  currentPath={currentPath}
+                  onFileClick={onFileClick}
+                  onEditDocument={onEditDocument}
+                  onDownloadDocument={onDownloadDocument}
+                  onRenameDocument={handleRenameClick}
+                  onDeleteDocument={handleDeleteClick}
+                  onNavigate={onNavigate}
+                  bindDragSource={bindDragSource}
+                  handleContextMenu={handleContextMenu}
+                  contextMenu={contextMenu}
+                  dnd={dnd}
+                />
+              ))}
+            </ul>
 
             {categoryKeys.map((category) => {
               const categoryData = categorized[category];
-              const categoryPath = category;
-              const isExpanded = expandedPaths[categoryPath] === true;
-
-              const categoryRoute = `/category/${categoryPath}`;
-              const isCategoryActive = currentPath === categoryRoute;
-
-              const categoryMeta = categoryData?._meta;
+              const categoryId = categoryData._meta?.id;
+              const isExpanded = expandedPaths[categoryId] === true;
               return (
-                <div
-                  key={category}
-                  class="category-section"
-                  data-expanded={isExpanded}
-                  {...(categoryMeta
-                    ? {
-                        'data-dnd-drop-id': categoryMeta.id,
-                        'data-dnd-drop-type': 'DIRECTORY',
-                      }
-                    : {})}
-                >
-                  <FolderItem
-                    level={0}
-                    subPath={categoryPath}
-                    keyName={category}
-                    isSubExpanded={isExpanded}
-                    isSubcategoryActive={isCategoryActive}
-                    onFolderClick={onFolderClick}
-                    onCreateDocument={onCreateDocument}
-                    onCreateFolder={onCreateFolder}
-                    subNode={categoryData}
-                    renderTree={renderTree}
-                    visited={new Set()}
-                    isCategory={true}
-                    bindDragSource={bindDragSource}
-                    bindDropTarget={bindDropTarget}
-                  />
-                </div>
+                <FolderItem
+                  key={categoryId}
+                  level={0}
+                  subId={categoryId}
+                  subPath={category}
+                  keyName={category}
+                  isSubExpanded={isExpanded}
+                  isSubcategoryActive={currentPath === `/folder/${categoryId}`}
+                  onFolderClick={onFolderClick}
+                  onNavigate={onNavigate}
+                  currentRoute={currentPath}
+                  onCreateDocument={onCreateDocument}
+                  onCreateFolder={onCreateFolder}
+                  onRenameFolder={handleRenameClick}
+                  onDeleteFolder={handleDeleteClick}
+                  subNode={categoryData}
+                  renderTree={renderTree}
+                  visited={new Set()}
+                  isCategory={true}
+                  bindDragSource={bindDragSource}
+                  bindDropTarget={bindDropTarget}
+                  onContextMenu={handleContextMenu}
+                  contextMenu={contextMenu}
+                />
               );
             })}
           </>
         )}
       </div>
 
-      {/* 구독 페이지 섹션 */}
       {followingUsers.length > 0 && (
         <div className="directory-tree__section">
           <h3 className="directory-tree__section-title">구독 페이지</h3>
           {followingUsers.map((u) => {
-            const userId = u.id;
-            const username = u.username;
-            const docTitle = u.document_title || username;
-            const isUserExpanded = expandedPaths[`sub_${userId}`] === true;
-            const userTree = followingTrees[userId];
-            const isLoading = loadingTrees[userId];
-
+            const isUserExpanded = expandedPaths[`sub_${u.id}`] === true;
             return (
-              <div key={userId} className="category-section" data-expanded={isUserExpanded}>
-                <div
-                  className={`category-header ${isUserExpanded ? 'active' : ''}`}
-                  onClick={() => onUserClick(userId)}
-                >
+              <div key={u.id} className="category-section" data-expanded={isUserExpanded}>
+                <div className={`category-header ${isUserExpanded ? 'active' : ''}`} onClick={() => onUserClick(u.id)}>
                   <span className="folder-icon">👤</span>
-                  <span className="category-title">{docTitle}</span>
-                  {isLoading && <span className="directory-tree__loading-icon">...</span>}
+                  <span className="category-title">{u.document_title || u.username}</span>
                 </div>
-                {isUserExpanded && userTree && (
-                  <div className="category-content">{renderTree(userTree, `sub_${userId}`, 0, new Set(), true)}</div>
+                {isUserExpanded && followingTrees[u.id] && (
+                  <div className="category-content">
+                    {renderTree(followingTrees[u.id], `sub_${u.id}`, 0, new Set(), true)}
+                  </div>
                 )}
               </div>
             );
           })}
         </div>
       )}
+
+      <ContextMenu
+        {...contextMenu}
+        onClose={closeContextMenu}
+        onCreateDocument={onCreateDocument}
+        onCreateFolder={onCreateFolder}
+        onEditDocument={onEditDocument}
+        onDownloadDocument={onDownloadDocument}
+        onRenameDocument={(id, title) => handleRenameClick(id, title, 'file')}
+        onDeleteDocument={(id) => handleDeleteClick(id, 'file')}
+        onRenameFolder={(id, name) => handleRenameClick(id, name, 'folder')}
+        onDeleteFolder={(id) => handleDeleteClick(id, 'folder')}
+      />
+
+      <Modal
+        isOpen={renameOpen}
+        onClose={handleRenameCancel}
+        title="제목 수정"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleRenameCancel}
+              disabled={updateDocMutation.isPending}
+            >
+              취소
+            </Button>
+            <Button type="submit" form="directory-rename-form" variant="primary" loading={updateDocMutation.isPending}>
+              <IconCheck size={16} />
+              수정
+            </Button>
+          </>
+        }
+      >
+        <div className="directory-create-modal">
+          <form id="directory-rename-form" onSubmit={handleRenameConfirm} className="directory-create-modal__form">
+            <div className="directory-create-modal__form-group">
+              <label htmlFor="renameValue">새 이름</label>
+              <input
+                id="renameValue"
+                type="text"
+                value={renameValue}
+                onInput={(e) => setRenameValue(e.target.value)}
+                required
+                autoFocus
+                className="directory-create-modal__input"
+              />
+            </div>
+          </form>
+        </div>
+      </Modal>
+
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        title="삭제 확인"
+        message="정말 삭제하시겠습니까?"
+        onConfirm={handleConfirmDelete}
+        onClose={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }
 
-/**
- * FolderItem 컴포넌트
- * 폴더 항목 렌더링 및 호버시 + 아이콘 표시
- */
+function FileItem({
+  file,
+  currentPath,
+  onFileClick,
+  onEditDocument,
+  onDownloadDocument,
+  onRenameDocument,
+  onDeleteDocument,
+  onNavigate,
+  isSubscription,
+  bindDragSource,
+  handleContextMenu,
+  contextMenu,
+  dnd,
+}) {
+  const [hovered, setHovered] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const buttonRef = useRef(null);
+
+  const handleDotsClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setPopoverOpen(!popoverOpen);
+  };
+
+  const handleRenameClick = () => {
+    onRenameDocument(file.id, file.title, 'file');
+    setPopoverOpen(false);
+  };
+
+  const handleDeleteClick = () => {
+    onDeleteDocument(file.id, 'file');
+    setPopoverOpen(false);
+  };
+
+  const handleListItemClick = (callback) => (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    callback();
+    setPopoverOpen(false);
+  };
+
+  return (
+    <>
+      <li
+        key={file.id}
+        class={`file-item ${currentPath === file.route ? 'active' : ''} ${
+          dnd.dragItem?.id === file.id ? 'file-item--dragging' : ''
+        } ${contextMenu.isOpen && contextMenu.targetId === file.id ? 'right-clicked' : ''}`}
+        onClick={() => onFileClick(file)}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onContextMenu={(e) => !isSubscription && handleContextMenu(e, file.id, 'file', file)}
+        data-dnd-item-id={file.id}
+        data-dnd-item-type="FILE"
+        data-dnd-item-name={file.title}
+        data-dnd-item-author-id={file.author_id}
+        {...(!isSubscription ? bindDragSource(file) : {})}
+      >
+        <span class="file-icon">{file.ext === '.template' ? '📄' : '📝'}</span>
+        <span class="file-name">{file.title}</span>
+        {hovered && !isSubscription && (
+          <button ref={buttonRef} class="folder-item__add-button" onClick={handleDotsClick}>
+            <IconDots size={16} />
+          </button>
+        )}
+      </li>
+
+      <Popover isOpen={popoverOpen} onClose={() => setPopoverOpen(false)} anchorRef={buttonRef}>
+        <List>
+          <ListItem icon={<IconEdit size={18} />} onClick={handleListItemClick(() => onEditDocument(file.id))}>
+            편집
+          </ListItem>
+          <ListItem icon={<IconDownload size={18} />} onClick={handleListItemClick(() => onDownloadDocument(file))}>
+            다운로드
+          </ListItem>
+          <ListItem icon={<IconPencil size={18} />} onClick={handleListItemClick(handleRenameClick)}>
+            제목 수정
+          </ListItem>
+          <ListItem
+            className="list-item--danger"
+            icon={<IconTrash size={18} />}
+            onClick={handleListItemClick(handleDeleteClick)}
+          >
+            삭제
+          </ListItem>
+        </List>
+      </Popover>
+    </>
+  );
+}
+
 function FolderItem({
   level,
+  subId,
   subPath,
   keyName,
   isSubExpanded,
   isSubcategoryActive,
   onFolderClick,
+  onNavigate,
+  currentRoute,
   onCreateDocument,
   onCreateFolder,
+  onRenameFolder,
+  onDeleteFolder,
   subNode,
   renderTree,
   visited,
@@ -339,98 +509,134 @@ function FolderItem({
   bindDragSource,
   bindDropTarget,
   isSubscription = false,
+  onContextMenu,
+  contextMenu,
 }) {
   const [hovered, setHovered] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
   const buttonRef = useRef(null);
 
   const meta = subNode?._meta;
-  const folderDocsPath = meta?.path || `/docs/${subPath}`;
-  const drop = bindDropTarget ? bindDropTarget(meta?.id, 'DIRECTORY') : { dndHeaderClassName: '' };
-  const { dndHeaderClassName = '', dndTitle = '' } = drop || {};
+  const drop = bindDropTarget ? bindDropTarget(subId, 'DIRECTORY') : { dndHeaderClassName: '' };
+
+  const keys = Object.keys(subNode || {}).filter((key) => key !== '_files' && key !== '_meta');
+  const files = subNode?._files || [];
+  const isEmpty = keys.length === 0 && files.length === 0;
 
   const handleFolderClick = (e) => {
-    // + 아이콘 클릭이 아닌 경우에만 폴더 클릭 처리
     if (!e.target.closest('.folder-item__add-button')) {
-      onFolderClick(subPath);
+      onFolderClick(subId, subPath);
     }
   };
 
-  const handleAddClick = (e) => {
+  const handleDotsClick = (e) => {
+    e.preventDefault();
     e.stopPropagation();
-    setPopoverOpen(true);
+    setPopoverOpen(!popoverOpen);
   };
 
   const handleCreateDocument = () => {
     setPopoverOpen(false);
-    if (onCreateDocument) {
-      onCreateDocument(`/docs/${subPath}`);
-    }
+    if (onCreateDocument) onCreateDocument(subId);
   };
 
   const handleCreateFolder = () => {
     setPopoverOpen(false);
-    if (onCreateFolder) {
-      // 하위 디렉토리 생성시 현재 경로(subPath)를 그대로 사용
-      onCreateFolder(`/docs/${subPath}`);
-    }
+    if (onCreateFolder) onCreateFolder(subId);
   };
 
+  const handleRenameClick = () => {
+    onRenameFolder(subId, keyName, 'folder');
+    setPopoverOpen(false);
+  };
+
+  const handleDeleteClick = () => {
+    onDeleteFolder(subId, 'folder');
+    setPopoverOpen(false);
+  };
+
+  const handleListItemClick = (callback) => (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    callback();
+    setPopoverOpen(false);
+  };
+
+  const isRightClicked = contextMenu && contextMenu.isOpen && contextMenu.targetId === subId;
+
   const headerClass = isCategory
-    ? `category-header ${isSubcategoryActive ? 'active' : ''}`
-    : `${level === 0 ? 'subcategory-header' : 'subcategory-header nested'} ${isSubcategoryActive ? 'active' : ''}`;
+    ? `category-header ${isSubcategoryActive ? 'active' : ''} ${isRightClicked ? 'right-clicked' : ''}`
+    : `subcategory-header ${isSubcategoryActive ? 'active' : ''} ${level > 0 ? 'nested' : ''} ${
+        isRightClicked ? 'right-clicked' : ''
+      }`;
+
+  const dndAttributes = !isSubscription
+    ? {
+        'data-dnd-drop-id': subId,
+        'data-dnd-drop-type': 'DIRECTORY',
+        'data-dnd-item-id': subId,
+        'data-dnd-item-type': 'DIRECTORY',
+        'data-dnd-item-name': keyName,
+        'data-dnd-item-author-id': meta?.author_id,
+        ...(bindDragSource
+          ? bindDragSource({ id: subId, type: 'DIRECTORY', name: keyName, author_id: meta?.author_id })
+          : {}),
+      }
+    : {};
 
   return (
     <>
-      <li
-        class={`${
-          level === 0 && !isCategory ? 'subcategory-item' : isCategory ? 'category-item' : 'subcategory-item nested'
-        }`}
-        data-expanded={isSubExpanded}
-      >
+      <li class="subcategory-item" data-expanded={isSubExpanded}>
         <div
-          class={`${headerClass} ${dndHeaderClassName}`}
+          class={`${headerClass} ${drop.dndHeaderClassName}`}
           onClick={handleFolderClick}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
-          title={dndTitle || subPath}
-          data-dnd-drop-id={meta?.id}
-          data-dnd-drop-type="DIRECTORY"
-          {...(meta && bindDragSource
-            ? bindDragSource({
-                id: meta.id,
-                type: 'DIRECTORY',
-                path: folderDocsPath,
-                name: meta.name || keyName,
-                author_id: meta.author_id,
-              })
-            : {})}
+          onContextMenu={(e) => !isSubscription && onContextMenu(e, subId, 'folder', { id: subId, name: keyName })}
+          {...dndAttributes}
         >
           <span class="folder-icon">📁</span>
           <span class={isCategory ? 'category-title' : 'subcategory-title'}>{keyName}</span>
-          {hovered && (onCreateDocument || onCreateFolder) && (
-            <button
-              ref={buttonRef}
-              class="folder-item__add-button"
-              onClick={handleAddClick}
-              onMouseDown={(e) => e.stopPropagation()}
-              aria-label="파일/폴더 추가"
-              title="파일/폴더 추가"
-            >
-              <IconPlus size={16} />
+          {!isSubscription && hovered ? (
+            <button ref={buttonRef} class="folder-item__add-button" onClick={handleDotsClick}>
+              <IconDots size={16} />
             </button>
+          ) : (
+            !isEmpty && (
+              <span className="folder-item__chevron">
+                {isSubExpanded ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
+              </span>
+            )
           )}
         </div>
-        <div class={isCategory ? 'category-content' : 'subcategory-content'}>
-          {isSubExpanded && renderTree(subNode, subPath, isCategory ? 0 : level + 1, visited, isSubscription)}
-        </div>
+        {!isEmpty && (
+          <div class={isCategory ? 'category-content' : 'subcategory-content'}>
+            {isSubExpanded && renderTree(subNode, subPath, isCategory ? 0 : level + 1, visited, isSubscription)}
+          </div>
+        )}
       </li>
       <Popover isOpen={popoverOpen} onClose={() => setPopoverOpen(false)} anchorRef={buttonRef}>
-        <FileManageList onCreateDocument={handleCreateDocument} onCreateFolder={handleCreateFolder} />
+        <List>
+          <ListItem icon={<IconFilePlus size={18} />} onClick={handleListItemClick(handleCreateDocument)}>
+            하위문서 생성
+          </ListItem>
+          <ListItem icon={<IconFolderPlus size={18} />} onClick={handleListItemClick(handleCreateFolder)}>
+            하위폴더 생성
+          </ListItem>
+          <ListItem icon={<IconPencil size={18} />} onClick={handleListItemClick(handleRenameClick)}>
+            제목 수정
+          </ListItem>
+          <ListItem
+            className="list-item--danger"
+            icon={<IconTrash size={18} />}
+            onClick={handleListItemClick(handleDeleteClick)}
+          >
+            삭제
+          </ListItem>
+        </List>
       </Popover>
     </>
   );
 }
 
-// 기존 API 호환성을 위한 기본 export (Container 사용)
 export const DirectoryTree = DirectoryTreeContainer;

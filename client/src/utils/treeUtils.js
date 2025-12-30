@@ -135,7 +135,7 @@ function transformFileNode(node) {
     const ext = hasDot ? `.${rawName.split('.').pop()}` : '';
     return {
         path: node.path,
-        route: node.path, // 라우팅 경로
+        route: `/doc/${node.id}`, // ID 기반 라우팅으로 변경
         title: rawName.replace(/\.(md|template)$/i, ''), // 확장자 제거된 제목
         name: rawName,
         ext,

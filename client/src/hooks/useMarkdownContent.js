@@ -6,16 +6,25 @@ import { useDocContentQuery } from './useDocContentQuery';
  */
 export function useMarkdownContent(url) {
   const routePath = url || '/';
-  const isCategoryRoute = routePath.startsWith('/category/');
-  const isRootRoute = routePath === '/';
-  const isDocRoute = routePath.startsWith('/docs/');
+  
+  // URL에서 ID 추출 (/doc/:id 또는 /folder/:id)
+  const isDocRoute = routePath.startsWith('/doc/');
+  const isFolderRoute = routePath.startsWith('/folder/');
+  const urlPath = routePath.split('?')[0];
+  const id = (isDocRoute || isFolderRoute) ? urlPath.split('/').pop() : null;
 
-  const shouldFetch = !isCategoryRoute && !isRootRoute && isDocRoute;
-  const { data: doc, isLoading } = useDocContentQuery(routePath, { enabled: shouldFetch });
+  const isRootRoute = routePath === '/';
+
+  const shouldFetch = !!id;
+  const { data: doc, isLoading } = useDocContentQuery(id || routePath, { enabled: shouldFetch });
 
   const { content, fileExt, currentFile } = useMemo(() => {
-    if (!shouldFetch) {
+    if (!shouldFetch && !isRootRoute) {
       return { content: '', fileExt: '', currentFile: null };
+    }
+
+    if (isRootRoute) {
+       return { content: '', fileExt: '', currentFile: null };
     }
 
     if (!doc) {
@@ -30,14 +39,17 @@ export function useMarkdownContent(url) {
       content: doc.content || '',
       fileExt: ext,
       currentFile: {
+        id: doc.id,
         path: doc.path,
-        route: doc.path,
+        route: `/doc/${doc.id}`,
         title: name.replace(/\.md$/, '').replace(/\.template$/, ''),
         ext,
         author_id: doc.author_id,
+        parent_id: doc.parent_id,
+        updated_at: doc.updated_at,
       },
     };
-  }, [doc, shouldFetch]);
+  }, [doc, shouldFetch, isRootRoute]);
 
   return {
     content,

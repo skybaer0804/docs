@@ -5,48 +5,21 @@ import {
   getBreadcrumbLinkRoute,
   filterBreadcrumbItemsForMobile,
 } from '../utils/breadcrumbUtils';
-import { IconChevronsRight } from '@tabler/icons-preact';
+import { IconChevronsRight, IconInfoCircle } from '@tabler/icons-preact';
 import './Breadcrumb.scss';
 import { useDnd } from '../contexts/DndContext';
 
 /**
  * BreadcrumbNav Presenter 컴포넌트
- * 순수 UI 렌더링만 담당 (Props 기반)
- * TDD 친화적: Props만으로 렌더링하므로 테스트 용이
  */
 function BreadcrumbNavPresenter({ items, onNavigate, sidebarCollapsed, onToggleCollapse, currentRoute }) {
   const dnd = useDnd();
 
-  // 브레드크럼 아이템의 docs path 계산
-  const getItemDocsPath = (item) => {
-    if (item.path) {
-      // path가 /docs/로 시작하지 않으면 /docs/ 추가
-      if (item.path.startsWith('/docs')) {
-        return item.path;
-      }
-      return `/docs/${item.path}`;
-    }
-    if (item.type === 'category' && item.category) {
-      return `/docs/${item.category}`;
-    }
-    if (item.type === 'subcategory' && item.category && item.subcategory) {
-      return `/docs/${item.category}/${item.subcategory}`;
-    }
-    if (item.type === 'link' && item.route === '/') {
-      return '/docs';
-    }
-    return null;
-  };
-
   const renderBreadcrumbItem = (item, index, isCurrent, isLast = false) => {
     const linkRoute = getBreadcrumbLinkRoute(item);
-    const itemDocsPath = getItemDocsPath(item);
-    // Breadcrumb는 path 기반이므로, id는 나중에 path로 조회하도록 함
-    // 일단 path를 그대로 사용하되, DIRECTORY 타입으로 가정
-    const itemId = item.nodeId || null; // 나중에 path로 조회해서 설정
+    const itemId = item.nodeId || null;
     const itemType = 'DIRECTORY';
-    // itemId가 null이면 루트(Home)를 의미하며, 'null' 문자열로 취급하여 DnD 가능하게 함
-    const effectiveId = itemId === null && item.type === 'link' && item.route === '/' ? 'null' : itemId;
+    const effectiveId = itemId === null && item.route === '/' ? 'null' : itemId;
     const normalizedTargetId = effectiveId === 'null' ? null : effectiveId;
     
     const canDrop = effectiveId !== null && dnd.canDropTo(effectiveId, itemType);
@@ -86,6 +59,15 @@ function BreadcrumbNavPresenter({ items, onNavigate, sidebarCollapsed, onToggleC
     );
   };
 
+  const lastItem = items[items.length - 1];
+  const updatedAt = lastItem?.updated_at;
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return `마지막 업데이트: ${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
+  };
+
   return (
     <>
       {/* 데스크톱 브레드크럼 */}
@@ -96,28 +78,42 @@ function BreadcrumbNavPresenter({ items, onNavigate, sidebarCollapsed, onToggleC
           </button>
         )}
         {items.map((item, index) => {
-          const isCurrent = item.type === 'current' || index === items.length - 1;
+          const isCurrent = index === items.length - 1;
           return renderBreadcrumbItem(item, index, isCurrent, index === items.length - 1);
         })}
+        {updatedAt && (
+          <div className="breadcrumb__icon-info" title={formatDate(updatedAt)}>
+            <IconInfoCircle size={18} />
+          </div>
+        )}
       </nav>
 
       {/* 모바일 브레드크럼 */}
       <nav class="breadcrumb breadcrumb--mobile">
         {(() => {
           const displayItems = filterBreadcrumbItemsForMobile(items);
-          return displayItems.map(({ item, index, isEllipsis }, displayIndex) => {
-            if (isEllipsis) {
-              return (
-                <span key="ellipsis" class="breadcrumb__separator">
-                  ...
-                </span>
-              );
-            }
+          return (
+            <>
+              {displayItems.map(({ item, index, isEllipsis }, displayIndex) => {
+                if (isEllipsis) {
+                  return (
+                    <span key="ellipsis" class="breadcrumb__separator">
+                      ...
+                    </span>
+                  );
+                }
 
-            const isCurrent = item.type === 'current' || index === items.length - 1;
-            const isLastDisplayItem = displayIndex === displayItems.length - 1;
-            return renderBreadcrumbItem(item, index, isCurrent, isLastDisplayItem);
-          });
+                const isCurrent = index === items.length - 1;
+                const isLastDisplayItem = displayIndex === displayItems.length - 1;
+                return renderBreadcrumbItem(item, index, isCurrent, isLastDisplayItem);
+              })}
+              {updatedAt && (
+                <div className="breadcrumb__icon-info" title={formatDate(updatedAt)}>
+                  <IconInfoCircle size={16} />
+                </div>
+              )}
+            </>
+          );
         })()}
       </nav>
     </>

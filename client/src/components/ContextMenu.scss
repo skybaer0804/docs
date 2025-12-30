@@ -1,0 +1,44 @@
+@use '../style.scss' as *;
+
+.context-menu {
+  position: fixed;
+  z-index: 10000;
+  animation: contextMenuFadeIn 0.1s ease-out;
+
+  // List와 ListItem의 기본 스타일을 그대로 사용하도록 설정을 최소화합니다.
+  .list {
+    margin: 0;
+    padding: 0;
+    min-width: 180px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  // ListItem.scss의 스타일이 적용되므로 별도의 list-item 스타일은 제거합니다.
+  // 이렇게 하면 설정 메뉴와 동일한 아이콘 색상 및 간격이 적용됩니다.
+}
+
+@keyframes contextMenuFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// 다크모드
+body[data-theme='dark'] {
+  .context-menu {
+    .list {
+      background-color: var(--card-bg-dark, #252525);
+      border-color: #333;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+  }
+}

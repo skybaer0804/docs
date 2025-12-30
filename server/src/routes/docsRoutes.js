@@ -29,7 +29,10 @@ router.delete('/:id', authMiddleware, docsController.deleteDoc);
 // 문서/폴더 이동 (🔐 인증 필요)
 router.post('/move', authMiddleware, docsController.moveDoc);
 
-// 특정 문서 조회 (공개/비공개 로직은 컨트롤러 내부에서 처리)
+// 특정 문서 조회 (ID 기반)
+router.get('/id/:id', optionalAuthMiddleware, docsController.getDocById);
+
+// 특정 문서 조회 (path 기반 - 하위 호환성 유지)
 router.get('/*', optionalAuthMiddleware, docsController.getDocByPath);
 
 module.exports = router;

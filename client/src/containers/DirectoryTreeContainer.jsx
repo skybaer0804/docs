@@ -3,6 +3,7 @@ import { DirectoryTreePresenter } from '../components/DirectoryTree';
 import { useState } from 'preact/hooks';
 import { DirectoryCreateModal } from '../components/DirectoryCreateModal';
 import { route } from 'preact-router';
+import { downloadFile } from '../utils/downloadUtils';
 
 /**
  * DirectoryTree Container 컴포넌트
@@ -22,24 +23,39 @@ export function DirectoryTreeContainer({ currentPath, onNavigate }) {
     loading,
   } = useDirectoryTree(currentPath, onNavigate);
   const [directoryModalOpen, setDirectoryModalOpen] = useState(false);
-  const [directoryModalPath, setDirectoryModalPath] = useState('/docs');
+  const [directoryModalParentId, setDirectoryModalParentId] = useState(null);
 
-  const handleCreateDocument = async (parentPath) => {
+  const handleCreateDocument = async (parentId) => {
+    const url = parentId ? `/write?parent_id=${parentId}` : '/write';
     if (onNavigate) {
-      onNavigate(`/write?parent=${encodeURIComponent(parentPath)}`);
+      onNavigate(url);
     } else {
-      route(`/write?parent=${encodeURIComponent(parentPath)}`);
+      route(url);
     }
   };
 
-  const handleCreateFolder = (parentPath) => {
-    setDirectoryModalPath(parentPath);
+  const handleCreateFolder = (parentId) => {
+    setDirectoryModalParentId(parentId);
     setDirectoryModalOpen(true);
   };
 
   const handleFolderCreated = (folder) => {
-    // Toast는 DirectoryCreateModal에서 이미 표시하므로 중복 제거
-    // navigationObserver 이벤트는 createFolder 함수에서 이미 발생하므로 여기서는 추가 작업 불필요
+    // ...
+  };
+
+  const handleEditDocument = (id) => {
+    const url = `/edit/${id}`;
+    if (onNavigate) {
+      onNavigate(url);
+    } else {
+      route(url);
+    }
+  };
+
+  const handleDownloadDocument = async (file) => {
+    if (!file?.id) return;
+    const fileName = file.title.endsWith('.md') ? file.title : `${file.title}.md`;
+    await downloadFile(`/api/docs/id/${file.id}`, fileName);
   };
 
   return (
@@ -57,13 +73,15 @@ export function DirectoryTreeContainer({ currentPath, onNavigate }) {
         onNavigate={onNavigate}
         onCreateDocument={handleCreateDocument}
         onCreateFolder={handleCreateFolder}
+        onEditDocument={handleEditDocument}
+        onDownloadDocument={handleDownloadDocument}
         loading={loading}
       />
       <DirectoryCreateModal
         isOpen={directoryModalOpen}
         onClose={() => setDirectoryModalOpen(false)}
         onSuccess={handleFolderCreated}
-        currentPath={directoryModalPath}
+        parentId={directoryModalParentId}
       />
     </>
   );

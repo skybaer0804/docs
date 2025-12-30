@@ -199,17 +199,50 @@ exports.getUserDocs = async (req, res) => {
   }
 };
 
-// 특정 문서 조회 (path 기반)
+// 특정 문서 조회 (ID 기반)
+exports.getDocById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { data: doc, error } = await supabase.from('nodes').select('*').eq('id', id).single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return res.status(404).json({ error: 'Document not found' });
+      throw error;
+    }
+
+    // 권한 체크: 비공개 문서는 로그인 유저(본인)만 볼 수 있음
+    if (doc.visibility_type === 'private' && (!req.user || req.user.id !== doc.author_id)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // 구독자 전용 문서 체크
+    if (doc.visibility_type === 'subscriber_only' && (!req.user || req.user.id !== doc.author_id)) {
+      const { data: sub } = await supabase
+        .from('subscriptions')
+        .select('id')
+        .eq('follower_id', req.user?.id)
+        .eq('following_id', doc.author_id)
+        .single();
+
+      if (!sub) {
+        return res.status(403).json({ error: 'Access denied. Subscriber only.' });
+      }
+    }
+
+    res.json(doc);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// 특정 문서 조회 (path 기반) - DEPRECATED: ID 기반 조회를 권장합니다.
 exports.getDocByPath = async (req, res) => {
   try {
     const pathParam = req.params[0]; // wildcard capture
     const fullPath = `/${pathParam}`;
 
-    // 로그인 여부 확인 (미들웨어에서 req.user 설정 가정)
-    // 비로그인 상태면 is_public 체크
-    let query = supabase.from('nodes').select('*').eq('path', fullPath).single();
-
-    const { data: doc, error } = await query;
+    const { data: doc, error } = await supabase.from('nodes').select('*').eq('path', fullPath).single();
 
     if (error) {
       if (error.code === 'PGRST116') return res.status(404).json({ error: 'Document not found' });
@@ -244,33 +277,41 @@ exports.getDocByPath = async (req, res) => {
 // 문서/폴더 생성
 exports.createDoc = async (req, res) => {
   try {
-    const { type, parent_path, name, content, is_public } = req.body;
+    const { type, parent_id: req_parent_id, parent_path, name, content, visibility_type } = req.body;
 
     // author_id 필수 체크
     if (!req.user || !req.user.id) {
-      console.error('createDoc: req.user is missing or has no id', { user: req.user });
       return res.status(401).json({ error: 'Authentication required. User ID is missing.' });
     }
     const author_id = req.user.id;
 
-    // author_id가 유효한지 확인
-    if (!author_id || author_id === null || author_id === undefined) {
-      console.error('createDoc: author_id is invalid', { author_id, user: req.user });
-      return res.status(401).json({ error: 'Invalid user ID. Please login again.' });
-    }
+    // 1. 부모 ID 결정
+    let parent_id = req_parent_id || null;
 
-    // 1. 부모 ID 찾기 (Root인 경우 parent_path가 없거나 '/' 또는 '/docs'일 수 있음)
-    let parent_id = null;
-    if (parent_path && parent_path !== '/' && parent_path !== '/docs') {
+    // 하위 호환성: parent_id가 없고 parent_path가 있는 경우에만 path로 검색
+    if (!parent_id && parent_path && parent_path !== '/' && parent_path !== '/docs') {
       const { data: parent } = await supabase.from('nodes').select('id').eq('path', parent_path).single();
-
-      if (!parent) return res.status(404).json({ error: 'Parent directory not found' });
-      parent_id = parent.id;
+      if (parent) {
+        parent_id = parent.id;
+      }
     }
 
-    // 2. 전체 경로 생성
-    const cleanParentPath = parent_path === '/' ? '' : parent_path || '';
-    const newPath = `${cleanParentPath}/${name}`;
+    // 2. 전체 경로 생성 (하위 호환성을 위해 유지하되, 선택적으로 처리)
+    let newPath = null;
+    if (parent_path) {
+      const cleanParentPath = parent_path === '/' ? '' : parent_path;
+      newPath = `${cleanParentPath}/${name}`;
+    } else if (parent_id) {
+      // parent_id만 있는 경우 path 기반 로직이 깨질 수 있으므로,
+      // 프론트엔드 전환 전까지는 가급적 path를 유지하는 것이 안전함.
+      // 하지만 1번 과제의 취지에 따라 path 의존성을 줄여야 함.
+      const { data: parent } = await supabase.from('nodes').select('path').eq('id', parent_id).single();
+      if (parent) {
+        newPath = `${parent.path}/${name}`;
+      }
+    } else {
+      newPath = `/docs/${name}`;
+    }
 
     // 3. DB 저장
     const insertData = {
@@ -278,9 +319,9 @@ exports.createDoc = async (req, res) => {
       type,
       name,
       content: type === 'FILE' ? content : null,
-      path: newPath,
-      visibility_type: req.body.visibility_type || 'public',
-      author_id: author_id, // 필수 필드 추가 (명시적으로 설정)
+      path: newPath, // TODO: DB 스키마에서 path 제거 후 삭제 예정
+      visibility_type: visibility_type || 'public',
+      author_id: author_id,
     };
 
     const { data, error } = await supabase.from('nodes').insert([insertData]).select().single();

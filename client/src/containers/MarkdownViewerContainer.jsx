@@ -21,9 +21,10 @@ export function MarkdownViewerContainer({ content, file, onNavigate, onContentRe
             .filter((n) => n.type === 'FILE')
             .map((n) => ({
                 path: n.path,
-                route: n.path,
+                route: `/doc/${n.id}`,
                 title: n.name.replace(/\.md$/, ''),
                 name: n.name,
+                id: n.id,
                 author_id: n.author_id,
             }));
     }, [nodes]);
@@ -125,9 +126,9 @@ export function MarkdownViewerContainer({ content, file, onNavigate, onContentRe
         }
     };
 
-    const handleEdit = (path) => {
+    const handleEdit = (id) => {
         if (onNavigate) {
-            onNavigate(`/edit${path}`);
+            onNavigate(`/edit/${id}`);
         }
     };
 
