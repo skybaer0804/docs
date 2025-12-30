@@ -12,13 +12,14 @@ let toastIdCounter = 0;
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
 
-  const showToast = useCallback((message, type = 'info', duration = 3000) => {
+  const showToast = useCallback((message, type = 'info', duration = 3000, action = null) => {
     const id = ++toastIdCounter;
     const newToast = {
       id,
       message,
       type,
       duration,
+      action,
       isOpen: true,
     };
 

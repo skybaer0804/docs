@@ -214,8 +214,13 @@ export function useReadingTracker({ contentRef, file, enabled = true, threshold 
             if (scrollPercentage >= threshold) {
                 // 이미 알림을 표시했는지 확인
                 if (!hasNotifiedRef.current || file.path !== lastFileNameRef.current) {
-                    // 회독 횟수 증가
-                    const count = incrementReadingCount(fileName);
+                    // 회독 횟수 증가 (경로와 제목 정보 포함)
+                    const count = incrementReadingCount(fileName, {
+                        path: file.path.startsWith('/doc/') || file.path.startsWith('/folder/') 
+                            ? file.path 
+                            : `/doc/${file.id || file.path}`,
+                        title: file.name || fileName
+                    });
 
                     // 알림 표시
                     showReadingCompleteNotification(count, fileName).catch((error) => {
