@@ -94,7 +94,7 @@ export function SearchModal({
       } else if (e.key === 'Enter') {
         e.preventDefault();
         if (displayItems.length > 0 && selectedIndex >= 0 && selectedIndex < displayItems.length) {
-          onSelect(displayItems[selectedIndex]);
+          handleItemSelect(displayItems[selectedIndex]);
         }
       } else if (e.key === 'Backspace' && !query && selectedUser) {
         onRemoveSelectedUser();
@@ -103,7 +103,18 @@ export function SearchModal({
 
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [isOpen, onClose, displayItems, selectedIndex, onSelect, query, selectedUser, onRemoveSelectedUser]);
+  }, [isOpen, onClose, displayItems, selectedIndex, query, selectedUser, onRemoveSelectedUser]);
+
+  // 결과 선택 핸들러 보정 (유저 선택 시 인풋 포커스 유지 및 모달 유지)
+  const handleItemSelect = (item) => {
+    onSelect(item);
+    if (item.type === 'user' && inputRef.current) {
+      // 조금 뒤에 포커스를 주어 리렌더링 후에도 포커스가 유지되도록 함
+      setTimeout(() => {
+        if (inputRef.current) inputRef.current.focus();
+      }, 50);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -167,7 +178,7 @@ export function SearchModal({
                   key={item.route || item.id}
                   class={`search-modal__result-item ${index === selectedIndex ? 'search-modal__result-item--active' : ''
                     }`}
-                  onClick={() => onSelect(item)}
+                  onClick={() => handleItemSelect(item)}
                   onMouseEnter={() => setSelectedIndex(index)}
                 >
                   <div class={`search-modal__result-item-icon search-modal__result-item-icon--${item.type}`}>

@@ -31,6 +31,10 @@ export function SearchContainer({ isOpen, onClose, onNavigate }) {
     // 검색어 변경 핸들러
     const handleQueryChange = (newQuery) => {
         setQuery(newQuery);
+        // @로 시작하면 자동으로 구독 문서 포함 체크
+        if (newQuery.startsWith('@')) {
+            setIncludeFollowing(true);
+        }
     };
 
     // 최근 검색어 저장
