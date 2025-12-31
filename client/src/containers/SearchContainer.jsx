@@ -12,8 +12,8 @@ const RECENT_SEARCHES_KEY = 'docs_recent_searches';
 export function SearchContainer({ isOpen, onClose, onNavigate }) {
     const [query, setQuery] = useState('');
     const [includeFollowing, setIncludeFollowing] = useState(false);
-    const [searchBySubscriber, setSearchBySubscriber] = useState(false);
-    const { results, loading } = useSearch(query, includeFollowing, searchBySubscriber);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const { results, loading } = useSearch(query, includeFollowing, selectedUser?.id);
     const [recentSearches, setRecentSearches] = useState([]);
 
     // 최근 검색어 불러오기
@@ -54,6 +54,12 @@ export function SearchContainer({ isOpen, onClose, onNavigate }) {
 
     // 결과 선택 핸들러
     const handleSelect = (item) => {
+        if (item.type === 'user') {
+            setSelectedUser({ id: item.id, username: item.username });
+            setQuery(''); // 유저 선택 후 검색어 초기화
+            return;
+        }
+
         saveRecentSearch(item);
 
         if (onNavigate) {
@@ -61,13 +67,17 @@ export function SearchContainer({ isOpen, onClose, onNavigate }) {
         }
         onClose();
         setQuery(''); // 검색어 초기화
+        setSelectedUser(null); // 네비게이션 후 유저 필터 초기화
     };
 
     // 모달 닫힐 때 검색어 초기화
     const handleClose = useCallback(() => {
         onClose();
         // 애니메이션 후 초기화 (선택적)
-        setTimeout(() => setQuery(''), 200);
+        setTimeout(() => {
+            setQuery('');
+            setSelectedUser(null);
+        }, 200);
     }, [onClose]);
 
     return (
@@ -78,8 +88,8 @@ export function SearchContainer({ isOpen, onClose, onNavigate }) {
             onQueryChange={handleQueryChange}
             includeFollowing={includeFollowing}
             onIncludeFollowingChange={setIncludeFollowing}
-            searchBySubscriber={searchBySubscriber}
-            onSearchBySubscriberChange={setSearchBySubscriber}
+            selectedUser={selectedUser}
+            onRemoveSelectedUser={() => setSelectedUser(null)}
             results={results}
             loading={loading}
             onSelect={handleSelect}

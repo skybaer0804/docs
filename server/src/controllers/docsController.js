@@ -81,8 +81,7 @@ exports.getAllDocs = async (req, res) => {
 
 exports.searchDocs = async (req, res) => {
   try {
-    console.log('Search query:', req.query);
-    const { q, include_following, search_by_subscriber } = req.query;
+    const { q, include_following, author_id } = req.query;
     const userId = req.user.id;
 
     if (!q || q.trim().length < 2) {
@@ -92,37 +91,38 @@ exports.searchDocs = async (req, res) => {
     const keyword = q.trim();
     let query;
 
-    if (search_by_subscriber === 'true') {
-      let userQuery = supabase
-        .from('users')
-        .select('id, username, document_title')
-        .or(`username.ilike.%${keyword}%,document_title.ilike.%${keyword}%`);
-
-      const { data: matchedUsers, error: userError } = await userQuery;
-      if (userError) throw userError;
-
-      if (!matchedUsers || matchedUsers.length === 0) {
-        return res.json([]);
+    if (author_id) {
+      // 특정 유저의 문서 내에서 검색
+      // 권한 체크: 내 문서이거나, 해당 유저를 구독 중이어서 볼 수 있는 문서여야 함
+      let isFollowing = false;
+      if (author_id !== userId) {
+        const { data: sub } = await supabase
+          .from('subscriptions')
+          .select('id')
+          .eq('follower_id', userId)
+          .eq('following_id', author_id)
+          .single();
+        isFollowing = !!sub;
       }
 
-      const userIds = matchedUsers.map((u) => u.id);
-
-      const { data: subs } = await supabase.from('subscriptions').select('following_id').eq('follower_id', userId);
-      const followingIds = subs?.map((s) => s.following_id) || [];
-
-      let filterStr = `author_id.in.(${userIds.join(',')})`;
-      filterStr += `,or(author_id.eq.${userId},and(visibility_type.in.(public,subscriber_only),author_id.in.(${followingIds.join(
-        ',',
-      )})))`;
+      const allowedVisibilities = ['public'];
+      if (isFollowing || author_id === userId) {
+        allowedVisibilities.push('subscriber_only');
+      }
+      if (author_id === userId) {
+        allowedVisibilities.push('private');
+      }
 
       query = supabase
         .from('nodes')
         .select('id, name, type, visibility_type, author_id, users:author_id (username)')
-        .or(filterStr)
+        .eq('author_id', author_id)
+        .in('visibility_type', allowedVisibilities)
+        .ilike('name', `%${keyword}%`)
         .order('type', { ascending: true })
         .limit(50);
     } else if (include_following === 'true') {
-      const { data: subs } = await supabase.from('subscriptions').select('following_id').eq('follower_id', userId);
+      const { data: subs = [] } = await supabase.from('subscriptions').select('following_id').eq('follower_id', userId);
       const followingIds = subs?.map((s) => s.following_id) || [];
 
       let filterStr = `author_id.eq.${userId}`;

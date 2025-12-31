@@ -42,6 +42,37 @@
         display: flex;
         align-items: center;
         width: 100%;
+        gap: 8px;
+    }
+
+    &__user-tag {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        background-color: var(--primary-color, #1976d2);
+        color: #fff;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 13px;
+        font-weight: 500;
+        white-space: nowrap;
+
+        &-close {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 2px;
+
+            &:hover {
+                color: #fff;
+                background-color: rgba(255, 255, 255, 0.1);
+            }
+        }
     }
 
     &__search-icon {
@@ -182,6 +213,10 @@
             &--file {
                 color: var(--primary-color, #1976d2);
             }
+
+            &--user {
+                color: #e91e63; // 유저 아이콘 색상 (핑크)
+            }
         }
 
         &-content {
@@ -189,6 +224,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            gap: 2px;
         }
 
         &-title {
@@ -201,6 +237,14 @@
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+
+        &-subtitle {
+            font-size: 12px;
+            color: #999;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         &-author {
@@ -267,6 +311,11 @@
             }
         }
 
+        &__user-tag {
+            background-color: var(--primary-color, #1976d2);
+            color: #fff;
+        }
+
         &__search-icon {
             color: #888;
         }
@@ -299,6 +348,10 @@
 
             &-title {
                 color: #e0e0e0;
+            }
+
+            &-subtitle {
+                color: #777;
             }
 
             &-author {

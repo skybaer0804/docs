@@ -443,20 +443,22 @@ export async function fetchFollowingNodes() {
  * 문서 검색
  * @param {string} query 검색어
  * @param {boolean} includeFollowing 구독 유저 포함 여부
- * @param {boolean} searchBySubscriber 구독자 이름/문서타이틀 검색 여부
+ * @param {string} authorId 특정 유저 ID (필터링용)
  */
-export async function searchDocs(query, includeFollowing = false, searchBySubscriber = false) {
+export async function searchDocs(query, includeFollowing = false, authorId = null) {
   const token = getToken();
   if (!token) return [];
 
-  const response = await fetch(
-    `${API_BASE}/search?q=${encodeURIComponent(query)}&include_following=${includeFollowing}&search_by_subscriber=${searchBySubscriber}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+  let url = `${API_BASE}/search?q=${encodeURIComponent(query)}&include_following=${includeFollowing}`;
+  if (authorId) {
+    url += `&author_id=${authorId}`;
+  }
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
     },
-  );
+  });
 
   if (!response.ok) {
     const err = await response.json();
