@@ -40,7 +40,6 @@ export function useMarkdownContent(url) {
       fileExt: ext,
       currentFile: {
         id: doc.id,
-        path: doc.path,
         route: `/doc/${doc.id}`,
         title: name.replace(/\.md$/, '').replace(/\.template$/, ''),
         ext,

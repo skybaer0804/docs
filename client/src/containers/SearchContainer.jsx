@@ -12,7 +12,8 @@ const RECENT_SEARCHES_KEY = 'docs_recent_searches';
 export function SearchContainer({ isOpen, onClose, onNavigate }) {
     const [query, setQuery] = useState('');
     const [includeFollowing, setIncludeFollowing] = useState(false);
-    const { results, loading } = useSearch(query, includeFollowing);
+    const [searchBySubscriber, setSearchBySubscriber] = useState(false);
+    const { results, loading } = useSearch(query, includeFollowing, searchBySubscriber);
     const [recentSearches, setRecentSearches] = useState([]);
 
     // 최근 검색어 불러오기
@@ -35,15 +36,15 @@ export function SearchContainer({ isOpen, onClose, onNavigate }) {
     // 최근 검색어 저장
     const saveRecentSearch = (item) => {
         const newItem = {
+            id: item.id,
             title: item.title,
-            path: item.path,
             route: item.route,
             type: item.type,
         };
 
         setRecentSearches((prev) => {
             // 중복 제거 및 최신 항목 맨 앞으로
-            const filtered = prev.filter((p) => p.route !== newItem.route);
+            const filtered = prev.filter((p) => p.id !== newItem.id);
             const updated = [newItem, ...filtered].slice(0, MAX_RECENT_SEARCHES);
 
             localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
@@ -77,6 +78,8 @@ export function SearchContainer({ isOpen, onClose, onNavigate }) {
             onQueryChange={handleQueryChange}
             includeFollowing={includeFollowing}
             onIncludeFollowingChange={setIncludeFollowing}
+            searchBySubscriber={searchBySubscriber}
+            onSearchBySubscriberChange={setSearchBySubscriber}
             results={results}
             loading={loading}
             onSelect={handleSelect}

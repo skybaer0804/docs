@@ -13,6 +13,8 @@ export function SearchModal({
   onQueryChange,
   includeFollowing,
   onIncludeFollowingChange,
+  searchBySubscriber,
+  onSearchBySubscriberChange,
   results,
   loading,
   onSelect,
@@ -103,26 +105,18 @@ export function SearchModal({
     <div class="search-modal__overlay" onClick={handleOverlayClick}>
       <div class="search-modal__container" ref={modalRef}>
         <div class="search-modal__header">
-          <div class="search-modal__search-icon">
-            {loading ? <IconLoader2 className="search-modal__spinner" size={20} /> : <IconSearch size={20} />}
-          </div>
-          <input
-            ref={inputRef}
-            type="text"
-            class="search-modal__input"
-            placeholder="무엇을 찾고 계신가요?"
-            value={query}
-            onInput={(e) => onQueryChange(e.target.value)}
-          />
-          <div className="search-modal__header-actions">
-            <label className="search-modal__checkbox-label">
-              <input
-                type="checkbox"
-                checked={includeFollowing}
-                onChange={(e) => onIncludeFollowingChange(e.target.checked)}
-              />
-              <span>구독자 포함</span>
-            </label>
+          <div className="search-modal__input-wrapper">
+            <div class="search-modal__search-icon">
+              {loading ? <IconLoader2 className="search-modal__spinner" size={20} /> : <IconSearch size={20} />}
+            </div>
+            <input
+              ref={inputRef}
+              type="text"
+              class="search-modal__input"
+              placeholder="무엇을 찾고 계신가요?"
+              value={query}
+              onInput={(e) => onQueryChange(e.target.value)}
+            />
             <button
               class="search-modal__close-btn"
               onClick={(e) => {
@@ -135,6 +129,25 @@ export function SearchModal({
               <IconX size={20} />
             </button>
           </div>
+
+          <div className="search-modal__header-options">
+            <label className="search-modal__checkbox-label">
+              <input
+                type="checkbox"
+                checked={includeFollowing}
+                onChange={(e) => onIncludeFollowingChange(e.target.checked)}
+              />
+              <span>구독 문서 포함</span>
+            </label>
+            <label className="search-modal__checkbox-label">
+              <input
+                type="checkbox"
+                checked={searchBySubscriber}
+                onChange={(e) => onSearchBySubscriberChange(e.target.checked)}
+              />
+              <span>구독 이름 검색</span>
+            </label>
+          </div>
         </div>
 
         <div class="search-modal__body">
@@ -146,9 +159,8 @@ export function SearchModal({
               {displayItems.map((item, index) => (
                 <li
                   key={item.route}
-                  class={`search-modal__result-item ${
-                    index === selectedIndex ? 'search-modal__result-item--active' : ''
-                  }`}
+                  class={`search-modal__result-item ${index === selectedIndex ? 'search-modal__result-item--active' : ''
+                    }`}
                   onClick={() => onSelect(item)}
                   onMouseEnter={() => setSelectedIndex(index)}
                 >
@@ -171,7 +183,6 @@ export function SearchModal({
                         </span>
                       )}
                     </div>
-                    <div class="search-modal__result-item-path">{item.path}</div>
                   </div>
                   {/* Enter 키 안내 (선택된 항목에만 표시) */}
                   {index === selectedIndex && <div class="search-modal__result-item-enter">⏎</div>}

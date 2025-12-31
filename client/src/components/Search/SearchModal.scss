@@ -33,8 +33,15 @@
         padding: 16px;
         border-bottom: 1px solid #eee;
         display: flex;
-        align-items: center;
+        flex-direction: column;
+        gap: 12px;
         background-color: #fff;
+    }
+
+    &__input-wrapper {
+        display: flex;
+        align-items: center;
+        width: 100%;
     }
 
     &__search-icon {
@@ -57,10 +64,11 @@
         }
     }
 
-    &__header-actions {
+    &__header-options {
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: 1.5rem;
+        padding-left: 32px; // 아이콘 크기 + 마진만큼 들여쓰기
     }
 
     &__checkbox-label {
@@ -77,6 +85,7 @@
             width: 16px;
             height: 16px;
             cursor: pointer;
+            accent-color: var(--primary-color, #007bff);
         }
 
         &:hover {
@@ -152,8 +161,8 @@
 
         &:hover,
         &--active {
-            background-color: #f8f9fa;
-            border-left-color: #509ee3; // 포인트 컬러
+            background-color: var(--bg-hover, #f8f9fa);
+            border-left-color: var(--primary-color, #1976d2);
 
             .search-modal__result-item-enter {
                 opacity: 1;
@@ -171,7 +180,7 @@
             }
 
             &--file {
-                color: #509ee3; // 파일 색상
+                color: var(--primary-color, #1976d2);
             }
         }
 
@@ -204,15 +213,6 @@
             display: inline-flex;
             align-items: center;
             gap: 4px;
-        }
-
-        &-path {
-            font-size: 12px;
-            color: #999;
-            margin-top: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
 
         &-enter {
@@ -304,10 +304,6 @@
             &-author {
                 background: #444;
                 color: #aaa;
-            }
-
-            &-path {
-                color: #888;
             }
 
             &-icon {
