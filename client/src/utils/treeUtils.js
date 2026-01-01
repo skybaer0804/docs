@@ -11,16 +11,13 @@
  *   },
  *   "files": [...] // 루트 파일들
  * }
- * 
- * DB 노드 예시:
- * { id: 1, parent_id: null, name: "Platform", type: "DIRECTORY", path: "/docs/Platform" }
  */
 export function buildDirectoryTree(nodes) {
     const tree = {};
     const idMap = {}; // id -> node 객체 매핑 (참조용)
     
-    // /docs 폴더의 ID 찾기 (경로가 '/docs'이고 parent_id가 null인 노드)
-    const docsRootId = nodes.find(n => n.path === '/docs' && (n.parent_id === null || n.parent_id === undefined))?.id;
+    // docs 루트 노드 찾기 (parent_id가 null이고 이름이 docs인 노드)
+    const docsRootId = nodes.find(n => n.name === 'docs' && (n.parent_id === null || n.parent_id === undefined))?.id;
 
     // 1. 모든 노드를 idMap에 저장하고, children 배열 초기화
     nodes.forEach(node => {
@@ -35,12 +32,12 @@ export function buildDirectoryTree(nodes) {
     nodes.forEach(node => {
         const current = idMap[node.id];
         
-        // /docs 폴더 자체는 트리에서 제외
+        // docs 폴더 자체는 트리에서 제외
         if (docsRootId && node.id === docsRootId) {
             return;
         }
         
-        // /docs의 직접 하위 노드들은 최상위로 처리
+        // docs의 직접 하위 노드들은 최상위로 처리
         if (docsRootId && node.parent_id === docsRootId) {
             if (node.type === 'DIRECTORY') {
                 tree[node.name] = current;
@@ -52,7 +49,7 @@ export function buildDirectoryTree(nodes) {
         }
         
         if (node.parent_id === null || node.parent_id === undefined) {
-            // 최상위 노드인 경우 (/docs가 없는 경우를 대비)
+            // 최상위 노드인 경우 (docs가 없는 경우를 대비)
             if (node.type === 'DIRECTORY') {
                 tree[node.name] = current;
             } else {
@@ -66,30 +63,6 @@ export function buildDirectoryTree(nodes) {
                     parent.children[node.name] = current;
                 } else {
                     parent.files.push(transformFileNode(node));
-                }
-            } else {
-                // 부모가 없는 경우 경로 기반으로 처리 시도
-                console.warn('Parent not found for node:', node.path, 'parent_id:', node.parent_id);
-                
-                // 경로 기반으로 부모 찾기 시도
-                if (node.path && node.path.startsWith('/docs/')) {
-                    const pathParts = node.path.split('/').filter(Boolean);
-                    if (pathParts.length > 1 && pathParts[0] === 'docs') {
-                        // /docs/Archtecture/BCP 같은 경우
-                        // 부모 경로를 찾아서 처리
-                        const parentPath = '/' + pathParts.slice(0, -1).join('/');
-                        const parentNode = nodes.find(n => n.path === parentPath);
-                        if (parentNode && idMap[parentNode.id]) {
-                            const foundParent = idMap[parentNode.id];
-                            if (node.type === 'DIRECTORY') {
-                                foundParent.children[node.name] = current;
-                            } else {
-                                foundParent.files.push(transformFileNode(node));
-                            }
-                        } else {
-                            console.warn('Parent node not found by path:', parentPath);
-                        }
-                    }
                 }
             }
         }
@@ -134,8 +107,7 @@ function transformFileNode(node) {
     const hasDot = rawName.includes('.') && !rawName.startsWith('.') && rawName.lastIndexOf('.') > 0;
     const ext = hasDot ? `.${rawName.split('.').pop()}` : '';
     return {
-        path: node.path,
-        route: `/doc/${node.id}`, // ID 기반 라우팅으로 변경
+        route: `/doc/${node.id}`, // ID 기반 라우팅
         title: rawName.replace(/\.(md|template)$/i, ''), // 확장자 제거된 제목
         name: rawName,
         ext,
@@ -162,12 +134,11 @@ function cleanTreeStructure(dirtyTree) {
         // 재귀 처리
         const cleanChildren = cleanTreeStructure(node.children || {});
 
-        // 폴더 메타 보존 (삭제/이동/DnD를 위해 id/path가 필요)
+        // 폴더 메타 보존 (삭제/이동/DnD를 위해 id가 필요)
         // NOTE: 기존 렌더러들이 폴더 키로 인식하지 않도록 `_meta`는 예약 키로 사용
         if (node && node.type === 'DIRECTORY') {
             cleanChildren._meta = {
                 id: node.id,
-                path: node.path,
                 name: node.name,
                 type: node.type,
                 author_id: node.author_id
@@ -184,7 +155,3 @@ function cleanTreeStructure(dirtyTree) {
 
     return clean;
 }
-
-
-
-

@@ -1,11 +1,15 @@
-import { useEffect, useRef, useState } from 'preact/hooks';
-import { IconSearch, IconFileText, IconFolder, IconHistory, IconX, IconLoader2, IconUser } from '@tabler/icons-preact';
+import { useState, useEffect, useRef } from 'preact/hooks';
+import {
+  IconSearch,
+  IconX,
+  IconFileText,
+  IconFolder,
+  IconHistory,
+  IconLoader2,
+  IconUser,
+} from '@tabler/icons-preact';
 import './SearchModal.scss';
 
-/**
- * SearchModal Presenter 컴포넌트
- * 검색창 UI와 결과 리스트를 렌더링합니다.
- */
 export function SearchModal({
   isOpen,
   onClose,
@@ -13,6 +17,8 @@ export function SearchModal({
   onQueryChange,
   includeFollowing,
   onIncludeFollowingChange,
+  selectedUser,
+  onRemoveSelectedUser,
   results,
   loading,
   onSelect,
@@ -88,14 +94,27 @@ export function SearchModal({
       } else if (e.key === 'Enter') {
         e.preventDefault();
         if (displayItems.length > 0 && selectedIndex >= 0 && selectedIndex < displayItems.length) {
-          onSelect(displayItems[selectedIndex]);
+          handleItemSelect(displayItems[selectedIndex]);
         }
+      } else if (e.key === 'Backspace' && !query && selectedUser) {
+        onRemoveSelectedUser();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [isOpen, onClose, displayItems, selectedIndex, onSelect]);
+  }, [isOpen, onClose, displayItems, selectedIndex, query, selectedUser, onRemoveSelectedUser]);
+
+  // 결과 선택 핸들러 보정 (유저 선택 시 인풋 포커스 유지 및 모달 유지)
+  const handleItemSelect = (item) => {
+    onSelect(item);
+    if (item.type === 'user' && inputRef.current) {
+      // 조금 뒤에 포커스를 주어 리렌더링 후에도 포커스가 유지되도록 함
+      setTimeout(() => {
+        if (inputRef.current) inputRef.current.focus();
+      }, 50);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -103,26 +122,26 @@ export function SearchModal({
     <div class="search-modal__overlay" onClick={handleOverlayClick}>
       <div class="search-modal__container" ref={modalRef}>
         <div class="search-modal__header">
-          <div class="search-modal__search-icon">
-            {loading ? <IconLoader2 className="search-modal__spinner" size={20} /> : <IconSearch size={20} />}
-          </div>
-          <input
-            ref={inputRef}
-            type="text"
-            class="search-modal__input"
-            placeholder="무엇을 찾고 계신가요?"
-            value={query}
-            onInput={(e) => onQueryChange(e.target.value)}
-          />
-          <div className="search-modal__header-actions">
-            <label className="search-modal__checkbox-label">
-              <input
-                type="checkbox"
-                checked={includeFollowing}
-                onChange={(e) => onIncludeFollowingChange(e.target.checked)}
-              />
-              <span>구독자 포함</span>
-            </label>
+          <div className="search-modal__input-wrapper">
+            <div class="search-modal__search-icon">
+              {loading ? <IconLoader2 className="search-modal__spinner" size={20} /> : <IconSearch size={20} />}
+            </div>
+            {selectedUser && (
+              <div className="search-modal__user-tag">
+                @{selectedUser.username}
+                <button className="search-modal__user-tag-close" onClick={onRemoveSelectedUser}>
+                  <IconX size={14} />
+                </button>
+              </div>
+            )}
+            <input
+              ref={inputRef}
+              type="text"
+              class="search-modal__input"
+              placeholder={selectedUser ? `${selectedUser.username}의 문서 검색...` : "무엇을 찾고 계신가요? (@이름으로 유저 검색)"}
+              value={query}
+              onInput={(e) => onQueryChange(e.target.value)}
+            />
             <button
               class="search-modal__close-btn"
               onClick={(e) => {
@@ -135,6 +154,17 @@ export function SearchModal({
               <IconX size={20} />
             </button>
           </div>
+
+          <div className="search-modal__header-options">
+            <label className="search-modal__checkbox-label">
+              <input
+                type="checkbox"
+                checked={includeFollowing}
+                onChange={(e) => onIncludeFollowingChange(e.target.checked)}
+              />
+              <span>구독 문서 포함</span>
+            </label>
+          </div>
         </div>
 
         <div class="search-modal__body">
@@ -145,11 +175,10 @@ export function SearchModal({
             <ul class="search-modal__result-list" ref={resultListRef}>
               {displayItems.map((item, index) => (
                 <li
-                  key={item.route}
-                  class={`search-modal__result-item ${
-                    index === selectedIndex ? 'search-modal__result-item--active' : ''
-                  }`}
-                  onClick={() => onSelect(item)}
+                  key={item.route || item.id}
+                  class={`search-modal__result-item ${index === selectedIndex ? 'search-modal__result-item--active' : ''
+                    }`}
+                  onClick={() => handleItemSelect(item)}
                   onMouseEnter={() => setSelectedIndex(index)}
                 >
                   <div class={`search-modal__result-item-icon search-modal__result-item-icon--${item.type}`}>
@@ -158,6 +187,8 @@ export function SearchModal({
                       <IconHistory size={20} />
                     ) : item.type === 'directory' ? (
                       <IconFolder size={20} />
+                    ) : item.type === 'user' ? (
+                      <IconUser size={20} />
                     ) : (
                       <IconFileText size={20} />
                     )}
@@ -171,7 +202,7 @@ export function SearchModal({
                         </span>
                       )}
                     </div>
-                    <div class="search-modal__result-item-path">{item.path}</div>
+                    {item.subtitle && <div class="search-modal__result-item-subtitle">{item.subtitle}</div>}
                   </div>
                   {/* Enter 키 안내 (선택된 항목에만 표시) */}
                   {index === selectedIndex && <div class="search-modal__result-item-enter">⏎</div>}
@@ -179,7 +210,13 @@ export function SearchModal({
               ))}
             </ul>
           ) : (
-            <div class="search-modal__empty">{query ? '검색 결과가 없습니다.' : '최근 검색 기록이 없습니다.'}</div>
+            <div class="search-modal__empty">
+              {query ? (
+                query.startsWith('@') ? '해당 이름의 구독자를 찾을 수 없습니다.' : '검색 결과가 없습니다.'
+              ) : (
+                '최근 검색 기록이 없습니다.'
+              )}
+            </div>
           )}
         </div>
       </div>

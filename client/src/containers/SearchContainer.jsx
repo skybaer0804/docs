@@ -12,7 +12,8 @@ const RECENT_SEARCHES_KEY = 'docs_recent_searches';
 export function SearchContainer({ isOpen, onClose, onNavigate }) {
     const [query, setQuery] = useState('');
     const [includeFollowing, setIncludeFollowing] = useState(false);
-    const { results, loading } = useSearch(query, includeFollowing);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const { results, loading } = useSearch(query, includeFollowing, selectedUser?.id);
     const [recentSearches, setRecentSearches] = useState([]);
 
     // 최근 검색어 불러오기
@@ -30,20 +31,24 @@ export function SearchContainer({ isOpen, onClose, onNavigate }) {
     // 검색어 변경 핸들러
     const handleQueryChange = (newQuery) => {
         setQuery(newQuery);
+        // @로 시작하면 자동으로 구독 문서 포함 체크
+        if (newQuery.startsWith('@')) {
+            setIncludeFollowing(true);
+        }
     };
 
     // 최근 검색어 저장
     const saveRecentSearch = (item) => {
         const newItem = {
+            id: item.id,
             title: item.title,
-            path: item.path,
             route: item.route,
             type: item.type,
         };
 
         setRecentSearches((prev) => {
             // 중복 제거 및 최신 항목 맨 앞으로
-            const filtered = prev.filter((p) => p.route !== newItem.route);
+            const filtered = prev.filter((p) => p.id !== newItem.id);
             const updated = [newItem, ...filtered].slice(0, MAX_RECENT_SEARCHES);
 
             localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
@@ -53,6 +58,12 @@ export function SearchContainer({ isOpen, onClose, onNavigate }) {
 
     // 결과 선택 핸들러
     const handleSelect = (item) => {
+        if (item.type === 'user') {
+            setSelectedUser({ id: item.id, username: item.username });
+            setQuery(''); // 유저 선택 후 검색어 초기화
+            return;
+        }
+
         saveRecentSearch(item);
 
         if (onNavigate) {
@@ -60,13 +71,17 @@ export function SearchContainer({ isOpen, onClose, onNavigate }) {
         }
         onClose();
         setQuery(''); // 검색어 초기화
+        setSelectedUser(null); // 네비게이션 후 유저 필터 초기화
     };
 
     // 모달 닫힐 때 검색어 초기화
     const handleClose = useCallback(() => {
         onClose();
         // 애니메이션 후 초기화 (선택적)
-        setTimeout(() => setQuery(''), 200);
+        setTimeout(() => {
+            setQuery('');
+            setSelectedUser(null);
+        }, 200);
     }, [onClose]);
 
     return (
@@ -77,6 +92,8 @@ export function SearchContainer({ isOpen, onClose, onNavigate }) {
             onQueryChange={handleQueryChange}
             includeFollowing={includeFollowing}
             onIncludeFollowingChange={setIncludeFollowing}
+            selectedUser={selectedUser}
+            onRemoveSelectedUser={() => setSelectedUser(null)}
             results={results}
             loading={loading}
             onSelect={handleSelect}

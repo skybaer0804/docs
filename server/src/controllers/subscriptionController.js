@@ -147,17 +147,17 @@ exports.getFollowingNodes = async (req, res) => {
       return res.json([]);
     }
 
-    // 2. 해당 유저들의 공개된(is_public=true) 노드들 가져오기
+    // 2. 해당 유저들의 공개된(visibility_type='public' 또는 'subscriber_only') 노드들 가져오기
     const { data: nodes, error: nodeErr } = await supabase
       .from('nodes')
       .select(
         `
-        id, parent_id, name, type, path, is_public, author_id,
+        id, parent_id, name, type, visibility_type, author_id,
         users:author_id (username)
       `,
       )
       .in('author_id', followingIds)
-      .eq('is_public', true)
+      .in('visibility_type', ['public', 'subscriber_only'])
       .order('type', { ascending: true })
       .order('name', { ascending: true });
 
