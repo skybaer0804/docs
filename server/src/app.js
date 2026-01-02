@@ -20,6 +20,7 @@ app.use(express.static(path.join(__dirname, '../../client/dist')));
 app.use('/api/docs', require('./routes/docsRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/subscriptions', require('./routes/subscriptionRoutes'));
+app.use('/api/study-timer', require('./routes/studyTimerRoutes'));
 
 // SPA Fallback
 // API 요청이 아닌 모든 GET 요청은 index.html을 반환하여 리액트 라우팅을 지원합니다.

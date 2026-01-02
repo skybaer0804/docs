@@ -2,10 +2,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createDoc, updateDoc, deleteDoc, moveDoc } from '../utils/api';
 import { docsKeys } from '../query/queryKeys';
 
-function safeString(value) {
-  return typeof value === 'string' ? value : '';
-}
-
 export function useCreateDocMutation(options = {}) {
   const queryClient = useQueryClient();
 
@@ -17,12 +13,6 @@ export function useCreateDocMutation(options = {}) {
     },
     onSuccess: async (data, variables, context) => {
       await queryClient.invalidateQueries({ queryKey: docsKeys.tree() });
-
-      // 생성된 문서/폴더가 응답에 path를 포함하면, content 캐시도 미리 채워둠
-      const createdPath = safeString(data?.path);
-      if (createdPath) {
-        queryClient.setQueryData(docsKeys.content(createdPath), data);
-      }
 
       if (options.onSuccess) {
         await options.onSuccess(data, variables, context);
@@ -43,13 +33,6 @@ export function useUpdateDocMutation(options = {}) {
         await queryClient.invalidateQueries({ queryKey: docsKeys.detail(variables.id) });
       }
 
-      // 수정된 문서가 응답에 path를 포함하면, content 캐시를 최신으로 갱신
-      const updatedPath = safeString(variables?.path) || safeString(data?.path) || safeString(variables?.data?.path);
-      if (updatedPath) {
-        queryClient.setQueryData(docsKeys.content(updatedPath), data);
-        await queryClient.invalidateQueries({ queryKey: docsKeys.content(updatedPath) });
-      }
-
       if (options.onSuccess) {
         await options.onSuccess(data, variables, context);
       }
@@ -65,12 +48,6 @@ export function useDeleteDocMutation(options = {}) {
     mutationFn: (variables) => deleteDoc(variables.id),
     onSuccess: async (data, variables, context) => {
       await queryClient.invalidateQueries({ queryKey: docsKeys.tree() });
-
-      // 삭제된 문서의 path를 알고 있다면, content 캐시에서 제거
-      const deletedPath = safeString(variables?.path);
-      if (deletedPath) {
-        queryClient.removeQueries({ queryKey: docsKeys.content(deletedPath) });
-      }
 
       if (options.onSuccess) {
         await options.onSuccess(data, variables, context);
@@ -91,15 +68,8 @@ export function useMoveDocMutation(options = {}) {
     onSuccess: async (data, variables, context) => {
       await queryClient.invalidateQueries({ queryKey: docsKeys.tree() });
 
-      const oldPath = safeString(data?.oldPath || variables?.oldPath || variables?.data?.oldPath);
-      const newPath = safeString(data?.newPath || variables?.newPath || variables?.data?.newPath);
-
-      // 이동은 path가 바뀌므로 이전 path의 content 캐시는 제거, 새 path는 무효화(재조회 유도)
-      if (oldPath) {
-        queryClient.removeQueries({ queryKey: docsKeys.content(oldPath) });
-      }
-      if (newPath) {
-        await queryClient.invalidateQueries({ queryKey: docsKeys.content(newPath) });
+      if (variables.id) {
+        await queryClient.invalidateQueries({ queryKey: docsKeys.detail(variables.id) });
       }
 
       if (options.onSuccess) {
@@ -124,11 +94,6 @@ export function useCreateFolderMutation(options = {}) {
       }),
     onSuccess: async (data, variables, context) => {
       await queryClient.invalidateQueries({ queryKey: docsKeys.tree() });
-
-      const createdPath = safeString(data?.path);
-      if (createdPath) {
-        queryClient.setQueryData(docsKeys.content(createdPath), data);
-      }
 
       if (options.onSuccess) {
         await options.onSuccess(data, variables, context);

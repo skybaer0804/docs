@@ -12,8 +12,8 @@ export function FileEditorContent({ file, onUpdate, onDelete, loading }) {
   const [name, setName] = useState('');
   const [isPublic, setIsPublic] = useState(false);
 
-  const { data: doc, isLoading: contentLoading } = useDocContentQuery(file?.path || '', {
-    enabled: !!file?.path,
+  const { data: doc, isLoading: contentLoading } = useDocContentQuery(file?.id || '', {
+    enabled: !!file?.id,
   });
 
   // 파일 내용 로드
@@ -27,7 +27,7 @@ export function FileEditorContent({ file, onUpdate, onDelete, loading }) {
   useEffect(() => {
     if (!file) return;
     setContent(doc?.content || '');
-  }, [file?.path, doc?.content]);
+  }, [file?.id, doc?.content]);
 
   const handleSave = async () => {
     if (!file.id) return;

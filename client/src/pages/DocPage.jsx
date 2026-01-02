@@ -78,7 +78,11 @@ export function DocPagePresenter({
         if (!content) {
             return (
                 <div class={pageClass} style={pageStyle}>
-                    <DirectoryView currentRoute={currentRoute} onNavigate={onNavigate} />
+                    <DirectoryView 
+                        currentRoute={currentRoute} 
+                        onNavigate={onNavigate} 
+                        authorId={currentFile?.author_id}
+                    />
                 </div>
             );
         }
@@ -124,7 +128,11 @@ export function DocPagePresenter({
         if (!parentContent) {
             return (
                 <div class={pageClass} style={parentPageStyle}>
-                    <DirectoryView currentRoute={parentRoute} onNavigate={onNavigate} />
+                    <DirectoryView 
+                        currentRoute={parentRoute} 
+                        onNavigate={onNavigate} 
+                        authorId={parentFile?.author_id}
+                    />
                 </div>
             );
         }

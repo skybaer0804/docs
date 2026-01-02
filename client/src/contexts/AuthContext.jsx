@@ -3,6 +3,7 @@ import { useContext, useState, useEffect } from 'preact/hooks';
 import { getCurrentUser, getToken, login as apiLogin, logout as apiLogout, register as apiRegister } from '../utils/api';
 import { useToast } from './ToastContext';
 import { queryClient } from '../query/queryClient';
+import { studyTimerObserver } from '../observers/StudyTimerObserver';
 
 const AuthContext = createContext();
 
@@ -57,6 +58,15 @@ export function AuthProvider({ children }) {
   };
 
   const signOut = async () => {
+    // 타이머가 작동 중이면 종료
+    if (studyTimerObserver.status !== 'idle') {
+      try {
+        await studyTimerObserver.end();
+      } catch (err) {
+        console.error('Failed to end study timer during logout:', err);
+      }
+    }
+
     apiLogout();
     queryClient.clear(); // 로그아웃 시 모든 캐시 삭제
     setUser(null);

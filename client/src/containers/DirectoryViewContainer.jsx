@@ -8,9 +8,9 @@ import { downloadFile } from '../utils/downloadUtils';
 /**
  * DirectoryView Container 컴포넌트
  */
-export function DirectoryViewContainer({ currentRoute, onNavigate }) {
-    const { categorized, files, displayType, displayData, handleFolderClick, handleFileClick } = useDirectoryView(currentRoute, onNavigate);
-    
+export function DirectoryViewContainer({ currentRoute, onNavigate, authorId }) {
+    const { categorized, displayType, displayData, handleFolderClick, handleFileClick } = useDirectoryView(currentRoute, onNavigate, authorId);
+
     const [directoryModalOpen, setDirectoryModalOpen] = useState(false);
     const [directoryModalParentId, setDirectoryModalParentId] = useState(null);
 

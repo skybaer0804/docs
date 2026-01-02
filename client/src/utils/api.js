@@ -3,6 +3,7 @@
 const API_BASE = '/api/docs';
 const AUTH_API_BASE = '/api/auth';
 const SUB_API_BASE = '/api/subscriptions';
+const TIMER_API_BASE = '/api/study-timer';
 
 /**
  * 로컬 스토리지에서 토큰 가져오기
@@ -481,5 +482,90 @@ export async function searchUsers(query) {
     const err = await response.json();
     throw new Error(err.error || 'Failed to search users');
   }
+  return response.json();
+}
+
+/**
+ * 공부 세션 시작
+ * @returns {Promise<Object>} { id, start_at }
+ */
+export async function createStudySession() {
+  const token = getToken();
+  if (!token) throw new Error('Authentication required');
+
+  const response = await fetch(`${TIMER_API_BASE}/start`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error || 'Failed to start study session');
+  }
+  return response.json();
+}
+
+/**
+ * 공부 세션 종료
+ * @param {string} sessionId
+ * @param {Object} data - { end_at, pure_duration }
+ */
+export async function endStudySession(sessionId, data) {
+  const token = getToken();
+  if (!token) throw new Error('Authentication required');
+
+  const response = await fetch(`${TIMER_API_BASE}/end/${sessionId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error || 'Failed to end study session');
+  }
+  return response.json();
+}
+
+/**
+ * 공부 통계 조회
+ * @param {number} days
+ */
+export async function fetchStudyStats(days = 14) {
+  const token = getToken();
+  if (!token) throw new Error('Authentication required');
+
+  const response = await fetch(`${TIMER_API_BASE}/stats?days=${days}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) throw new Error('Failed to fetch study stats');
+  return response.json();
+}
+
+/**
+ * 공부 세션 목록 조회
+ * @param {number} limit
+ * @param {number} offset
+ */
+export async function fetchStudySessions(limit = 20, offset = 0) {
+  const token = getToken();
+  if (!token) throw new Error('Authentication required');
+
+  const response = await fetch(`${TIMER_API_BASE}/sessions?limit=${limit}&offset=${offset}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) throw new Error('Failed to fetch study sessions');
   return response.json();
 }

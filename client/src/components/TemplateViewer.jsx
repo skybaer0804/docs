@@ -21,10 +21,9 @@ export function TemplateViewer({ content, file }) {
     }, [content]);
 
     const handleDownload = () => {
-        if (file && file.path) {
-            // 파일명 추출 (경로에서 마지막 부분)
-            const fileName = file.path.split('/').pop() || file.title || 'download';
-            downloadFile(file.path, fileName);
+        if (file && file.id) {
+            const fileName = file.title.endsWith('.template') ? file.title : `${file.title}.template`;
+            downloadFile(`/api/docs/id/${file.id}`, fileName);
         }
     };
 

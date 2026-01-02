@@ -15,16 +15,16 @@ import { showReadingCompleteNotification } from '../utils/notificationService';
  */
 export function useReadingTracker({ contentRef, file, enabled = true, threshold = 0.95 }) {
     const hasNotifiedRef = useRef(false);
-    const lastFileNameRef = useRef(null);
+    const lastFileIdRef = useRef(null);
     const [contentElementReady, setContentElementReady] = useState(false);
     const hasScrolledRef = useRef(false); // 사용자가 실제로 스크롤했는지 추적
     const initialScrollTopRef = useRef(null); // 초기 스크롤 위치 저장
 
     useEffect(() => {
         // 파일이 변경되면 알림 상태 초기화
-        if (file && file.path && file.path !== lastFileNameRef.current) {
+        if (file && file.id && file.id !== lastFileIdRef.current) {
             hasNotifiedRef.current = false;
-            lastFileNameRef.current = file.path;
+            lastFileIdRef.current = file.id;
             hasScrolledRef.current = false;
             initialScrollTopRef.current = null;
         }
@@ -55,14 +55,14 @@ export function useReadingTracker({ contentRef, file, enabled = true, threshold 
         }, 100);
 
         return () => clearInterval(interval);
-    }, [contentRef, file?.path]);
+    }, [contentRef, file?.id]);
 
     useEffect(() => {
         if (!enabled) {
             return;
         }
 
-        if (!file?.path) {
+        if (!file?.id) {
             return;
         }
 
@@ -86,10 +86,10 @@ export function useReadingTracker({ contentRef, file, enabled = true, threshold 
             return;
         }
 
-        const fileName = file.path.split('/').pop() || file.name || file.path;
+        const fileName = file.title || file.name || '문서';
 
         // 이미 알림을 표시했으면 더 이상 추적하지 않음
-        if (hasNotifiedRef.current && file.path === lastFileNameRef.current) {
+        if (hasNotifiedRef.current && file.id === lastFileIdRef.current) {
             return;
         }
 
@@ -213,13 +213,11 @@ export function useReadingTracker({ contentRef, file, enabled = true, threshold 
 
             if (scrollPercentage >= threshold) {
                 // 이미 알림을 표시했는지 확인
-                if (!hasNotifiedRef.current || file.path !== lastFileNameRef.current) {
+                if (!hasNotifiedRef.current || file.id !== lastFileIdRef.current) {
                     // 회독 횟수 증가 (경로와 제목 정보 포함)
                     const count = incrementReadingCount(fileName, {
-                        path: file.path.startsWith('/doc/') || file.path.startsWith('/folder/') 
-                            ? file.path 
-                            : `/doc/${file.id || file.path}`,
-                        title: file.name || fileName
+                        path: file.route || `/doc/${file.id}`,
+                        title: file.title || fileName
                     });
 
                     // 알림 표시
@@ -228,7 +226,7 @@ export function useReadingTracker({ contentRef, file, enabled = true, threshold 
                     });
 
                     hasNotifiedRef.current = true;
-                    lastFileNameRef.current = file.path;
+                    lastFileIdRef.current = file.id;
                 }
             }
         };

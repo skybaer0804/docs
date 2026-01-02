@@ -33,12 +33,11 @@ export function FileTree({
         {/* 파일들 */}
         {files.map((file) => (
           <li
-            key={file.path}
-            className={`file-tree__item file-tree__item--file ${
-              selectedFile?.path === file.path ? 'file-tree__item--selected' : ''
-            }`}
+            key={file.id}
+            className={`file-tree__item file-tree__item--file ${selectedFile?.id === file.id ? 'file-tree__item--selected' : ''
+              }`}
             onClick={() => onFileSelect(file)}
-            title={file.path}
+            title={file.title}
           >
             <IconFile size={16} />
             <span className="file-tree__item-name">{file.title}</span>
@@ -70,9 +69,8 @@ export function FileTree({
           return (
             <li key={key} className="file-tree__item file-tree__item--folder">
               <div
-                className={`file-tree__folder-header ${
-                  onPathSelect && selectedPath === `/docs/${subPath}` ? 'file-tree__folder-header--selected' : ''
-                }`}
+                className={`file-tree__folder-header ${onPathSelect && selectedPath === `/docs/${subPath}` ? 'file-tree__folder-header--selected' : ''
+                  }`}
                 onClick={() => {
                   onFolderClick(subPath);
                   if (onPathSelect) {
@@ -164,9 +162,8 @@ export function FileTree({
         return (
           <div key={category} className={`file-tree__category ${isUserCategory ? 'file-tree__category--user' : ''}`}>
             <div
-              className={`file-tree__category-header ${
-                onPathSelect && selectedPath === `/docs/${category}` ? 'file-tree__category-header--selected' : ''
-              } ${isUserCategory ? 'file-tree__category-header--user' : ''}`}
+              className={`file-tree__category-header ${onPathSelect && selectedPath === `/docs/${category}` ? 'file-tree__category-header--selected' : ''
+                } ${isUserCategory ? 'file-tree__category-header--user' : ''}`}
               onClick={() => {
                 onFolderClick(category);
                 if (onPathSelect) {
