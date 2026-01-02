@@ -7,13 +7,12 @@
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   max-width: 1000px;
-  margin: 1rem auto;
 
   &__top-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1rem 1.5rem;
+    padding: 0.5rem;
     background-color: var(--bg-tertiary);
     border-radius: 8px;
     gap: 2rem;
@@ -28,7 +27,7 @@
     display: flex;
     align-items: center;
     gap: 1.5rem;
-    
+
     &-time {
       font-size: 2.5rem;
       font-family: 'Courier New', Courier, monospace;
@@ -44,18 +43,18 @@
       font-weight: 600;
       text-transform: uppercase;
       white-space: nowrap;
-      
+
       &--idle {
         color: var(--text-secondary);
         border: 1px solid var(--border-color);
       }
-      
+
       &--recording {
         color: #10b981;
         border: 1px solid #10b981;
         animation: pulse 2s infinite;
       }
-      
+
       &--paused {
         color: #f59e0b;
         border: 1px solid #f59e0b;
@@ -80,7 +79,7 @@
     cursor: pointer;
     transition: all 0.2s ease;
     min-width: 80px;
-    
+
     &:disabled {
       opacity: 0.4;
       cursor: not-allowed;
@@ -144,18 +143,25 @@
 }
 
 @keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.6; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+
+  100% {
+    opacity: 1;
+  }
 }
 
 @media (max-width: 480px) {
   .study-timer {
-    padding: 1rem;
-    gap: 1rem;
-    
+    gap: 0.7rem;
+
     &__top-bar {
-      padding: 1rem;
+      padding: 0.5rem;
     }
 
     &__display {
@@ -163,7 +169,7 @@
         font-size: 2rem;
       }
     }
-    
+
     &__controls {
       width: 100%;
       justify-content: space-between;
@@ -176,4 +182,3 @@
     }
   }
 }
-
