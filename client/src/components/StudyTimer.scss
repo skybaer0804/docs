@@ -1,0 +1,126 @@
+.study-timer {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  padding: 1.5rem;
+  background-color: var(--bg-secondary);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  margin: 1rem auto;
+
+  &__display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background-color: var(--bg-tertiary);
+    border-radius: 8px;
+    
+    &-time {
+      font-size: clamp(2.5rem, 8vw, 4rem);
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: 700;
+      color: var(--primary-color);
+      letter-spacing: 2px;
+    }
+
+    &-status {
+      margin-top: 1rem;
+      padding: 0.4rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      
+      &--idle {
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+      }
+      
+      &--recording {
+        color: #10b981;
+        border: 1px solid #10b981;
+        animation: pulse 2s infinite;
+      }
+      
+      &--paused {
+        color: #f59e0b;
+        border: 1px solid #f59e0b;
+      }
+    }
+  }
+
+  &__controls {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+
+  &__button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      filter: grayscale(1);
+    }
+
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      filter: brightness(1.1);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    &--start {
+      background-color: #10b981;
+      color: white;
+    }
+
+    &--pause {
+      background-color: #f59e0b;
+      color: white;
+    }
+
+    &--end {
+      background-color: #ef4444;
+      color: white;
+    }
+  }
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+@media (max-width: 480px) {
+  .study-timer {
+    padding: 1rem;
+    gap: 1.5rem;
+    
+    &__display {
+      padding: 1.5rem;
+    }
+    
+    &__controls {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+

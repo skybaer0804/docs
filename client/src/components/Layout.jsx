@@ -16,6 +16,7 @@ import {
   IconSettings,
   IconUser,
   IconUserCircle,
+  IconClock,
 } from '@tabler/icons-preact';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -102,6 +103,11 @@ export function LayoutPresenter({
     onNavigate('/settings/subscriptions');
   };
 
+  const handleStudyTimer = () => {
+    setSettingsOpen(false);
+    onNavigate('/settings/study-timer');
+  };
+
   const handleExternalLinkClick = (e) => {
     e.preventDefault();
     if (!personalLink) return;
@@ -170,6 +176,9 @@ export function LayoutPresenter({
                     </ListItem>
                     <ListItem icon={<IconUserCircle size={18} />} onClick={handleSubscriptions}>
                       구독관리
+                    </ListItem>
+                    <ListItem icon={<IconClock size={18} />} onClick={handleStudyTimer}>
+                      공부시간
                     </ListItem>
                   </>
                 )}
