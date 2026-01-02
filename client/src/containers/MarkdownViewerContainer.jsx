@@ -20,12 +20,12 @@ export function MarkdownViewerContainer({ content, file, onNavigate, onContentRe
         return nodes
             .filter((n) => n.type === 'FILE')
             .map((n) => ({
-                path: n.path,
                 route: `/doc/${n.id}`,
                 title: n.name.replace(/\.md$/, ''),
                 name: n.name,
                 id: n.id,
                 author_id: n.author_id,
+                parent_id: n.parent_id,
             }));
     }, [nodes]);
 
@@ -89,9 +89,11 @@ export function MarkdownViewerContainer({ content, file, onNavigate, onContentRe
             // 경로를 route로 변환 (확장자 포함)
             let routePath = href;
 
-            // 상대 경로인 경우 현재 파일의 경로를 기준으로 절대 경로로 변환
-            if (!href.startsWith('/') && file && file.path) {
-                routePath = resolvePath(file.path, href);
+            // 상대 경로인 경우 현재 파일의 경로를 기준으로 절대 경로로 변환 (현재는 ID 기반이므로 지원 제한됨)
+            if (!href.startsWith('/') && file && file.route) {
+                // routePath = resolvePath(file.path, href);
+                // ID 기반 라우팅에서는 상대 경로 해결이 어려우므로 href를 그대로 사용하거나
+                // 필요시 추가 로직 구현
             }
 
             // 매칭되는 파일 찾기
@@ -119,10 +121,9 @@ export function MarkdownViewerContainer({ content, file, onNavigate, onContentRe
     }, [html, file, onNavigate, allFiles]);
 
     const handleDownload = () => {
-        if (file && file.path) {
-            // 파일명 추출 (경로에서 마지막 부분)
-            const fileName = file.path.split('/').pop() || file.title || 'download';
-            downloadFile(file.path, fileName);
+        if (file && file.id) {
+            const fileName = file.title.endsWith('.md') ? file.title : `${file.title}.md`;
+            downloadFile(`/api/docs/id/${file.id}`, fileName);
         }
     };
 

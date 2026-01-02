@@ -9,6 +9,7 @@ import { ProfilePage } from './pages/ProfilePage';
 import { SubscriptionManagementPage } from './pages/SubscriptionManagementPage';
 import { StudyTimerContainer } from './containers/StudyTimerContainer';
 import { useAuth } from './contexts/AuthContext';
+import { StudyTimerProvider } from './contexts/StudyTimerContext';
 import { getRecentDocs } from './utils/readingHistory';
 import { usePWAUpdate } from './hooks/usePWAUpdate';
 import { studyTimerStorage } from './utils/studyTimerStorage';
@@ -33,6 +34,7 @@ export function App() {
       if (path.startsWith('/recent/')) {
         const index = parseInt(path.split('/').pop(), 10);
         const recentDocs = getRecentDocs(3);
+        // readingHistory의 path는 실제 route를 저장함
         if (recentDocs[index] && recentDocs[index].path) {
           return recentDocs[index].path;
         }
@@ -193,9 +195,11 @@ export function App() {
 
   return (
     <ThemeProvider>
-      <LayoutContainer key={user?.id || 'guest'} currentPath={currentRoute} onNavigate={handleNavigate}>
-        {renderContent()}
-      </LayoutContainer>
+      <StudyTimerProvider>
+        <LayoutContainer key={user?.id || 'guest'} currentPath={currentRoute} onNavigate={handleNavigate}>
+          {renderContent()}
+        </LayoutContainer>
+      </StudyTimerProvider>
     </ThemeProvider>
   );
 }

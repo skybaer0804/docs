@@ -82,7 +82,7 @@ export function FileEditor({ isOpen, onClose, userId, username }) {
   // 파일 수정 핸들러
   const handleUpdateFile = async (file, updates) => {
     try {
-      const result = await updateDocMutation.mutateAsync({ id: file.id, path: file.path, data: updates });
+      const result = await updateDocMutation.mutateAsync({ id: file.id, data: updates });
       showSuccess('파일이 수정되었습니다');
 
       // FileEditor는 자체 트리를 관리하므로 navigationObserver 이벤트는 발생시키지 않음
@@ -104,7 +104,7 @@ export function FileEditor({ isOpen, onClose, userId, username }) {
     }
 
     try {
-      await deleteDocMutation.mutateAsync({ id: fileId, path: file?.path || selectedFile?.path });
+      await deleteDocMutation.mutateAsync({ id: fileId });
       showSuccess('파일이 삭제되었습니다');
 
       // FileEditor는 자체 트리를 관리하므로 navigationObserver 이벤트는 발생시키지 않음
@@ -126,7 +126,7 @@ export function FileEditor({ isOpen, onClose, userId, username }) {
       // 파일 검색
       if (node._files) {
         result._files = node._files.filter(
-          (file) => file.title.toLowerCase().includes(lowerQuery) || file.path.toLowerCase().includes(lowerQuery),
+          (file) => file.title.toLowerCase().includes(lowerQuery) || file.name.toLowerCase().includes(lowerQuery),
         );
       }
 
