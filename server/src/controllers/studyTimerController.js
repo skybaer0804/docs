@@ -58,3 +58,66 @@ exports.endSession = async (req, res) => {
     }
 };
 
+/**
+ * 공부 통계 조회 (날짜별 합계)
+ * GET /api/study-timer/stats?days=14
+ */
+exports.getStats = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const days = parseInt(req.query.days) || 14;
+
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - days);
+        startDate.setHours(0, 0, 0, 0);
+
+        const { data, error } = await supabase
+            .from('study_sessions')
+            .select('start_at, pure_duration')
+            .eq('user_id', userId)
+            .eq('status', 'completed')
+            .gte('start_at', startDate.toISOString())
+            .order('start_at', { ascending: true });
+
+        if (error) throw error;
+
+        // 날짜별로 그룹화
+        const stats = {};
+        data.forEach(session => {
+            const date = session.start_at.split('T')[0];
+            stats[date] = (stats[date] || 0) + (session.pure_duration || 0);
+        });
+
+        res.json(stats);
+    } catch (err) {
+        console.error('Get stats error:', err);
+        res.status(500).json({ error: 'Failed to fetch study stats' });
+    }
+};
+
+/**
+ * 공부 세션 목록 조회 (최근순)
+ * GET /api/study-timer/sessions?limit=20&offset=0
+ */
+exports.getSessions = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const limit = parseInt(req.query.limit) || 20;
+        const offset = parseInt(req.query.offset) || 0;
+
+        const { data, error } = await supabase
+            .from('study_sessions')
+            .select('*')
+            .eq('user_id', userId)
+            .order('start_at', { ascending: false })
+            .range(offset, offset + limit - 1);
+
+        if (error) throw error;
+
+        res.json(data);
+    } catch (err) {
+        console.error('Get sessions error:', err);
+        res.status(500).json({ error: 'Failed to fetch study sessions' });
+    }
+};
+

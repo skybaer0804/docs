@@ -1,5 +1,6 @@
 import { useEffect } from 'preact/hooks';
 import { useLayout } from '../hooks/useLayout';
+import { useStudyTimer } from '../hooks/useStudyTimer';
 import { LayoutPresenter } from '../components/Layout';
 import { SidebarContext } from '../contexts/SidebarContext';
 import { SearchContainer } from './SearchContainer';
@@ -24,6 +25,8 @@ export function LayoutContainer({ children, currentPath, onNavigate }) {
         openSearch,
         closeSearch,
     } = useLayout();
+
+    const { formattedTime, status: timerStatus } = useStudyTimer();
 
     // 라우트 변경 시 모바일에서 사이드바 닫기
     useEffect(() => {
@@ -51,6 +54,8 @@ export function LayoutContainer({ children, currentPath, onNavigate }) {
                     sidebarWidth={sidebarWidth}
                     isDesktop={isDesktop}
                     currentPath={currentPath}
+                    timerTime={formattedTime}
+                    timerStatus={timerStatus}
                     onSidebarResize={handleSidebarResize}
                     onToggleSidebar={toggleSidebar}
                     onCloseSidebar={closeSidebar}

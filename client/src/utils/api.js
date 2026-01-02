@@ -532,3 +532,40 @@ export async function endStudySession(sessionId, data) {
   }
   return response.json();
 }
+
+/**
+ * 공부 통계 조회
+ * @param {number} days
+ */
+export async function fetchStudyStats(days = 14) {
+  const token = getToken();
+  if (!token) throw new Error('Authentication required');
+
+  const response = await fetch(`${TIMER_API_BASE}/stats?days=${days}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) throw new Error('Failed to fetch study stats');
+  return response.json();
+}
+
+/**
+ * 공부 세션 목록 조회
+ * @param {number} limit
+ * @param {number} offset
+ */
+export async function fetchStudySessions(limit = 20, offset = 0) {
+  const token = getToken();
+  if (!token) throw new Error('Authentication required');
+
+  const response = await fetch(`${TIMER_API_BASE}/sessions?limit=${limit}&offset=${offset}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) throw new Error('Failed to fetch study sessions');
+  return response.json();
+}

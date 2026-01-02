@@ -1,6 +1,9 @@
+import { useState } from 'preact/hooks';
 import { useStudyTimer } from '../hooks/useStudyTimer';
 import { StudyTimerPresenter } from '../components/StudyTimerPresenter';
 import { useToast } from '../contexts/ToastContext';
+import { StudyOverview } from '../components/StudyTimer/StudyOverview';
+import { StudyTable } from '../components/StudyTimer/StudyTable';
 
 /**
  * StudyTimerContainer
@@ -9,6 +12,7 @@ import { useToast } from '../contexts/ToastContext';
 export const StudyTimerContainer = () => {
     const { status, formattedTime, start, pause, end } = useStudyTimer();
     const { showToast, showError, showSuccess } = useToast();
+    const [activeTab, setActiveTab] = useState('overview');
 
     const handleStart = async () => {
         try {
@@ -39,7 +43,15 @@ export const StudyTimerContainer = () => {
             onStart={handleStart}
             onPause={pause}
             onEnd={handleEnd}
-        />
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+        >
+            {activeTab === 'overview' ? (
+                <StudyOverview />
+            ) : (
+                <StudyTable />
+            )}
+        </StudyTimerPresenter>
     );
 };
 

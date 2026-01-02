@@ -38,6 +38,8 @@ export function LayoutPresenter({
   sidebarWidth,
   isDesktop,
   currentPath,
+  timerTime,
+  timerStatus,
   onSidebarResize,
   onToggleSidebar,
   onCloseSidebar,
@@ -141,6 +143,12 @@ export function LayoutPresenter({
             </div>
           </div>
           <div class="header__actions">
+            {isDesktop && currentPath !== '/settings/study-timer' && (
+              <div class="header__timer" onClick={() => onNavigate('/settings/study-timer')}>
+                <span class={`header__timer-dot header__timer-dot--${timerStatus}`}></span>
+                <span class="header__timer-text">{timerTime}</span>
+              </div>
+            )}
             <button class="header__search-btn" onClick={onOpenSearch} aria-label="검색 (Ctrl+K)" title="검색 (Ctrl+K)">
               <IconSearch size={20} />
             </button>
@@ -198,9 +206,8 @@ export function LayoutPresenter({
 
         <div class="layout__content-wrapper">
           <aside
-            class={`layout__sidebar ${sidebarOpen ? 'layout__sidebar--open' : ''} ${
-              sidebarCollapsed && isDesktop ? 'layout__sidebar--collapsed' : ''
-            }`}
+            class={`layout__sidebar ${sidebarOpen ? 'layout__sidebar--open' : ''} ${sidebarCollapsed && isDesktop ? 'layout__sidebar--collapsed' : ''
+              }`}
             style={{ width: sidebarCollapsed && isDesktop ? '0px' : `${sidebarWidth}px` }}
           >
             {isDesktop && !sidebarCollapsed && (
