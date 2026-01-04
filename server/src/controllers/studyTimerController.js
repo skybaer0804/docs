@@ -121,3 +121,53 @@ exports.getSessions = async (req, res) => {
     }
 };
 
+/**
+ * 활성 공부 세션 조회 (진행 중인 세션 확인)
+ * GET /api/study-timer/active
+ */
+exports.getActiveSession = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const { data, error } = await supabase
+            .from('study_sessions')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('status', 'recording')
+            .order('start_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (error) throw error;
+
+        res.json(data);
+    } catch (err) {
+        console.error('Get active session error:', err);
+        res.status(500).json({ error: 'Failed to fetch active study session' });
+    }
+};
+
+/**
+ * 공부 세션 삭제
+ * DELETE /api/study-timer/session/:id
+ */
+exports.deleteSession = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+
+        const { error } = await supabase
+            .from('study_sessions')
+            .delete()
+            .eq('id', id)
+            .eq('user_id', userId);
+
+        if (error) throw error;
+
+        res.json({ message: 'Session deleted successfully' });
+    } catch (err) {
+        console.error('Delete session error:', err);
+        res.status(500).json({ error: 'Failed to delete study session' });
+    }
+};
+

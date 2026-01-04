@@ -1,8 +1,5 @@
-import { createStudySession, endStudySession } from '../utils/api';
+import { createStudySession, endStudySession, fetchActiveStudySession } from '../utils/api';
 import { studyTimerStorage } from '../utils/studyTimerStorage';
-
-// 1초 무음 WAV 데이터 URI (파일 미존재 시 대비)
-const SILENT_AUDIO_URI = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
 
 /**
  * StudyTimerObserver
@@ -12,20 +9,55 @@ export class StudyTimerObserver {
     constructor() {
         this.service = {
             createSession: createStudySession,
-            endSession: endStudySession
+            endSession: endStudySession,
+            fetchActive: fetchActiveStudySession
         };
         this.storage = studyTimerStorage;
-        this.audio = null;
         this.sessionId = null;
         this.startTime = null;
         this.pausedDuration = 0;
         this.status = 'idle'; // 'idle' | 'recording' | 'paused'
         this.listeners = new Set();
-        this.handleAudioInterrupt = this.handleAudioInterrupt.bind(this);
+        
+        // Visibility Change 감지 (백그라운드 복귀 대응)
+        if (typeof document !== 'undefined') {
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    this.notify(); // UI 갱신 유도
+                }
+            });
+        }
+    }
+
+    /**
+     * 서버의 활성 세션과 동기화
+     */
+    async syncWithServer() {
+        try {
+            const activeSession = await this.service.fetchActive();
+            if (activeSession) {
+                this.sessionId = activeSession.id;
+                this.startTime = new Date(activeSession.start_at).getTime();
+                this.status = activeSession.status || 'recording';
+                // 서버 데이터 기반으로 로컬 상태 복구
+                this.notify();
+            } else {
+                // 서버에 활성 세션이 없으면 로컬도 정리
+                if (this.status !== 'idle') {
+                    this.cleanup();
+                }
+            }
+        } catch (err) {
+            console.error('StudyTimer: Sync with server failed', err);
+        }
     }
 
     subscribe(callback) {
         this.listeners.add(callback);
+        // 첫 구독 시 서버 동기화 시도
+        if (this.listeners.size === 1) {
+            this.syncWithServer();
+        }
         return () => this.listeners.delete(callback);
     }
 
@@ -37,12 +69,13 @@ export class StudyTimerObserver {
     getState() {
         const now = Date.now();
         let elapsedMs = 0;
-        if (this.status === 'recording') {
+        
+        if (this.status === 'recording' && this.startTime) {
             elapsedMs = now - this.startTime - this.pausedDuration;
-        } else if (this.status === 'paused') {
-            // 일시정지 상태에서는 멈춘 시점의 경과 시간 유지
-            elapsedMs = this.lastPausedAt - this.startTime - this.pausedDuration;
+        } else if (this.status === 'paused' && this.startTime) {
+            elapsedMs = (this.lastPausedAt || now) - this.startTime - this.pausedDuration;
         }
+        
         return {
             status: this.status,
             sessionId: this.sessionId,
@@ -50,42 +83,11 @@ export class StudyTimerObserver {
         };
     }
 
-    handleAudioInterrupt() {
-        if (this.status === 'recording') {
-            console.warn('StudyTimer: Audio interrupted, pausing...');
-            this.pause();
-        }
-    }
-
     async start() {
         if (this.status === 'recording') return;
 
-        // 1. 오디오 설정 (PWA 백그라운드 유지용)
-        if (!this.audio) {
-            // 외부 파일 대신 내장된 무음 데이터 사용
-            this.audio = new Audio(SILENT_AUDIO_URI);
-            this.audio.loop = true;
-            this.audio.addEventListener('pause', this.handleAudioInterrupt);
-        }
-
         try {
-            await this.audio.play();
-            
-            // 2. Media Session 설정
-            if ('mediaSession' in navigator) {
-                navigator.mediaSession.metadata = new MediaMetadata({
-                    title: '순공부 시간 측정 중',
-                    artist: 'Docs App',
-                    artwork: [
-                        { src: '/assets/icon.svg', sizes: '512x512', type: 'image/svg+xml' }
-                    ]
-                });
-                navigator.mediaSession.setActionHandler('play', () => this.start());
-                navigator.mediaSession.setActionHandler('pause', () => this.pause());
-                navigator.mediaSession.setActionHandler('stop', () => this.end());
-            }
-
-            // 3. 상태 업데이트
+            // 1. 상태 업데이트
             if (this.status === 'idle') {
                 this.startTime = Date.now();
                 this.pausedDuration = 0;
@@ -102,7 +104,7 @@ export class StudyTimerObserver {
 
             this.status = 'recording';
             
-            // 4. 로컬 백업
+            // 2. 로컬 백업
             if (this.storage) {
                 this.storage.saveActiveSession({
                     sessionId: this.sessionId,
@@ -123,7 +125,6 @@ export class StudyTimerObserver {
 
         this.status = 'paused';
         this.lastPausedAt = Date.now();
-        this.audio?.pause();
         
         if (this.storage) {
             this.storage.saveActiveSession({
@@ -173,16 +174,6 @@ export class StudyTimerObserver {
     }
 
     cleanup() {
-        if (this.audio) {
-            this.audio.removeEventListener('pause', this.handleAudioInterrupt);
-            this.audio.pause();
-            this.audio = null;
-        }
-        
-        if ('mediaSession' in navigator) {
-            navigator.mediaSession.metadata = null;
-        }
-
         this.status = 'idle';
         this.sessionId = null;
         this.startTime = null;
@@ -193,8 +184,5 @@ export class StudyTimerObserver {
     }
 }
 
-// 실제 앱에서 사용할 싱글톤 인스턴스는 Context 등에서 주입하여 생성하거나 
-// 여기서 기본 인스턴스를 내보낼 수 있습니다.
-// 여기서는 기본 인스턴스를 내보내되, 의존성은 나중에 설정할 수 있도록 합니다.
 export const studyTimerObserver = new StudyTimerObserver();
 

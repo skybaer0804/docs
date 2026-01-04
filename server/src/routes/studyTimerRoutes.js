@@ -8,6 +8,8 @@ router.use(authMiddleware);
 
 router.post('/start', studyTimerController.startSession);
 router.put('/end/:id', studyTimerController.endSession);
+router.delete('/session/:id', studyTimerController.deleteSession);
+router.get('/active', studyTimerController.getActiveSession);
 router.get('/stats', studyTimerController.getStats);
 router.get('/sessions', studyTimerController.getSessions);
 
