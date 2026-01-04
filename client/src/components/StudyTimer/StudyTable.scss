@@ -39,6 +39,11 @@
     }
   }
 
+  &__row {
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
   &__status {
     padding: 0.2rem 0.5rem;
     border-radius: 4px;

@@ -569,3 +569,43 @@ export async function fetchStudySessions(limit = 20, offset = 0) {
   if (!response.ok) throw new Error('Failed to fetch study sessions');
   return response.json();
 }
+
+/**
+ * 활성 공부 세션 조회
+ * @returns {Promise<Object|null>}
+ */
+export async function fetchActiveStudySession() {
+  const token = getToken();
+  if (!token) return null;
+
+  const response = await fetch(`${TIMER_API_BASE}/active`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) throw new Error('Failed to fetch active session');
+  return response.json();
+}
+
+/**
+ * 공부 세션 삭제
+ * @param {string} sessionId
+ */
+export async function deleteStudySession(sessionId) {
+  const token = getToken();
+  if (!token) throw new Error('Authentication required');
+
+  const response = await fetch(`${TIMER_API_BASE}/session/${sessionId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error || 'Failed to delete study session');
+  }
+  return response.json();
+}
