@@ -4,6 +4,8 @@ import { downloadFile } from '../utils/downloadUtils';
 import { MarkdownViewerPresenter } from '../components/MarkdownViewer';
 import { MarkdownParser, resolvePath, findTargetFile } from '../tdd/MarkdownLogic';
 import { useDocsTreeQuery } from '../hooks/useDocsTreeQuery';
+import { useInteractionLogger } from '../hooks/useInteractionLogger';
+import { logInteraction } from '../utils/api';
 
 /**
  * MarkdownViewer Container 컴포넌트
@@ -15,6 +17,9 @@ export function MarkdownViewerContainer({ content, file, onNavigate, onContentRe
     const [html, setHtml] = useState('');
     const contentRef = useRef(null);
     const { data: nodes = [] } = useDocsTreeQuery();
+
+    // 행동 분석 로그 추적 (조회)
+    useInteractionLogger(file?.id);
 
     const allFiles = useMemo(() => {
         return nodes
@@ -58,7 +63,12 @@ export function MarkdownViewerContainer({ content, file, onNavigate, onContentRe
             if (!href || href === 'javascript:void(0)') return;
 
             // 외부 링크는 그대로 유지
-            if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('mailto:') || href.startsWith('#')) {
+            if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('mailto:')) {
+                return;
+            }
+
+            // 내부 앵커 링크는 그대로 유지 (단, Smooth Scroll 처리를 위해 따로 처리하거나 그대로 둠)
+            if (href.startsWith('#')) {
                 return;
             }
 
@@ -76,10 +86,24 @@ export function MarkdownViewerContainer({ content, file, onNavigate, onContentRe
             // data-href가 있으면 그것을 사용 (이미 수정된 링크)
             const originalHref = link.getAttribute('data-href');
             const href = originalHref || link.getAttribute('href');
-            if (!href || href === '#' || href === 'javascript:void(0)') return;
+            if (!href || href === 'javascript:void(0)') return;
+
+            // 앵커 링크 (#...) 처리
+            if (href.startsWith('#')) {
+                const targetId = decodeURIComponent(href.substring(1));
+                const targetEl = element.querySelector(`[id="${targetId}"]`) || document.getElementById(targetId);
+                
+                if (targetEl) {
+                    e.preventDefault();
+                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // URL 해시 업데이트 (선택 사항)
+                    window.history.pushState(null, null, `#${targetId}`);
+                }
+                return;
+            }
 
             // 외부 링크는 기본 동작 유지
-            if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('mailto:') || href.startsWith('#')) {
+            if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('mailto:')) {
                 return;
             }
 
@@ -122,6 +146,13 @@ export function MarkdownViewerContainer({ content, file, onNavigate, onContentRe
 
     const handleDownload = () => {
         if (file && file.id) {
+            // 행동 분석 로그 기록 (다운로드)
+            logInteraction({
+                node_id: file.id,
+                interaction_type: 'download',
+                duration_sec: 0
+            }).catch(console.error);
+
             const fileName = file.title.endsWith('.md') ? file.title : `${file.title}.md`;
             downloadFile(`/api/docs/id/${file.id}`, fileName);
         }

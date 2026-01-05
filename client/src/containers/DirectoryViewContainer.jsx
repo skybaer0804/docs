@@ -4,6 +4,7 @@ import { useState } from 'preact/hooks';
 import { DirectoryCreateModal } from '../components/DirectoryCreateModal';
 import { route } from 'preact-router';
 import { downloadFile } from '../utils/downloadUtils';
+import { logInteraction } from '../utils/api';
 
 /**
  * DirectoryView Container 컴포넌트
@@ -39,6 +40,14 @@ export function DirectoryViewContainer({ currentRoute, onNavigate, authorId }) {
 
     const handleDownloadDocument = async (file) => {
         if (!file?.id) return;
+
+        // 행동 분석 로그 기록 (다운로드)
+        logInteraction({
+            node_id: file.id,
+            interaction_type: 'download',
+            duration_sec: 0
+        }).catch(console.error);
+
         const fileName = file.title.endsWith('.md') ? file.title : `${file.title}.md`;
         // ID 기반 API 주소를 filePath 대신 전달하여 다운로드 유틸리티가 해당 내용을 fetch 하도록 함
         await downloadFile(`/api/docs/id/${file.id}`, fileName);

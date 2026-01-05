@@ -84,6 +84,16 @@ export class MarkdownParser {
         this.renderer.table = (header, body) => {
             return `<div class="table-wrapper"><table><thead>${header}</thead><tbody>${body}</tbody></table></div>`;
         };
+
+        // 헤더 렌더러 커스터마이징 (TOC를 위한 ID 부여)
+        this.renderer.heading = (text, level) => {
+            // 한글 및 영문 텍스트를 id로 사용 가능하도록 변환
+            const escapedText = text
+                .toLowerCase()
+                .trim()
+                .replace(/[^\wㄱ-ㅎㅏ-ㅣ가-힣0-9]+/g, '-');
+            return `<h${level} id="${escapedText}">${text}</h${level}>`;
+        };
     }
 
     parse(content) {

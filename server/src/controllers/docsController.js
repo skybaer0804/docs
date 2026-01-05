@@ -67,7 +67,7 @@ exports.getAllDocs = async (req, res) => {
 
     const { data, error } = await supabase
       .from('nodes')
-      .select('id, parent_id, name, type, visibility_type, author_id')
+      .select('id, parent_id, name, type, visibility_type, author_id, stats:v_node_total_stats(view_count, download_count)')
       .eq('author_id', userId)
       .order('type', { ascending: true })
       .order('name', { ascending: true });
@@ -115,7 +115,7 @@ exports.searchDocs = async (req, res) => {
 
       query = supabase
         .from('nodes')
-        .select('id, name, type, visibility_type, author_id, users:author_id (username)')
+        .select('id, name, type, visibility_type, author_id, users:author_id (username), stats:v_node_total_stats(view_count, download_count)')
         .eq('author_id', author_id)
         .in('visibility_type', allowedVisibilities)
         .ilike('name', `%${keyword}%`)
@@ -132,7 +132,7 @@ exports.searchDocs = async (req, res) => {
 
       query = supabase
         .from('nodes')
-        .select('id, name, type, visibility_type, author_id, users:author_id (username)')
+        .select('id, name, type, visibility_type, author_id, users:author_id (username), stats:v_node_total_stats(view_count, download_count)')
         .or(filterStr)
         .ilike('name', `%${keyword}%`)
         .order('type', { ascending: true })
@@ -140,7 +140,7 @@ exports.searchDocs = async (req, res) => {
     } else {
       query = supabase
         .from('nodes')
-        .select('id, name, type, visibility_type, author_id, users:author_id (username)')
+        .select('id, name, type, visibility_type, author_id, users:author_id (username), stats:v_node_total_stats(view_count, download_count)')
         .eq('author_id', userId)
         .ilike('name', `%${keyword}%`)
         .order('type', { ascending: true })
@@ -183,7 +183,7 @@ exports.getUserDocs = async (req, res) => {
 
     const { data, error } = await supabase
       .from('nodes')
-      .select('id, parent_id, name, type, visibility_type, author_id')
+      .select('id, parent_id, name, type, visibility_type, author_id, stats:v_node_total_stats(view_count, download_count)')
       .eq('author_id', userId)
       .in('visibility_type', allowedVisibilities)
       .order('type', { ascending: true })
@@ -471,6 +471,32 @@ exports.moveDoc = async (req, res) => {
       body: req?.body,
       userId: req?.user?.id,
     });
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.logInteraction = async (req, res) => {
+  try {
+    const { node_id, interaction_type, duration_sec } = req.body;
+    const user_id = req.user?.id || null;
+
+    if (!node_id || !interaction_type) {
+      return res.status(400).json({ error: 'Missing required fields: node_id, interaction_type' });
+    }
+
+    const { error } = await supabase.from('node_interactions').insert([
+      {
+        node_id,
+        user_id,
+        interaction_type,
+        duration_sec: duration_sec || 0,
+      },
+    ]);
+
+    if (error) throw error;
+    res.status(201).json({ success: true });
+  } catch (err) {
+    console.error('logInteraction error:', err);
     res.status(500).json({ error: err.message });
   }
 };

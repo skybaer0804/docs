@@ -116,7 +116,9 @@ export function transformFileNode(node) {
         ext,
         id: node.id,
         type: node.type,
-        author_id: node.author_id
+        author_id: node.author_id,
+        view_count: node.stats?.view_count || (Array.isArray(node.stats) ? node.stats[0]?.view_count : 0) || 0,
+        download_count: node.stats?.download_count || (Array.isArray(node.stats) ? node.stats[0]?.download_count : 0) || 0
     };
 }
 
