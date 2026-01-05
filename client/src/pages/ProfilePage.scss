@@ -49,6 +49,16 @@
     margin-bottom: 1rem;
   }
 
+  &__section {
+    margin-bottom: 2.5rem;
+
+    &-title {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      color: var(--text-color);
+    }
+  }
+
   &__form {
     display: flex;
     flex-direction: column;
