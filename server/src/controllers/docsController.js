@@ -8,7 +8,12 @@ function splitNameForAutoRename(name) {
 }
 
 async function ensureDocsRootDirectory(author_id) {
-  const { data: existing } = await supabase.from('nodes').select('id, type').eq('name', 'docs').is('parent_id', null).single();
+  const { data: existing } = await supabase
+    .from('nodes')
+    .select('id, type')
+    .eq('name', 'docs')
+    .is('parent_id', null)
+    .single();
   if (existing && existing.type === 'DIRECTORY') return existing;
 
   const insertData = {
@@ -58,6 +63,32 @@ async function getUniqueNameInParent({ parentId, desiredName, excludeId }) {
   throw new Error('Failed to generate unique name');
 }
 
+async function fetchStatsForNodes(nodeIds) {
+  if (!nodeIds || nodeIds.length === 0) return {};
+
+  const { data: stats, error } = await supabase
+    .from('v_node_total_stats')
+    .select('node_id, view_count, download_count')
+    .in('node_id', nodeIds);
+
+  if (error) {
+    console.error('fetchStatsForNodes error:', error);
+    return {};
+  }
+
+  return stats.reduce((acc, curr) => {
+    acc[curr.node_id] = curr;
+    return acc;
+  }, {});
+}
+
+function mergeStats(nodes, statsMap) {
+  return nodes.map((node) => ({
+    ...node,
+    stats: statsMap[node.id] || { view_count: 0, download_count: 0 },
+  }));
+}
+
 exports.getAllDocs = async (req, res) => {
   try {
     const userId = req.user?.id;
@@ -65,15 +96,21 @@ exports.getAllDocs = async (req, res) => {
       return res.json([]);
     }
 
-    const { data, error } = await supabase
+    const { data: nodes, error } = await supabase
       .from('nodes')
-      .select('id, parent_id, name, type, visibility_type, author_id, stats:v_node_total_stats(view_count, download_count)')
+      .select('id, parent_id, name, type, visibility_type, author_id')
       .eq('author_id', userId)
       .order('type', { ascending: true })
       .order('name', { ascending: true });
 
     if (error) throw error;
-    res.json(data);
+
+    // 통계 데이터 별도 조회 및 병합
+    const nodeIds = nodes.filter((n) => n.type === 'FILE').map((n) => n.id);
+    const statsMap = await fetchStatsForNodes(nodeIds);
+    const result = mergeStats(nodes, statsMap);
+
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -115,7 +152,7 @@ exports.searchDocs = async (req, res) => {
 
       query = supabase
         .from('nodes')
-        .select('id, name, type, visibility_type, author_id, users:author_id (username), stats:v_node_total_stats(view_count, download_count)')
+        .select('id, name, type, visibility_type, author_id, users:author_id (username)')
         .eq('author_id', author_id)
         .in('visibility_type', allowedVisibilities)
         .ilike('name', `%${keyword}%`)
@@ -132,7 +169,7 @@ exports.searchDocs = async (req, res) => {
 
       query = supabase
         .from('nodes')
-        .select('id, name, type, visibility_type, author_id, users:author_id (username), stats:v_node_total_stats(view_count, download_count)')
+        .select('id, name, type, visibility_type, author_id, users:author_id (username)')
         .or(filterStr)
         .ilike('name', `%${keyword}%`)
         .order('type', { ascending: true })
@@ -140,17 +177,22 @@ exports.searchDocs = async (req, res) => {
     } else {
       query = supabase
         .from('nodes')
-        .select('id, name, type, visibility_type, author_id, users:author_id (username), stats:v_node_total_stats(view_count, download_count)')
+        .select('id, name, type, visibility_type, author_id, users:author_id (username)')
         .eq('author_id', userId)
         .ilike('name', `%${keyword}%`)
         .order('type', { ascending: true })
         .limit(50);
     }
 
-    const { data, error } = await query;
+    const { data: nodes, error } = await query;
     if (error) throw error;
 
-    res.json(data);
+    // 통계 데이터 별도 조회 및 병합
+    const nodeIds = nodes.filter((n) => n.type === 'FILE').map((n) => n.id);
+    const statsMap = await fetchStatsForNodes(nodeIds);
+    const result = mergeStats(nodes, statsMap);
+
+    res.json(result);
   } catch (err) {
     console.error('searchDocs error:', err);
     res.status(500).json({ error: err.message });
@@ -181,16 +223,22 @@ exports.getUserDocs = async (req, res) => {
       }
     }
 
-    const { data, error } = await supabase
+    const { data: nodes, error } = await supabase
       .from('nodes')
-      .select('id, parent_id, name, type, visibility_type, author_id, stats:v_node_total_stats(view_count, download_count)')
+      .select('id, parent_id, name, type, visibility_type, author_id')
       .eq('author_id', userId)
       .in('visibility_type', allowedVisibilities)
       .order('type', { ascending: true })
       .order('name', { ascending: true });
 
     if (error) throw error;
-    res.json(data);
+
+    // 통계 데이터 별도 조회 및 병합
+    const nodeIds = nodes.filter((n) => n.type === 'FILE').map((n) => n.id);
+    const statsMap = await fetchStatsForNodes(nodeIds);
+    const result = mergeStats(nodes, statsMap);
+
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -228,7 +276,17 @@ exports.getDocById = async (req, res) => {
       }
     }
 
-    res.json(doc);
+    // 통계 데이터 추가
+    const { data: stats } = await supabase
+      .from('v_node_total_stats')
+      .select('view_count, download_count')
+      .eq('node_id', id)
+      .single();
+
+    res.json({
+      ...doc,
+      stats: stats || { view_count: 0, download_count: 0 },
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
