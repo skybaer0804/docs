@@ -1,0 +1,69 @@
+@use '../style.scss' as *;
+
+.push-setting {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    gap: 20px;
+
+    &__info {
+        flex: 1;
+    }
+
+    &__title {
+        margin: 0 0 8px 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-color);
+    }
+
+    &__description {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--text-muted-color);
+        line-height: 1.4;
+    }
+
+    &__warning {
+        margin: 8px 0 0 0;
+        font-size: 0.8rem;
+        color: #f44336; // error color
+    }
+
+    &--unsupported {
+        opacity: 0.7;
+        background-color: var(--hover-bg-color);
+    }
+
+    &__message {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--text-muted-color);
+        text-align: center;
+        width: 100%;
+    }
+
+    &__button {
+        min-width: 100px;
+    }
+}
+
+@media (max-width: 600px) {
+    .push-setting {
+        flex-direction: column;
+        align-items: flex-start;
+        
+        &__actions {
+            width: 100%;
+            
+            .push-setting__button {
+                width: 100%;
+            }
+        }
+    }
+}
+

@@ -4,6 +4,7 @@ const API_BASE = '/api/docs';
 const AUTH_API_BASE = '/api/auth';
 const SUB_API_BASE = '/api/subscriptions';
 const TIMER_API_BASE = '/api/study-timer';
+const PUSH_API_BASE = '/api/push';
 
 /**
  * 로컬 스토리지에서 토큰 가져오기
@@ -633,4 +634,27 @@ export async function logInteraction(data) {
     console.error('Failed to log interaction:', e);
     return null;
   }
+}
+/**
+ * 푸시 구독 정보를 서버에 저장
+ * @param {PushSubscription} subscription
+ */
+export async function savePushSubscription(subscription) {
+  const token = getToken();
+  if (!token) throw new Error('Authentication required');
+
+  const response = await fetch(`${PUSH_API_BASE}/subscribe`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ subscription }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error || 'Failed to save push subscription');
+  }
+  return response.json();
 }

@@ -27,6 +27,46 @@ exports.follow = async (req, res) => {
       throw error;
     }
 
+    // 푸시 알림 비동기 전송
+    (async () => {
+      try {
+        const webpush = require('../config/webpush');
+
+        // 1. 팔로워 정보(내 정보) 가져오기
+        const { data: follower } = await supabase.from('users').select('username').eq('id', follower_id).single();
+
+        // 2. 팔로우 대상의 구독 정보 가져오기
+        const { data: subs } = await supabase.from('push_subscriptions').select('*').eq('user_id', following_id);
+
+        if (subs && subs.length > 0) {
+          const payload = JSON.stringify({
+            title: '새로운 팔로워! 🎉',
+            body: `${follower.username}님이 당신을 구독하기 시작했습니다!`,
+            icon: '/icons/icon-192x192.png',
+            data: { url: `/profile/${follower.username}` },
+          });
+
+          subs.forEach((sub) => {
+            webpush
+              .sendNotification(
+                {
+                  endpoint: sub.endpoint,
+                  keys: { p256dh: sub.p256dh, auth: sub.auth },
+                },
+                payload,
+              )
+              .catch((err) => {
+                if (err.statusCode === 410) {
+                  supabase.from('push_subscriptions').delete().eq('id', sub.id).then();
+                }
+              });
+          });
+        }
+      } catch (pushErr) {
+        console.error('푸시 알림 전송 실패:', pushErr);
+      }
+    })();
+
     res.status(201).json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
