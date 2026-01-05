@@ -1,6 +1,16 @@
 import { DirectoryViewContainer } from '../containers/DirectoryViewContainer';
 import { useRef, useState, useEffect, useCallback } from 'preact/hooks';
-import { IconDots, IconTrash, IconPencil, IconCheck, IconFilePlus, IconFolderPlus, IconEdit, IconDownload } from '@tabler/icons-preact';
+import {
+  IconDots,
+  IconTrash,
+  IconPencil,
+  IconCheck,
+  IconFilePlus,
+  IconFolderPlus,
+  IconEdit,
+  IconDownload,
+  IconEye,
+} from '@tabler/icons-preact';
 import { Popover } from './Popover';
 import { List } from './List';
 import { ListItem } from './ListItem';
@@ -133,13 +143,13 @@ export function DirectoryViewPresenter({
     const id = meta.id;
     const authorId = meta.author_id;
     const showMenu = canManage(authorId);
-    
+
     const drop = isFolder ? bindDropTarget(id, 'DIRECTORY') : { dndClassName: '' };
-    const dragHandlers = bindDragSource({ 
-      id, 
-      type: isFolder ? 'DIRECTORY' : 'FILE', 
-      name: isFolder ? name : meta.title, 
-      author_id: authorId 
+    const dragHandlers = bindDragSource({
+      id,
+      type: isFolder ? 'DIRECTORY' : 'FILE',
+      name: isFolder ? name : meta.title,
+      author_id: authorId,
     });
 
     return (
@@ -156,18 +166,32 @@ export function DirectoryViewPresenter({
         data-dnd-drop-type={isFolder ? 'DIRECTORY' : undefined}
         {...dragHandlers}
       >
-        <span class="item-icon">{isFolder ? '📁' : (meta.ext === '.template' ? '📄' : '📝')}</span>
-        <span class="item-name">{isFolder ? name : meta.title}</span>
+        <span class="item-icon">{isFolder ? '📁' : meta.ext === '.template' ? '📄' : '📝'}</span>
+        <div class="item-info">
+          <span class="item-name">{isFolder ? name : meta.title}</span>
+          {!isFolder && (
+            <div class="item-stats">
+              <span class="item-stats__item" title="조회수">
+                <IconEye size={12} /> {meta.view_count || 0}
+              </span>
+              <span class="item-stats__item" title="다운로드">
+                <IconDownload size={12} /> {meta.download_count || 0}
+              </span>
+            </div>
+          )}
+        </div>
         {showMenu && (
           <button
             class="directory-item__menu-btn"
-            onClick={(e) => openMenu(e, { 
-              type: isFolder ? 'folder' : 'file', 
-              id, 
-              author_id: authorId, 
-              label: isFolder ? name : meta.title,
-              raw: nodeOrFile
-            })}
+            onClick={(e) =>
+              openMenu(e, {
+                type: isFolder ? 'folder' : 'file',
+                id,
+                author_id: authorId,
+                label: isFolder ? name : meta.title,
+                raw: nodeOrFile,
+              })
+            }
           >
             <IconDots size={18} />
           </button>
@@ -185,8 +209,8 @@ export function DirectoryViewPresenter({
     content = (
       <div class="directory-view">
         <div class="directory-grid">
-          {categoryKeys.map(key => renderItem(key, categorized[key], true))}
-          {rootFiles.map(file => renderItem(file.title, file, false))}
+          {categoryKeys.map((key) => renderItem(key, categorized[key], true))}
+          {rootFiles.map((file) => renderItem(file.title, file, false))}
         </div>
       </div>
     );
@@ -198,8 +222,8 @@ export function DirectoryViewPresenter({
     content = (
       <div class="directory-view">
         <div class="directory-grid">
-          {subDirs.map(key => renderItem(key, node[key], true))}
-          {directFiles.map(file => renderItem(file.title, file, false))}
+          {subDirs.map((key) => renderItem(key, node[key], true))}
+          {directFiles.map((file) => renderItem(file.title, file, false))}
         </div>
       </div>
     );
@@ -212,39 +236,67 @@ export function DirectoryViewPresenter({
         <List>
           {menuTarget?.type === 'folder' ? (
             <>
-              <ListItem 
-                icon={<IconFilePlus size={18} />} 
-                onClick={() => { onCreateDocument(menuTarget.id); closeMenu(); }}
+              <ListItem
+                icon={<IconFilePlus size={18} />}
+                onClick={() => {
+                  onCreateDocument(menuTarget.id);
+                  closeMenu();
+                }}
               >
                 하위문서 생성
               </ListItem>
-              <ListItem 
-                icon={<IconFolderPlus size={18} />} 
-                onClick={() => { onCreateFolder(menuTarget.id); closeMenu(); }}
+              <ListItem
+                icon={<IconFolderPlus size={18} />}
+                onClick={() => {
+                  onCreateFolder(menuTarget.id);
+                  closeMenu();
+                }}
               >
                 하위폴더 생성
               </ListItem>
             </>
           ) : (
             <>
-              <ListItem 
-                icon={<IconEdit size={18} />} 
-                onClick={() => { onEditDocument(menuTarget.id); closeMenu(); }}
+              <ListItem
+                icon={<IconEdit size={18} />}
+                onClick={() => {
+                  onEditDocument(menuTarget.id);
+                  closeMenu();
+                }}
               >
                 편집
               </ListItem>
-              <ListItem 
-                icon={<IconDownload size={18} />} 
-                onClick={() => { onDownloadDocument(menuTarget.raw); closeMenu(); }}
+              <ListItem
+                icon={<IconDownload size={18} />}
+                onClick={() => {
+                  onDownloadDocument(menuTarget.raw);
+                  closeMenu();
+                }}
               >
                 다운로드
               </ListItem>
             </>
           )}
-          <ListItem icon={<IconPencil size={18} />} onClick={() => { setRenameTarget(menuTarget); setRenameValue(menuTarget.label); setRenameOpen(true); closeMenu(); }}>
+          <ListItem
+            icon={<IconPencil size={18} />}
+            onClick={() => {
+              setRenameTarget(menuTarget);
+              setRenameValue(menuTarget.label);
+              setRenameOpen(true);
+              closeMenu();
+            }}
+          >
             제목 수정
           </ListItem>
-          <ListItem className="list-item--danger" icon={<IconTrash size={18} />} onClick={() => { setDeleteTarget(menuTarget); setConfirmOpen(true); closeMenu(); }}>
+          <ListItem
+            className="list-item--danger"
+            icon={<IconTrash size={18} />}
+            onClick={() => {
+              setDeleteTarget(menuTarget);
+              setConfirmOpen(true);
+              closeMenu();
+            }}
+          >
             삭제
           </ListItem>
         </List>
@@ -277,11 +329,7 @@ export function DirectoryViewPresenter({
         }
       >
         <div className="directory-create-modal">
-          <form
-            id="directory-rename-form-view"
-            onSubmit={handleRenameConfirm}
-            className="directory-create-modal__form"
-          >
+          <form id="directory-rename-form-view" onSubmit={handleRenameConfirm} className="directory-create-modal__form">
             <div className="directory-create-modal__form-group">
               <label htmlFor="renameValueView">새 이름</label>
               <input

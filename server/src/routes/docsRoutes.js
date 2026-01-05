@@ -29,6 +29,9 @@ router.delete('/:id', authMiddleware, docsController.deleteDoc);
 // 문서/폴더 이동 (🔐 인증 필요)
 router.post('/move', authMiddleware, docsController.moveDoc);
 
+// 사용자 행동 분석 로그 기록 (🔐 선택적 인증)
+router.post('/interactions', optionalAuthMiddleware, docsController.logInteraction);
+
 // 특정 문서 조회 (ID 기반)
 router.get('/id/:id', optionalAuthMiddleware, docsController.getDocById);
 

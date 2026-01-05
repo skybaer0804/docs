@@ -609,3 +609,28 @@ export async function deleteStudySession(sessionId) {
   }
   return response.json();
 }
+
+/**
+ * 사용자 행동 분석 로그 기록
+ * @param {Object} data - { node_id, interaction_type, duration_sec }
+ */
+export async function logInteraction(data) {
+  const token = getToken();
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  try {
+    const response = await fetch(`${API_BASE}/interactions`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(data),
+      // 페이지 이탈 시에도 전송될 수 있도록 keepalive 옵션 사용 고려
+      keepalive: true,
+    });
+    if (!response.ok) return null;
+    return response.json();
+  } catch (e) {
+    console.error('Failed to log interaction:', e);
+    return null;
+  }
+}

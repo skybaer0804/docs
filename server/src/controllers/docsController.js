@@ -8,7 +8,12 @@ function splitNameForAutoRename(name) {
 }
 
 async function ensureDocsRootDirectory(author_id) {
-  const { data: existing } = await supabase.from('nodes').select('id, type').eq('name', 'docs').is('parent_id', null).single();
+  const { data: existing } = await supabase
+    .from('nodes')
+    .select('id, type')
+    .eq('name', 'docs')
+    .is('parent_id', null)
+    .single();
   if (existing && existing.type === 'DIRECTORY') return existing;
 
   const insertData = {
@@ -58,6 +63,32 @@ async function getUniqueNameInParent({ parentId, desiredName, excludeId }) {
   throw new Error('Failed to generate unique name');
 }
 
+async function fetchStatsForNodes(nodeIds) {
+  if (!nodeIds || nodeIds.length === 0) return {};
+
+  const { data: stats, error } = await supabase
+    .from('v_node_total_stats')
+    .select('node_id, view_count, download_count')
+    .in('node_id', nodeIds);
+
+  if (error) {
+    console.error('fetchStatsForNodes error:', error);
+    return {};
+  }
+
+  return stats.reduce((acc, curr) => {
+    acc[curr.node_id] = curr;
+    return acc;
+  }, {});
+}
+
+function mergeStats(nodes, statsMap) {
+  return nodes.map((node) => ({
+    ...node,
+    stats: statsMap[node.id] || { view_count: 0, download_count: 0 },
+  }));
+}
+
 exports.getAllDocs = async (req, res) => {
   try {
     const userId = req.user?.id;
@@ -65,7 +96,7 @@ exports.getAllDocs = async (req, res) => {
       return res.json([]);
     }
 
-    const { data, error } = await supabase
+    const { data: nodes, error } = await supabase
       .from('nodes')
       .select('id, parent_id, name, type, visibility_type, author_id')
       .eq('author_id', userId)
@@ -73,7 +104,13 @@ exports.getAllDocs = async (req, res) => {
       .order('name', { ascending: true });
 
     if (error) throw error;
-    res.json(data);
+
+    // 통계 데이터 별도 조회 및 병합
+    const nodeIds = nodes.filter((n) => n.type === 'FILE').map((n) => n.id);
+    const statsMap = await fetchStatsForNodes(nodeIds);
+    const result = mergeStats(nodes, statsMap);
+
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -147,10 +184,15 @@ exports.searchDocs = async (req, res) => {
         .limit(50);
     }
 
-    const { data, error } = await query;
+    const { data: nodes, error } = await query;
     if (error) throw error;
 
-    res.json(data);
+    // 통계 데이터 별도 조회 및 병합
+    const nodeIds = nodes.filter((n) => n.type === 'FILE').map((n) => n.id);
+    const statsMap = await fetchStatsForNodes(nodeIds);
+    const result = mergeStats(nodes, statsMap);
+
+    res.json(result);
   } catch (err) {
     console.error('searchDocs error:', err);
     res.status(500).json({ error: err.message });
@@ -181,7 +223,7 @@ exports.getUserDocs = async (req, res) => {
       }
     }
 
-    const { data, error } = await supabase
+    const { data: nodes, error } = await supabase
       .from('nodes')
       .select('id, parent_id, name, type, visibility_type, author_id')
       .eq('author_id', userId)
@@ -190,7 +232,13 @@ exports.getUserDocs = async (req, res) => {
       .order('name', { ascending: true });
 
     if (error) throw error;
-    res.json(data);
+
+    // 통계 데이터 별도 조회 및 병합
+    const nodeIds = nodes.filter((n) => n.type === 'FILE').map((n) => n.id);
+    const statsMap = await fetchStatsForNodes(nodeIds);
+    const result = mergeStats(nodes, statsMap);
+
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -228,7 +276,17 @@ exports.getDocById = async (req, res) => {
       }
     }
 
-    res.json(doc);
+    // 통계 데이터 추가
+    const { data: stats } = await supabase
+      .from('v_node_total_stats')
+      .select('view_count, download_count')
+      .eq('node_id', id)
+      .single();
+
+    res.json({
+      ...doc,
+      stats: stats || { view_count: 0, download_count: 0 },
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -471,6 +529,32 @@ exports.moveDoc = async (req, res) => {
       body: req?.body,
       userId: req?.user?.id,
     });
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.logInteraction = async (req, res) => {
+  try {
+    const { node_id, interaction_type, duration_sec } = req.body;
+    const user_id = req.user?.id || null;
+
+    if (!node_id || !interaction_type) {
+      return res.status(400).json({ error: 'Missing required fields: node_id, interaction_type' });
+    }
+
+    const { error } = await supabase.from('node_interactions').insert([
+      {
+        node_id,
+        user_id,
+        interaction_type,
+        duration_sec: duration_sec || 0,
+      },
+    ]);
+
+    if (error) throw error;
+    res.status(201).json({ success: true });
+  } catch (err) {
+    console.error('logInteraction error:', err);
     res.status(500).json({ error: err.message });
   }
 };
