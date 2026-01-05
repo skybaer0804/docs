@@ -14,7 +14,18 @@ app.use(cookieParser());
 
 // Static files (Client Build)
 // 개발 중에는 별도 포트(5173)를 쓰지만, 프로덕션 배포 시에는 여기서 정적 파일을 서빙합니다.
-app.use(express.static(path.join(__dirname, '../../client/dist')));
+app.use(express.static(path.join(__dirname, '../../client/dist'), {
+  setHeaders: (res, filePath) => {
+    // Service Worker와 manifest는 캐시하지 않도록 설정
+    if (filePath.endsWith('sw.js') || filePath.endsWith('manifest.webmanifest')) {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    }
+    // 버전 해시가 포함된 정적 에셋(js, css)은 길게 캐시해도 됨
+    else if (filePath.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg)$/) && filePath.includes('assets/')) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+  }
+}));
 
 // API Routes
 app.use('/api/docs', require('./routes/docsRoutes'));

@@ -7,7 +7,7 @@ import { useToast } from '../contexts/ToastContext';
  */
 export function usePWAUpdate() {
   const { showToast } = useToast();
-  
+
   const {
     offlineReady: [offlineReady, setOfflineReady],
     needRefresh: [needRefresh, setNeedRefresh],
@@ -15,6 +15,17 @@ export function usePWAUpdate() {
   } = useRegisterSW({
     onRegistered(r) {
       console.log('SW Registered:', r);
+      // 주기적으로 업데이트 확인 (예: 1시간마다)
+      if (r) {
+        setInterval(() => {
+          r.update();
+        }, 60 * 60 * 1000);
+
+        // 창이 포커스될 때마다 업데이트 확인
+        window.addEventListener('focus', () => {
+          r.update();
+        });
+      }
     },
     onRegisterError(error) {
       console.error('SW registration error:', error);
@@ -38,8 +49,8 @@ export function usePWAUpdate() {
           label: '업데이트',
           onClick: () => {
             updateServiceWorker(true);
-          }
-        }
+          },
+        },
       );
       // needRefresh는 toast가 닫힐 때 혹은 업데이트 시 처리되므로
       // 여기서는 상태만 유지
@@ -48,4 +59,3 @@ export function usePWAUpdate() {
 
   return { offlineReady, needRefresh, updateServiceWorker };
 }
-
